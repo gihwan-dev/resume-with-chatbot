@@ -1,0 +1,19 @@
+# System Files
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+
+# Astro
+.astro
+.vercel
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
