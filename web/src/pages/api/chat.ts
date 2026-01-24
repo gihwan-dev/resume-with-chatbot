@@ -72,7 +72,8 @@ export const POST = async ({ request }: { request: Request }) => {
           system: AGENT_SYSTEM_PROMPT,
           messages: modelMessages,
           tools: agent.tools,
-          stopWhen: stepCountIs(5),
+          // Increased from 5 to 8 to allow answer generation after tool calls
+          stopWhen: stepCountIs(8),
           onStepFinish: ({ toolResults }) => {
             // Check if searchKnowledge was called and collect sources
             if (toolResults && Array.isArray(toolResults)) {

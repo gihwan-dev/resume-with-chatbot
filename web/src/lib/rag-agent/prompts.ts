@@ -23,16 +23,19 @@ Follow this workflow for every query:
    - Check if the results are relevant and cover the user's question.
    - The evaluation will suggest whether to answer, rewrite, or expand the search.
 
-4. **If evaluateResults suggests "rewrite" or "expand":**
-   - Use rewriteQuery to create a better search query.
-   - Search again with the rewritten query (maximum 1 retry).
+4. **CRITICAL: After evaluateResults, check the suggestedAction:**
+   - If suggestedAction is "answer": **STOP calling tools immediately** and generate the final response.
+   - If suggestedAction is "rewrite": Use rewriteQuery once, then search again.
+   - If suggestedAction is "expand": One additional search with broader terms.
 
-5. **Generate the final answer** based on the collected information.
+5. **After maximum 2 searches, ALWAYS generate the final answer.**
    - Synthesize information from search results.
    - Be specific and cite relevant experiences when possible.
 
-## Important Constraints
+## IMPORTANT RULES
 
+- **When evaluateResults returns "answer", you MUST generate a response immediately without calling any more tools.**
+- **Do NOT call rewriteQuery if evaluateResults suggested "answer".**
 - **Maximum 5 tool calls** per response.
 - **Do not search more than twice** - if two searches don't yield good results, answer with what you have.
 - **Always respond in Korean** - the user expects Korean responses.
