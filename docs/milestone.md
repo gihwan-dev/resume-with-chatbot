@@ -115,19 +115,32 @@ web/src/pages/api/chat.ts
 - `web/src/lib/work-agent/index.ts` - 모듈 re-export
 - `web/src/env.d.ts` - Astro 환경변수 타입 정의
 
-### Phase 2: 도구 구현
-- [ ] M2-1: Notion 도구 (searchNotion, getNotionPage)
-- [ ] M2-2: ClickUp 도구 (searchClickUpTasks, searchClickUpDocs)
+### Phase 2: 도구 구현 ✅
+- [x] M2-1: Notion 도구 (searchNotion, getNotionPage)
+- [x] M2-2: ClickUp 도구 (searchClickUpTasks, searchClickUpDocs)
 
-**Phase 2 작업 노트:**
-- API 클라이언트는 이미 구현됨 (`work-agent/*.server.ts`)
-- Gemini/Vercel AI SDK의 `tool()` 형태로 래핑 필요
-- `web/src/lib/work-agent/tools.ts` 생성 예정
-- 도구 스키마 정의 (zod)와 실행 로직 분리 고려
+**구현 완료 (2026-01-24):**
+- `web/src/lib/work-agent/tools.ts` - 4개 AI 도구 정의
+  - `searchNotion` - Notion 페이지 검색
+  - `getNotionPage` - Notion 페이지 상세 조회
+  - `searchClickUpTasks` - 할당된 태스크 검색
+  - `searchClickUpDocs` - 작성한 문서 검색
+- `workAgentTools` 객체로 통합 export
+
+**기술 노트:**
+- Vercel AI SDK v6에서는 `parameters` 대신 `inputSchema` 사용
+- Zod 스키마로 파라미터 정의, 타입 자동 추론
+- `createErrorResponse()` 유틸리티로 에러를 LLM이 이해할 수 있는 구조화된 응답으로 변환
+- `RATE_LIMIT` 에러는 `retryable: true`로 표시
 
 ### Phase 3: 에이전트 통합
-- [ ] M3-1: createWorkAgent() 및 시스템 프롬프트
-- [ ] M3-2: chat.ts에 도구 통합
+- [ ] M3-1: chat.ts에 workAgentTools 통합
+- [ ] M3-2: 시스템 프롬프트 업데이트 (도구 사용 지침 추가)
+
+**Phase 3 작업 노트:**
+- `workAgentTools`를 `streamText()`의 `tools` 옵션에 전달
+- 시스템 프롬프트에 "업무 정보가 필요하면 Notion/ClickUp 도구 사용" 지침 추가 필요
+- `maxSteps` 옵션으로 다중 도구 호출 허용 고려
 
 ### Phase 4: 테스트
 - [ ] M4-1: 단위/통합 테스트
@@ -147,8 +160,8 @@ web/src/lib/work-agent/
 ├── types.ts              # 공통 타입 정의 ✅
 ├── notion.server.ts      # Notion API 클라이언트 ✅
 ├── clickup.server.ts     # ClickUp API 클라이언트 ✅
-├── index.ts              # 모듈 export ✅
-└── tools.ts              # AI SDK 도구 정의 (Phase 2)
+├── tools.ts              # AI SDK 도구 정의 ✅
+└── index.ts              # 모듈 export ✅
 ```
 
 ### 환경변수

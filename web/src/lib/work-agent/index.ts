@@ -29,3 +29,12 @@ export {
   searchClickUpDocs,
   getClickUpTask,
 } from "./clickup.server"
+
+// AI Tools
+export {
+  searchNotion,
+  getNotionPage,
+  searchClickUpTasks as searchClickUpTasksTool,
+  searchClickUpDocs as searchClickUpDocsTool,
+  workAgentTools,
+} from "./tools"
