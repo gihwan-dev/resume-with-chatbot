@@ -185,28 +185,72 @@ CLICKUP_USER_ID       ✅ 설정됨
 
 ---
 
-## Next: 검색 최적화 (Search Optimization) 📋
-> **Goal:** 에이전트 시스템의 응답 품질 극대화
+## Next: 에이전트 최적화 (Agent Optimization) 🔲
+> **Goal:** 검색 품질 강화 및 토큰/비용 최적화
 > **Status:** 계획 수립 완료 (2026-01-24)
 
 ### 배경
-컨텍스트 엔지니어링 관점에서 현재 에이전트 시스템의 토큰 효율성과 응답 품질을 개선하기 위한 전략 수립.
+현재 에이전트의 두 가지 문제:
+1. `toolChoice: "auto"`로 설정되어 검색 없이 답변 가능
+2. API 응답에 불필요한 필드가 많아 토큰 낭비
 
 ### 참고 자료
-- [Vercel AI SDK 6](https://vercel.com/blog/ai-sdk-6) - Agent abstraction, prepareStep, stopWhen
+- [Vercel AI SDK Loop Control](https://ai-sdk.dev/docs/agents/loop-control) - stopWhen, prepareStep, StopCondition
 - [TOON Format](https://github.com/toon-format/toon) - JSON 대비 40-60% 토큰 절감
-- [Gemini Thinking Models](https://ai.google.dev/gemini-api/docs/thinking) - thinkingBudget/thinkingLevel
-- [LLM-as-a-Judge](https://www.confident-ai.com/blog/why-llm-as-a-judge-is-the-best-llm-evaluation-method) - 자동 평가 방법론
+- [Gemini Thinking Models](https://ai.google.dev/gemini-api/docs/thinking) - thinkingBudget 조절
 - [ReAct Framework](https://react-lm.github.io/) - Reasoning + Acting 패턴
 
-### Phase 1: 토큰 최적화 🔲
-- [ ] M1-1: API 응답 스키마 필터링
+---
+
+### Phase 1: 검색 품질 강화 (Loop Control) 🔲 ← **우선순위 1**
+> `answer` 도구 + `prepareStep` 패턴으로 검색 필수화
+
+**핵심 전략:**
+1. `answer` 도구를 `execute` 없이 정의 → 호출 시 에이전트 루프 종료
+2. `prepareStep` 콜백으로 단계별 도구 가용성 제어
+3. 검색 완료 전에는 `answer` 도구 비활성화
+
+**동작 흐름:**
+```
+User 질문 → Step 0-1: 검색 강제 → Step 2+: answer 활성화 → 루프 종료
+```
+
+**작업 항목:**
+- [ ] M1-1: `answer` 도구 정의 (execute 없음)
+  ```typescript
+  export const answer = tool({
+    description: "검색 완료 후 최종 답변을 제공합니다.",
+    inputSchema: z.object({
+      answer: z.string(),
+      searchSummary: z.string().optional(),
+      confidence: z.enum(["high", "medium", "low"]),
+    }),
+    // execute 없음 - 호출 시 루프 종료
+  })
+  ```
+- [ ] M1-2: `prepareStep` 콜백 구현
+- [ ] M1-3: 커스텀 `StopCondition` 정의
+- [ ] M1-4: 시스템 프롬프트 업데이트
+- [ ] M1-5: 테스트 추가
+
+**수정 대상 파일:**
+- `web/src/lib/work-agent/tools.ts` - answer 도구 추가
+- `web/src/lib/work-agent/index.ts` - export 추가
+- `web/src/pages/api/chat.ts` - prepareStep, StopCondition, 프롬프트
+- `web/tests/lib/work-agent/tools.test.ts` - 테스트
+
+---
+
+### Phase 2: 토큰 최적화 🔲
+> API 응답 필터링 및 TOON 포맷 적용
+
+**작업 항목:**
+- [ ] M2-1: API 응답 스키마 필터링
   - ClickUp: `ClickUpTaskSlim` 타입 도입 (필수 필드만)
   - Notion: 불필요한 블록 타입 스킵 (image, video, divider 등)
   - 예상 효과: 토큰 30-50% 절감
-- [ ] M1-2: TOON 포맷 적용
+- [ ] M2-2: TOON 포맷 적용
   - 10개 이상 결과 시 TOON 포맷으로 자동 전환
-  - `toon-encoder.ts` 신규 생성
   - 예상 효과: 대량 데이터에서 추가 40-60% 절감
 
 **수정 대상 파일:**
@@ -215,25 +259,34 @@ CLICKUP_USER_ID       ✅ 설정됨
 - `web/src/lib/work-agent/tools.ts`
 - `web/src/lib/work-agent/toon-encoder.ts` (신규)
 
-### Phase 2: 추론 품질 향상 🔲
-- [ ] M2-1: ReAct + Reflexion 패턴 적용
+---
+
+### Phase 3: 추론 품질 향상 🔲
+> ReAct 패턴 및 동적 프롬프트
+
+**작업 항목:**
+- [ ] M3-1: ReAct + Reflexion 패턴 적용
   - 자기 검증 프로토콜 프롬프트 추가
   - `prepareStep`으로 반복 호출 감지 및 제어
   - 3단계 연속 같은 도구 호출 시 다른 도구로 유도
-- [ ] M2-2: 동적 시스템 프롬프트
+- [ ] M3-2: 동적 시스템 프롬프트
   - 의도 분류: career_inquiry, technical_inquiry, contact_inquiry, general_chat
   - 의도별 페르소나 전환
-  - `prompts.ts` 신규 생성
 
 **수정 대상 파일:**
 - `web/src/pages/api/chat.ts`
 - `web/src/lib/work-agent/prompts.ts` (신규)
 
-### Phase 3: 비용/성능 최적화 🔲
-- [ ] M3-1: Thinking Budget 동적 조절
+---
+
+### Phase 4: 비용/성능 최적화 🔲
+> Thinking Budget 및 검증 루프
+
+**작업 항목:**
+- [ ] M4-1: Thinking Budget 동적 조절
   - 간단한 질문: 낮은 thinkingBudget
   - 기술 질문: 높은 thinkingBudget (최대 24576)
-- [ ] M3-2: Zod 검증 루프
+- [ ] M4-2: Zod 검증 루프
   - 도구 응답 스키마 정의 (discriminated union)
   - `validateAndRecover()` 래퍼로 검증 실패 시 graceful degradation
 
@@ -241,31 +294,37 @@ CLICKUP_USER_ID       ✅ 설정됨
 - `web/src/pages/api/chat.ts`
 - `web/src/lib/work-agent/tools.ts`
 
-### Phase 4: 평가 프레임워크 🔲
-- [ ] M4-1: 품질 평가 테스트
+---
+
+### Phase 5: 평가 프레임워크 🔲
+> 품질 측정 자동화
+
+**작업 항목:**
+- [ ] M5-1: 품질 평가 테스트
   - 골든 데이터셋 10개 질문 정의
   - 평가 지표: 키워드 커버리지(30%), 도구 호출 정확도(20%), 응답 관련성(25%), 환각 없음(25%)
-- [ ] M4-2: 런타임 메트릭 수집
-  - `metrics.ts` 신규 생성
+- [ ] M5-2: 런타임 메트릭 수집
   - 토큰 사용량, 도구 호출 분포, 성공률 추적
 
 **수정 대상 파일:**
 - `web/tests/lib/work-agent/evaluation.test.ts` (신규)
 - `web/src/lib/work-agent/metrics.ts` (신규)
 
+---
+
 ### 구현 우선순위
-| 순위 | 작업 | 예상 효과 | 난이도 |
-|------|------|----------|--------|
-| 1 | API 응답 스키마 필터링 | 토큰 30-50% 절감 | 낮음 |
-| 2 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 |
-| 3 | TOON 포맷 적용 | 대량 데이터 토큰 40-60% 절감 | 중간 |
-| 4 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 |
-| 5 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 |
-| 6 | Zod 검증 루프 | 안정성 향상 | 중간 |
-| 7 | 평가 프레임워크 | 품질 측정 자동화 | 높음 |
+| 순위 | Phase | 작업 | 예상 효과 | 난이도 |
+|------|-------|------|----------|--------|
+| 1 | Phase 1 | 검색 품질 강화 (Loop Control) | 검색 필수화, 정확도 향상 | 중간 |
+| 2 | Phase 2 | API 응답 스키마 필터링 | 토큰 30-50% 절감 | 낮음 |
+| 3 | Phase 2 | TOON 포맷 적용 | 토큰 40-60% 추가 절감 | 중간 |
+| 4 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 |
+| 5 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 |
+| 6 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 |
+| 7 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 |
 
 ### 검증 방법
-1. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 사용량 측정
-2. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
-3. **응답 시간 측정**: 평균 응답 시간 비교
-4. **비용 분석**: 월간 예상 API 비용 비교
+1. **Phase 1 검증**: 채팅 테스트로 검색 없이 답변하는지 확인
+2. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
+3. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
+4. **단위 테스트**: `pnpm test`
