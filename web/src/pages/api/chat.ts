@@ -156,6 +156,7 @@ export const POST = async ({ request }: { request: Request }) => {
       system: SYSTEM_PROMPT,
       messages: modelMessages,
       tools: workAgentTools,
+      activeTools: ["searchNotion", "getNotionPage", "searchClickUpTasks", "searchClickUpDocs"],
       stopWhen: stepCountIs(20),
       toolChoice: "auto",
       onStepFinish: ({ toolCalls, toolResults, finishReason, usage }) => {

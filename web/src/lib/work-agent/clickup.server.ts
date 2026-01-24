@@ -13,7 +13,8 @@ import {
   type ClickUpTasksResult,
 } from "./types"
 
-const CLICKUP_BASE_URL = "https://api.clickup.com/api/v2"
+const CLICKUP_V2_BASE_URL = "https://api.clickup.com/api/v2"
+const CLICKUP_V3_BASE_URL = "https://api.clickup.com/api/v3"
 
 interface ClickUpConfig {
   apiToken: string
@@ -66,9 +67,17 @@ function getHeaders(): Record<string, string> {
 
 async function clickUpFetch<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
+  useV3 = false
 ): Promise<T> {
-  const url = `${CLICKUP_BASE_URL}${endpoint}`
+  const baseUrl = useV3 ? CLICKUP_V3_BASE_URL : CLICKUP_V2_BASE_URL
+  const url = `${baseUrl}${endpoint}`
+
+  console.log("[ClickUp API] Request:", {
+    url,
+    method: options?.method || "GET",
+    version: useV3 ? "v3" : "v2",
+  })
 
   try {
     const response = await fetch(url, {
@@ -82,6 +91,12 @@ async function clickUpFetch<T>(
     if (!response.ok) {
       const errorBody = await response.text()
       let errorMessage = `ClickUp API error: ${response.status}`
+
+      console.error("[ClickUp API] Error:", {
+        status: response.status,
+        body: errorBody,
+        url,
+      })
 
       try {
         const errorJson = JSON.parse(errorBody)
@@ -107,11 +122,22 @@ async function clickUpFetch<T>(
       )
     }
 
-    return response.json()
+    const data = await response.json()
+    console.log("[ClickUp API] Success:", {
+      url,
+      resultCount:
+        Array.isArray(data) ? data.length : data.tasks?.length ?? data.docs?.length ?? "N/A",
+    })
+
+    return data
   } catch (error) {
     if (error instanceof WorkAgentError) {
       throw error
     }
+    console.error("[ClickUp API] Network error:", {
+      url,
+      error: error instanceof Error ? error.message : "Unknown error",
+    })
     throw new WorkAgentError(
       `Failed to fetch from ClickUp: ${error instanceof Error ? error.message : "Unknown error"}`,
       "CLICKUP_API_ERROR",
@@ -216,10 +242,12 @@ export async function searchClickUpDocs(
   const config = getClickUpConfig()
   const { query, page = 0 } = options
 
-  // ClickUp Docs API 엔드포인트
+  // ClickUp Docs API 엔드포인트 (v3 API 사용)
   // 워크스페이스의 모든 문서 조회
   const response = await clickUpFetch<ClickUpApiDocsResponse>(
-    `/workspaces/${config.workspaceId}/docs?page=${page}`
+    `/workspaces/${config.workspaceId}/docs?page=${page}`,
+    undefined,
+    true // Use v3 API for Docs
   )
 
   let docs: ClickUpDoc[] = (response.docs || [])
