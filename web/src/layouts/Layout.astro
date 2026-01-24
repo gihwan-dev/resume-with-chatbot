@@ -2,26 +2,52 @@
 import "../styles/global.css"
 import { ChatWidget } from "@/components/chat/ChatWidget"
 import { Navigation } from "@/components/navigation"
+import { SEO } from "astro-seo"
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { 
+  title = "Gihwan-dev | AI와 함께하는 이력서", 
+  description = "최기환의 AI 기반 개발자 포트폴리오입니다. RAG 기술이 적용된 AI 페르소나와 직접 대화하며 경력과 기술을 확인해보세요." 
+} = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width"
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <SEO
+      title={title}
+      description={description}
+      openGraph={{
+        basic: {
+          title: title,
+          type: "website",
+          image: "/og-image.svg",
+        },
+        image: {
+            alt: "Gihwan-dev AI Resume Preview",
+        }
+      }}
+      extend={{
+        meta: [
+            { name: "twitter:card", content: "summary_large_image" },
+            { name: "twitter:title", content: title },
+            { name: "twitter:description", content: description },
+            { name: "twitter:image", content: "/og-image.svg" },
+        ],
+        link: [
+           { rel: "sitemap", href: "/sitemap-index.xml" }
+        ]
+      }}
     />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="/favicon.svg"
-    />
-    <meta
-      name="generator"
-      content={Astro.generator}
-    />
-    <title>Astro Basics</title>
+    
     <script is:inline>
       (function () {
         const theme = localStorage.getItem("theme");
