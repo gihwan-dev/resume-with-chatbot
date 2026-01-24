@@ -314,8 +314,15 @@ export function createRAGTools(
 
         vectorSnapshot.forEach((doc) => {
           const data = doc.data() as VectorResult
-          const distance = data.vector_distance ?? 0
-          const similarity = 1 - distance
+          const distance = data.vector_distance
+          // Debug: Log if vector_distance is missing
+          if (distance === undefined || distance === null) {
+            console.warn(
+              `[searchKnowledge] WARNING: vector_distance not returned for doc ${doc.id}. ` +
+                "Firestore findNearest may not be returning distance values."
+            )
+          }
+          const similarity = 1 - (distance ?? 0)
           rawResults.push({ id: doc.id, data, similarity })
         })
 
@@ -442,24 +449,28 @@ export function createRAGTools(
       const coverageScore = keywordMatches.length / Math.max(keywords.length, 1)
 
       // Determine suggested action
+      // IMPROVED: More lenient "answer" criteria to prevent unnecessary rewriteQuery calls
       let suggestedAction: SuggestedAction = "answer"
       let reason = ""
 
-      if (avgRelevance < 0.5) {
+      if (searchResults.length === 0) {
+        // Already handled above, but explicit check
         suggestedAction = "rewrite"
-        reason = "검색 결과의 관련성이 낮습니다."
-      } else if (coverageScore < 0.3 && searchResults.length < 2) {
+        reason = "검색 결과가 없습니다."
+      } else if (avgRelevance < 0.4) {
+        // Only rewrite if relevance is really low
+        suggestedAction = "rewrite"
+        reason = "검색 결과의 관련성이 매우 낮습니다."
+      } else if (avgRelevance >= 0.5 || searchResults.length >= 1) {
+        // Answer if we have at least some relevant results
+        suggestedAction = "answer"
+        reason =
+          searchResults.length >= 2
+            ? "충분한 정보가 있습니다."
+            : "적절한 정보가 있습니다."
+      } else if (coverageScore < 0.2 && searchResults.length < 2) {
         suggestedAction = "expand"
         reason = "검색 결과가 부족합니다. 추가 검색이 도움될 수 있습니다."
-      } else if (avgRelevance >= 0.7 && searchResults.length >= 2) {
-        suggestedAction = "answer"
-        reason = "충분한 정보가 있습니다."
-      } else if (avgRelevance >= 0.5) {
-        suggestedAction = "answer"
-        reason = "적절한 정보가 있습니다."
-      } else {
-        suggestedAction = "rewrite"
-        reason = "더 나은 검색 결과가 필요합니다."
       }
 
       const result: EvaluationResult = {
@@ -482,7 +493,8 @@ export function createRAGTools(
   const rewriteQueryTool = tool({
     description:
       "Rewrite the search query to get better results. " +
-      "Use when evaluateResults suggests 'rewrite' or 'expand'.",
+      "ONLY use when evaluateResults explicitly suggests 'rewrite' or 'expand'. " +
+      "DO NOT call this tool if evaluateResults suggested 'answer'.",
     inputSchema: zodSchema(rewriteQuerySchema),
     execute: async (input: RewriteQueryInput): Promise<RewriteResult> => {
       const { originalQuery, intent, keywords, rewriteStrategy } = input
