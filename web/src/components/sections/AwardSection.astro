@@ -1,0 +1,80 @@
+---
+const { awards } = Astro.props
+---
+
+<section id="awards">
+  <h2 class="text-2xl font-bold text-resume-text-main mb-8 tracking-tight">
+    Awards & Activities
+  </h2>
+  <div class="space-y-8">
+    {
+      awards.map((entry: any) => (
+        <div class="group bg-resume-card-bg rounded-sm border border-resume-border p-6 flex flex-col transition-all duration-300 hover:border-resume-primary/50 hover:bg-resume-highlight/30">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
+            <div>
+              <h3 class="text-xl font-bold text-resume-text-heading font-heading leading-tight group-hover:text-resume-primary transition-colors">
+                {entry.data.title}
+              </h3>
+              <p class="text-base text-resume-text-muted mt-1 font-medium">
+                {entry.data.issuer}
+              </p>
+            </div>
+            <span class="text-sm text-resume-text-muted font-mono whitespace-nowrap border border-resume-border px-2 py-0.5 rounded-sm">
+              {entry.data.date.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+              })}
+            </span>
+          </div>
+          {entry.data.summary && (
+            <p class="text-resume-text-muted mb-4 italic">
+              {entry.data.summary}
+            </p>
+          )}
+          <div class="award-content prose prose-neutral dark:prose-invert max-w-none text-resume-text-main/90">
+            <entry.Content />
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<style is:global>
+  .award-content h3 {
+    font-size: 0.875rem /* 14px */;
+    line-height: 1.25rem /* 20px */;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--primary);
+    background-color: var(--resume-highlight);
+    margin-top: 1.5rem /* 24px */;
+    margin-bottom: 0.75rem /* 12px */;
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+  }
+
+  .award-content ul,
+  .award-content ol {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    list-style-type: disc;
+    padding-left: 1.5rem;
+  }
+
+  .award-content ol {
+    list-style-type: decimal;
+  }
+
+  .award-content li {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .award-content p {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+</style>

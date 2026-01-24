@@ -2,18 +2,44 @@
 .DS_Store
 Thumbs.db
 
-# Node
-node_modules
-dist
-.env
-.env.local
-.env.*.local
-
-# Astro
-.astro
-.vercel
-
-# Editor
+# Editor & IDE
+.idea/
 .vscode/*
 !.vscode/extensions.json
-.idea
+
+# Node & Package Managers
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build Output
+dist/
+build/
+coverage/
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Frameworks (Astro, Vercel, Next.js)
+.astro/
+.vercel/
+.next/
+
+# Service Accounts & Secrets
+*.iam.gserviceaccount.com.json
+*-*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!biome.json
+!components.json
+
+# Generated Data
+collected-histories/
+.claude
+
+*.pdf

@@ -1,0 +1,64 @@
+---
+const { experiences } = Astro.props
+---
+
+<section
+  id="experience"
+  class="mb-12 relative"
+>
+  <h2 class="text-2xl font-bold text-resume-text-main mb-8 tracking-tight">
+    Experience
+  </h2>
+  <div>
+    {
+      experiences.map((entry: any, index: number) => (
+        <div class="relative pl-8 pb-12 last:pb-0">
+          <div
+            class:list={[
+              "absolute left-[7px] w-[2px] bg-resume-primary/30",
+              index === 0 ? "top-1.5" : "top-0",
+              index === experiences.length - 1 ? "h-3.5" : "bottom-0",
+            ]}
+          />
+          <div class="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-resume-primary ring-4 ring-resume-bg z-10" />
+
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline mb-2">
+            <h3 class="text-xl font-bold text-resume-text-heading font-heading">
+              {entry.data.role}
+            </h3>
+            <span class="text-sm font-mono text-resume-text-muted">
+              {entry.data.dateStart.toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
+              })}{" "}
+              -
+              {entry.data.isCurrent
+                ? "Present"
+                : entry.data.dateEnd?.toLocaleDateString("en-US", {
+                    month: "short",
+                    year: "numeric",
+                  })}
+            </span>
+          </div>
+
+          <div class="mb-4">
+            <span class="text-lg font-medium text-resume-primary">
+              {entry.data.company}
+            </span>
+            {entry.data.location && (
+              <span class="text-resume-text-muted text-sm ml-2">
+                ({entry.data.location})
+              </span>
+            )}
+          </div>
+
+          <p class="text-resume-text-muted mb-4 italic">{entry.data.summary}</p>
+
+          <div class="prose prose-sm prose-neutral dark:prose-invert max-w-none text-resume-text-main/90">
+            <entry.Content />
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>

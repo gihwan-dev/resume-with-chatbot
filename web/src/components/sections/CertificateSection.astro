@@ -1,0 +1,27 @@
+---
+const { certificates } = Astro.props
+---
+
+<section id="certificates">
+  <h2 class="text-2xl font-bold text-resume-text-main mb-6 tracking-tight">
+    Certificates
+  </h2>
+  <div class="space-y-4">
+    {
+      certificates.map((cert: any) => (
+        <div class="flex justify-between items-baseline">
+          <span class="font-medium text-resume-text-main">
+            {cert.data.name}
+          </span>
+          <span class="text-sm text-resume-text-muted text-right">
+            {cert.data.issuer},{" "}
+            {cert.data.date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+            })}
+          </span>
+        </div>
+      ))
+    }
+  </div>
+</section>

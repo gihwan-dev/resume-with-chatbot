@@ -1,0 +1,65 @@
+---
+const { profile } = Astro.props
+---
+
+<header
+  id="profile"
+  class="mb-12 space-y-4"
+>
+  <div class="space-y-4">
+    <h1
+      class="text-5xl font-heading font-bold tracking-tight text-resume-text-heading sm:text-6xl"
+    >
+      {profile?.name}
+    </h1>
+    <p class="text-xl text-resume-text-muted font-medium font-heading">
+      {profile?.label}
+    </p>
+  </div>
+
+  <div class="flex flex-col gap-2 text-sm text-resume-text-muted">
+    {
+      profile?.email && (
+        <a
+          href={`mailto:${profile.email}`}
+          class="hover:text-resume-primary transition-colors w-fit"
+        >
+          {profile.email}
+        </a>
+      )
+    }
+    <div class="flex flex-wrap gap-4">
+      {
+        profile?.url && (
+          <a
+            href={profile.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:text-resume-primary transition-colors"
+          >
+            Website
+          </a>
+        )
+      }
+      {
+        profile?.profiles.map((p: any, index: number) => (
+          <>
+            {(profile?.url || index > 0) && <span>•</span>}
+            <a
+              href={p.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-resume-primary transition-colors"
+            >
+              {p.network}
+            </a>
+          </>
+        ))
+      }
+    </div>
+  </div>
+
+  <p class="text-resume-text-main leading-relaxed w-full">
+    {profile?.summary}
+  </p>
+</header>
