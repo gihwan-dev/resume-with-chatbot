@@ -31,6 +31,10 @@ if (!getApps().length) {
 }
 
 const databaseId = import.meta.env.PUBLIC_FIREBASE_DATABASE_ID
-db = getFirestore(app, databaseId)
+if (databaseId) {
+  db = getFirestore(app, databaseId)
+} else {
+  db = getFirestore(app)
+}
 
 export { app, db }
