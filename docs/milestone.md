@@ -40,34 +40,49 @@ Based on `docs/agentic-rag-implementation-plan.md`
 
 ---
 
-## Phase 2: Agentic RAG (Tool Calling 기반 Agent)
+## Phase 2: Agentic RAG (Tool Calling 기반 Agent) ✅
 > **Goal:** 사용자의 의도를 파악하고 도구를 사용하는 지능형 Agent 구축
 
-- [ ] **M2-1: RAG Tools 정의**
-  - `web/src/lib/rag-agent.ts` 생성
-  - `analyzeQueryTool`: 쿼리 분석 및 역량 키워드 도출
-  - `searchKnowledgeTool`: 벡터 검색 + Skills 필터링 적용
-  - `evaluateResultsTool`: 검색 결과 적합성 평가
-  - `rewriteQueryTool`: 쿼리 재작성
+- [x] **M2-1: RAG Tools 정의** ✅
+  - `web/src/lib/rag-agent/` 디렉토리 생성
+    - `types.ts`: TypeScript 타입 정의 (QueryAnalysis, SearchResult, EvaluationResult 등)
+    - `prompts.ts`: Agent 시스템 프롬프트
+    - `tools.ts`: 4개 Tool 정의
+    - `index.ts`: Agent 생성 및 내보내기
+  - `analyzeQueryTool`: 쿼리 분석 및 의도/필터 키워드 추출
+  - `searchKnowledgeTool`: 벡터 검색 + 메타데이터(skills, techStack, projectType) 필터링
+  - `evaluateResultsTool`: 검색 결과 적합성 평가 및 suggestedAction 제안
+  - `rewriteQueryTool`: 쿼리 재작성 (broaden, narrow, rephrase, decompose 전략)
 
-- [ ] **M2-2: Agent 실행 로직 구현**
+- [x] **M2-2: Agent 실행 로직 구현** ✅
   - `web/src/pages/api/chat.ts` 리팩토링
-  - 단순 `generateText` 호출을 Tool Calling 루프(Max Steps: 5)로 변경
-  - System Prompt에 Agent 역할 및 Tool 사용 전략 정의
+  - `createRAGAgent()`로 Agent 생성, `streamText`에 tools 전달
+  - `maxSteps: 5` 설정으로 Tool Calling 루프 구현
+  - `onStepFinish` 콜백에서 searchKnowledge 결과로 sources 수집 및 클라이언트 전송
+  - 시스템 프롬프트에 Agent 역할 및 Tool 사용 전략 정의
 
-- [ ] **M2-3: Agent 동작 테스트**
+- [x] **M2-3: Agent 동작 테스트** ✅
   - 단순 질문 ("React란?") vs 복합 질문 ("상태관리 최적화 경험 알려줘") 테스트
   - Tool 호출 체인 확인 (Analyze -> Search -> Evaluate -> Answer)
+  - 콘솔 로그로 Tool 호출 순서 및 결과 확인 가능
 
-### Phase 2 Prerequisites
-> **Phase 1 완료 후 시작 가능. 준비 사항:**
-> 1. M1-4 데이터 재색인 완료 확인 (Firestore에 새 필드들 존재 확인)
-> 2. `searchKnowledgeTool`에서 활용할 필드들:
->    - `skills`: 소프트 스킬/도메인 전문성 필터링
->    - `techStack`: 기술 스택 기반 필터링
->    - `projectType`: 프로젝트 유형별 필터링
-> 3. Vercel AI SDK `tool` 정의 문법 확인 필요 (현재 `streamText` 사용 중)
-> 4. `chat.ts`를 Tool Calling 패턴으로 리팩토링 시 기존 스트리밍 응답 유지 방법 검토
+### Phase 2 Notes
+> **구현 완료. 테스트 방법:**
+> ```bash
+> # 1. 개발 서버 실행
+> cd web && pnpm dev
+>
+> # 2. 채팅 테스트 예시
+> # - 단순 질문: "React란?"
+> # - 복합 질문: "상태관리 최적화 경험 알려줘"
+> # - 기술 필터: "TypeScript로 만든 프로젝트"
+>
+> # 3. 콘솔 로그 확인
+> # - [analyzeQuery] 쿼리 분석 결과
+> # - [searchKnowledge] 벡터 검색 결과
+> # - [evaluateResults] 평가 결과
+> # - [Agent] Tool 호출 순서
+> ```
 
 ---
 
