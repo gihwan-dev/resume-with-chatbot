@@ -104,13 +104,26 @@ web/src/pages/api/chat.ts
 ## Current: Work Agent (Notion + ClickUp 연동)
 > **Goal:** 포트폴리오 질문에 실제 업무 기록을 참조하여 답변하는 에이전트
 
-### Phase 1: 기반 구축
-- [ ] M1-1: API 클라이언트 구현 (NotionClient, ClickUpClient)
-- [ ] M1-2: 타입 및 환경변수 설정
+### Phase 1: 기반 구축 ✅
+- [x] M1-1: API 클라이언트 구현 (NotionClient, ClickUpClient)
+- [x] M1-2: 타입 및 환경변수 설정
+
+**구현 완료 (2026-01-24):**
+- `web/src/lib/work-agent/types.ts` - 공통 타입 및 WorkAgentError 클래스
+- `web/src/lib/work-agent/notion.server.ts` - searchNotionPages(), getNotionPageContent()
+- `web/src/lib/work-agent/clickup.server.ts` - searchClickUpTasks(), searchClickUpDocs(), getClickUpTask()
+- `web/src/lib/work-agent/index.ts` - 모듈 re-export
+- `web/src/env.d.ts` - Astro 환경변수 타입 정의
 
 ### Phase 2: 도구 구현
 - [ ] M2-1: Notion 도구 (searchNotion, getNotionPage)
 - [ ] M2-2: ClickUp 도구 (searchClickUpTasks, searchClickUpDocs)
+
+**Phase 2 작업 노트:**
+- API 클라이언트는 이미 구현됨 (`work-agent/*.server.ts`)
+- Gemini/Vercel AI SDK의 `tool()` 형태로 래핑 필요
+- `web/src/lib/work-agent/tools.ts` 생성 예정
+- 도구 스키마 정의 (zod)와 실행 로직 분리 고려
 
 ### Phase 3: 에이전트 통합
 - [ ] M3-1: createWorkAgent() 및 시스템 프롬프트
@@ -128,11 +141,21 @@ chat.ts (Gemini 2.5 Pro + Tool Calling)
 └── searchClickUpDocs  - 본인 작성 문서 검색
 ```
 
+### 파일 구조
+```
+web/src/lib/work-agent/
+├── types.ts              # 공통 타입 정의 ✅
+├── notion.server.ts      # Notion API 클라이언트 ✅
+├── clickup.server.ts     # ClickUp API 클라이언트 ✅
+├── index.ts              # 모듈 export ✅
+└── tools.ts              # AI SDK 도구 정의 (Phase 2)
+```
+
 ### 환경변수
 ```
-NOTION_API_TOKEN
-CLICKUP_API_TOKEN
-CLICKUP_TEAM_ID
-CLICKUP_WORKSPACE_ID
-CLICKUP_USER_ID
+NOTION_API_TOKEN      ✅ 설정됨
+CLICKUP_API_TOKEN     ✅ 설정됨
+CLICKUP_TEAM_ID       ✅ 설정됨
+CLICKUP_WORKSPACE_ID  ✅ 설정됨
+CLICKUP_USER_ID       ✅ 설정됨
 ```
