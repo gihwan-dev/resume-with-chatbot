@@ -84,9 +84,9 @@ const searchClickUpTasksSchema = z.object({
     .optional()
     .describe("검색할 키워드 (태스크 이름, 설명에서 검색)"),
   statuses: z
-    .array(z.string())
+    .string()
     .optional()
-    .describe("필터링할 상태 목록 (예: ['in progress', 'review'])"),
+    .describe("필터링할 상태 (쉼표로 구분, 예: 'in progress,review')"),
   includeCompleted: z
     .boolean()
     .optional()
@@ -201,9 +201,12 @@ export const searchClickUpTasks = tool({
   inputSchema: searchClickUpTasksSchema,
   execute: async (params: SearchClickUpTasksInput) => {
     try {
+      const statusArray = params.statuses
+        ? params.statuses.split(",").map((s) => s.trim())
+        : undefined
       const result = await searchClickUpTasksApi({
         query: params.query,
-        statuses: params.statuses,
+        statuses: statusArray,
         includeCompleted: params.includeCompleted ?? false,
       })
       return {

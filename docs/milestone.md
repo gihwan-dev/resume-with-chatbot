@@ -101,8 +101,9 @@ web/src/pages/api/chat.ts
 
 ---
 
-## Current: Work Agent (Notion + ClickUp 연동)
+## Current: Work Agent (Notion + ClickUp 연동) ✅
 > **Goal:** 포트폴리오 질문에 실제 업무 기록을 참조하여 답변하는 에이전트
+> **Status:** 구현 완료 (2026-01-24)
 
 ### Phase 1: 기반 구축 ✅
 - [x] M1-1: API 클라이언트 구현 (NotionClient, ClickUpClient)
@@ -133,21 +134,28 @@ web/src/pages/api/chat.ts
 - `createErrorResponse()` 유틸리티로 에러를 LLM이 이해할 수 있는 구조화된 응답으로 변환
 - `RATE_LIMIT` 에러는 `retryable: true`로 표시
 
-### Phase 3: 에이전트 통합
-- [ ] M3-1: chat.ts에 workAgentTools 통합
-- [ ] M3-2: 시스템 프롬프트 업데이트 (도구 사용 지침 추가)
+### Phase 3: 에이전트 통합 ✅
+- [x] M3-1: chat.ts에 workAgentTools 통합
+- [x] M3-2: 시스템 프롬프트 업데이트 (도구 사용 지침 추가)
 
-**Phase 3 작업 노트:**
-- `workAgentTools`를 `streamText()`의 `tools` 옵션에 전달
-- 시스템 프롬프트에 "업무 정보가 필요하면 Notion/ClickUp 도구 사용" 지침 추가 필요
-- `maxSteps` 옵션으로 다중 도구 호출 허용 고려
+**구현 완료 (2026-01-24):**
+- `web/src/pages/api/chat.ts` 수정
+  - `workAgentTools` import 및 `streamText()`의 `tools` 옵션에 전달
+  - `maxSteps: 5` 설정으로 다중 도구 호출 허용
+  - 시스템 프롬프트에 도구 사용 가이드 섹션 추가
+    - searchNotion: 프로젝트 상세, 기술적 의사결정, 업무 노트 검색
+    - getNotionPage: 특정 페이지 상세 내용 조회
+    - searchClickUpTasks: 현재 진행 중인 업무, 완료된 태스크 확인
+    - searchClickUpDocs: 기술 문서, 회의록 검색
+  - 도구 사용 시 주의사항 추가 (기본 정보는 도구 없이, 에러 대응 등)
 
-### Phase 4: 테스트
-- [ ] M4-1: 단위/통합 테스트
+### Phase 4: 테스트 ✅
+- [x] M4-1: 단위/통합 테스트 (14개 테스트 통과)
 
 ### 아키텍처
 ```
-chat.ts (Gemini 2.5 Pro + Tool Calling)
+web/src/pages/api/chat.ts (Gemini 2.5 Pro + Tool Calling)
+├── workAgentTools 통합 (maxSteps: 5)
 ├── searchNotion       - Notion Search API로 페이지 검색
 ├── getNotionPage      - 페이지 콘텐츠 조회
 ├── searchClickUpTasks - 본인 할당 태스크 검색
@@ -156,12 +164,14 @@ chat.ts (Gemini 2.5 Pro + Tool Calling)
 
 ### 파일 구조
 ```
-web/src/lib/work-agent/
-├── types.ts              # 공통 타입 정의 ✅
-├── notion.server.ts      # Notion API 클라이언트 ✅
-├── clickup.server.ts     # ClickUp API 클라이언트 ✅
-├── tools.ts              # AI SDK 도구 정의 ✅
-└── index.ts              # 모듈 export ✅
+web/src/
+├── pages/api/chat.ts         # AI 에이전트 엔드포인트 ✅
+└── lib/work-agent/
+    ├── types.ts              # 공통 타입 정의 ✅
+    ├── notion.server.ts      # Notion API 클라이언트 ✅
+    ├── clickup.server.ts     # ClickUp API 클라이언트 ✅
+    ├── tools.ts              # AI SDK 도구 정의 ✅
+    └── index.ts              # 모듈 export ✅
 ```
 
 ### 환경변수
