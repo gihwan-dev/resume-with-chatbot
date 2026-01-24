@@ -1,21 +1,19 @@
 export const prerender = false
 
 import { createVertex } from "@ai-sdk/google-vertex"
-import type { TextPart, UIMessage } from "ai"
+import type { UIMessage } from "ai"
 import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  embed,
+  stepCountIs,
   streamText,
 } from "ai"
-import { FieldValue } from "firebase-admin/firestore"
-import { db } from "@/lib/firebase.server"
-
-// Relevance filtering constants
-const RELEVANCE_THRESHOLD = 0.7
-const INITIAL_FETCH_LIMIT = 10
-const MAX_RESULTS = 5
+import {
+  AGENT_SYSTEM_PROMPT,
+  createRAGAgent,
+  type Source,
+} from "@/lib/rag-agent"
 
 // Lazy initialization: Vertex AI 인스턴스를 요청 시점에 생성
 const getVertex = () => {
@@ -44,174 +42,88 @@ const getVertex = () => {
   })
 }
 
-interface KnowledgeDocument {
-  content: string
-  title?: string
-  category?: string
-  embedding_field?: number[]
-}
-
-interface Source {
-  id: string
-  title: string
-  content: string
-  category: string
-  relevanceScore: number
-}
-
 export const POST = async ({ request }: { request: Request }) => {
   try {
     const { messages } = (await request.json()) as { messages: UIMessage[] }
     const modelMessages = await convertToModelMessages(messages)
-    const lastMessage = modelMessages[modelMessages.length - 1]
-
-    // Extract text content from the last message safely
-    let userQuery = ""
-    if (typeof lastMessage.content === "string") {
-      userQuery = lastMessage.content
-    } else if (Array.isArray(lastMessage.content)) {
-      userQuery = lastMessage.content
-        .filter((part): part is TextPart => part.type === "text")
-        .map((part) => part.text)
-        .join("")
-    }
 
     const vertex = getVertex()
 
-    // 1. Generate Embedding for the user query
-    const { embedding } = await embed({
-      model: vertex.embeddingModel("text-embedding-004"),
-      value: userQuery,
+    // Create RAG Agent with tools
+    const agent = createRAGAgent(vertex, {
+      maxSteps: 5,
+      relevanceThreshold: 0.7,
+      initialFetchLimit: 10,
+      maxResults: 5,
     })
 
-    // 2. Vector Search in Firestore (with graceful degradation)
-    const sources: Source[] = []
-    let contextText = ""
+    // Clear any previous sources
+    agent.clearSources()
 
-    try {
-      const knowledgeBaseRef = db.collection("knowledge_base")
+    // Track if sources have been sent
+    let sourcesSent = false
+    const collectedSources: Source[] = []
 
-      // Use type assertion for distanceResultField (available in newer Firestore versions)
-      const vectorQuery = knowledgeBaseRef.findNearest(
-        "embedding_field",
-        FieldValue.vector(embedding),
-        {
-          limit: INITIAL_FETCH_LIMIT,
-          distanceMeasure: "COSINE",
-          distanceResultField: "vector_distance",
-        } as { limit: number; distanceMeasure: "COSINE"; distanceResultField?: string }
-      )
-
-      const vectorSnapshot = await vectorQuery.get()
-
-      // 3. Extract and filter results by relevance
-      interface VectorResult extends KnowledgeDocument {
-        vector_distance?: number
-      }
-
-      const rawResults: {
-        id: string
-        data: VectorResult
-        similarity: number
-      }[] = []
-
-      vectorSnapshot.forEach((doc) => {
-        const data = doc.data() as VectorResult
-        // Convert cosine distance to similarity (cosine distance = 1 - cosine similarity)
-        // So similarity = 1 - distance
-        const distance = data.vector_distance ?? 0
-        const similarity = 1 - distance
-        rawResults.push({ id: doc.id, data, similarity })
-      })
-
-      console.log(
-        "[Vector Search] Raw results count:",
-        rawResults.length,
-        "similarities:",
-        rawResults.map((r) => r.similarity.toFixed(3))
-      )
-
-      // Filter by relevance threshold, sort by similarity, take top MAX_RESULTS
-      const filteredResults = rawResults
-        .filter((r) => r.similarity >= RELEVANCE_THRESHOLD)
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, MAX_RESULTS)
-
-      console.log(
-        "[Vector Search] Filtered results count:",
-        filteredResults.length,
-        "(threshold:",
-        RELEVANCE_THRESHOLD,
-        ")"
-      )
-
-      // Build sources and context from filtered results
-      for (const result of filteredResults) {
-        sources.push({
-          id: result.id,
-          title: result.data.title || "경험",
-          content: result.data.content.slice(0, 200),
-          category: result.data.category || "기타",
-          relevanceScore: Math.round(result.similarity * 100) / 100,
-        })
-        contextText += `\n---\n${result.data.content}`
-      }
-
-      // Vector Search 결과 로깅
-      console.log("[Vector Search] Query:", userQuery.slice(0, 100))
-      console.log("[Vector Search] Final sources count:", sources.length)
-      console.log(
-        "[Vector Search] Sources:",
-        sources.map((s) => ({
-          id: s.id,
-          title: s.title,
-          category: s.category,
-          relevanceScore: s.relevanceScore,
-        }))
-      )
-    } catch (vectorError: unknown) {
-      console.warn(
-        "Vector search failed, proceeding without RAG context:",
-        vectorError
-      )
-      // NOT_FOUND 에러 (code 5) - 인덱스 미생성
-      if (
-        vectorError &&
-        typeof vectorError === "object" &&
-        "code" in vectorError &&
-        vectorError.code === 5
-      ) {
-        console.error(
-          "Firestore Vector Index가 생성되지 않았습니다. " +
-            "gcloud CLI 또는 Firebase Console에서 knowledge_base 컬렉션의 " +
-            "embedding_field에 대한 Vector Index를 생성해주세요."
-        )
-      }
-    }
-
-    // 4. Construct System Prompt with Context
-    const systemPrompt = `You are an AI assistant for a developer's portfolio/resume website.
-Your name is "Resume Bot".
-Use the following context to answer the user's question.
-If the answer is not in the context, politely say you don't know, but try to be helpful based on general knowledge if appropriate, while clarifying it's not in the resume.
-Always respond in Korean.
-
-Context:
-${contextText}
-`
-
-    // 5. Stream Response with data annotations
+    // Stream Response with Agent tools
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {
-        // Send sources as data part at the start
-        if (sources.length > 0) {
-          writer.write({ type: "data-sources", id: "sources", data: sources })
-        }
-
         const result = streamText({
           model: vertex("gemini-2.5-pro"),
-          system: systemPrompt,
+          system: AGENT_SYSTEM_PROMPT,
           messages: modelMessages,
+          tools: agent.tools,
+          stopWhen: stepCountIs(5),
+          onStepFinish: ({ toolResults }) => {
+            // Check if searchKnowledge was called and collect sources
+            if (toolResults && Array.isArray(toolResults)) {
+              for (const toolResult of toolResults) {
+                // Use 'output' for tool result value (AI SDK v6)
+                const output = "output" in toolResult ? toolResult.output : null
+                if (
+                  toolResult.toolName === "searchKnowledge" &&
+                  Array.isArray(output) &&
+                  output.length > 0
+                ) {
+                  // Convert to client-compatible sources
+                  const sources = agent.toClientSources(output)
+
+                  // Accumulate sources (in case of multiple searches)
+                  for (const source of sources) {
+                    if (!collectedSources.some((s) => s.id === source.id)) {
+                      collectedSources.push(source)
+                    }
+                  }
+
+                  // Send sources immediately after first search
+                  if (!sourcesSent && collectedSources.length > 0) {
+                    console.log(
+                      "[Agent] Sending sources to client:",
+                      collectedSources.length
+                    )
+                    writer.write({
+                      type: "data-sources",
+                      id: "sources",
+                      data: collectedSources,
+                    })
+                    sourcesSent = true
+                  }
+                }
+              }
+            }
+
+            // Log tool calls for debugging
+            if (toolResults && Array.isArray(toolResults)) {
+              for (const toolResult of toolResults) {
+                const output = "output" in toolResult ? toolResult.output : null
+                console.log(
+                  `[Agent] Tool: ${toolResult.toolName}`,
+                  typeof output === "object"
+                    ? JSON.stringify(output).slice(0, 200)
+                    : output
+                )
+              }
+            }
+          },
         })
 
         writer.merge(result.toUIMessageStream())
