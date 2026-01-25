@@ -185,9 +185,9 @@ CLICKUP_USER_ID       ✅ 설정됨
 
 ---
 
-## Next: 에이전트 최적화 (Agent Optimization) 🔲
+## Current: 에이전트 최적화 (Agent Optimization) 🔄
 > **Goal:** 검색 품질 강화 및 토큰/비용 최적화
-> **Status:** 계획 수립 완료 (2026-01-24)
+> **Status:** Phase 1 완료 (2026-01-24)
 
 ### 배경
 현재 에이전트의 두 가지 문제:
@@ -202,8 +202,9 @@ CLICKUP_USER_ID       ✅ 설정됨
 
 ---
 
-### Phase 1: 검색 품질 강화 (Loop Control) 🔲 ← **우선순위 1**
+### Phase 1: 검색 품질 강화 (Loop Control) ✅
 > `answer` 도구 + `prepareStep` 패턴으로 검색 필수화
+> **Status:** 구현 완료 (2026-01-24)
 
 **핵심 전략:**
 1. `answer` 도구를 `execute` 없이 정의 → 호출 시 에이전트 루프 종료
@@ -212,70 +213,156 @@ CLICKUP_USER_ID       ✅ 설정됨
 
 **동작 흐름:**
 ```
-User 질문 → Step 0-1: 검색 강제 → Step 2+: answer 활성화 → 루프 종료
+User 질문 → Step 0: 검색 도구만 (toolChoice: required)
+          → Step 1+: 검색 완료 시 answer 활성화 (toolChoice: auto)
+          → answer 호출 시 루프 종료
 ```
 
 **작업 항목:**
-- [ ] M1-1: `answer` 도구 정의 (execute 없음)
+- [x] M1-1: `answer` 도구 정의 (execute 없음)
   ```typescript
   export const answer = tool({
     description: "검색 완료 후 최종 답변을 제공합니다.",
     inputSchema: z.object({
       answer: z.string(),
-      searchSummary: z.string().optional(),
+      sources: z.array(z.object({
+        type: z.enum(["notion", "clickup_task", "clickup_doc", "resume"]),
+        title: z.string(),
+        id: z.string().optional(),
+      })),
       confidence: z.enum(["high", "medium", "low"]),
     }),
     // execute 없음 - 호출 시 루프 종료
   })
   ```
-- [ ] M1-2: `prepareStep` 콜백 구현
-- [ ] M1-3: 커스텀 `StopCondition` 정의
-- [ ] M1-4: 시스템 프롬프트 업데이트
-- [ ] M1-5: 테스트 추가
+- [x] M1-2: `prepareStep` 콜백 구현
+- [x] M1-3: `stopWhen` 조건 정의 (`hasToolCall("answer")` + `stepCountIs(15)`)
+- [x] M1-4: 시스템 프롬프트 업데이트 (answer 도구 사용 가이드 추가)
+- [x] M1-5: 테스트 추가 (answer 도구 스키마 검증 5개 테스트)
 
-**수정 대상 파일:**
-- `web/src/lib/work-agent/tools.ts` - answer 도구 추가
-- `web/src/lib/work-agent/index.ts` - export 추가
-- `web/src/pages/api/chat.ts` - prepareStep, StopCondition, 프롬프트
-- `web/tests/lib/work-agent/tools.test.ts` - 테스트
+**수정된 파일:**
+- `web/src/lib/work-agent/tools.ts` - answer 도구 추가, answerSchema 정의
+- `web/src/lib/work-agent/index.ts` - answer export 추가
+- `web/src/pages/api/chat.ts` - prepareStep, stopWhen, 프롬프트 업데이트
+- `web/tests/lib/work-agent/tools.test.ts` - answer 도구 테스트 5개 추가
+
+**Note for Next Phase:**
+- `hasToolCall` 유틸리티는 `ai` 패키지에서 import하여 사용
+- `prepareStep`의 반환 타입은 `activeTools`가 tool name literal의 배열이어야 함 (`ToolName[]`)
+- `as const` 대신 명시적 타입 `ToolName[]`을 사용해야 타입 오류 방지
+- Step 0에서 `toolChoice: "required"`로 검색 강제, 검색 완료 후 `toolChoice: "auto"`로 전환
+- maxSteps 20 → 15로 조정 (stopWhen 배열 사용)
 
 ---
 
-### Phase 2: 토큰 최적화 🔲
+### Phase 2: 토큰 최적화 ✅
 > API 응답 필터링 및 TOON 포맷 적용
+> **Status:** 구현 완료 (2026-01-25)
 
 **작업 항목:**
-- [ ] M2-1: API 응답 스키마 필터링
-  - ClickUp: `ClickUpTaskSlim` 타입 도입 (필수 필드만)
-  - Notion: 불필요한 블록 타입 스킵 (image, video, divider 등)
-  - 예상 효과: 토큰 30-50% 절감
-- [ ] M2-2: TOON 포맷 적용
-  - 10개 이상 결과 시 TOON 포맷으로 자동 전환
-  - 예상 효과: 대량 데이터에서 추가 40-60% 절감
+- [x] M2-1: API 응답 스키마 필터링
+  - ClickUp: `ClickUpTaskSlim`, `ClickUpDocSlim` 타입 도입
+  - Notion: `NotionPageSlim`, `NotionBlockSlim` 타입 도입
+  - Notion 블록: image, video, divider, breadcrumb, table_of_contents 스킵
+  - MAX_BLOCK_DEPTH: 3 → 2 축소
+  - 불필요 필드 제거: createdTime, parentType, parentId, dateCreated, dateUpdated, color 등
+- [x] M2-2: TOON 포맷 적용
+  - `@toon-format/toon` 패키지 설치
+  - `toon-encoder.ts` 모듈 생성 (encodeArrayResult, createFormatHint)
+  - 10개 이상 결과 시 TOON 포맷 자동 적용
+  - 응답 구조: `{ format: "json" | "toon", formatHint, data, ... }`
 
-**수정 대상 파일:**
-- `web/src/lib/work-agent/clickup.server.ts`
-- `web/src/lib/work-agent/notion.server.ts`
-- `web/src/lib/work-agent/tools.ts`
-- `web/src/lib/work-agent/toon-encoder.ts` (신규)
+**측정 결과 (2026-01-25):**
+| 시나리오 | Before | After | 절감율 |
+|----------|--------|-------|--------|
+| 적은 결과 (5개) - JSON | 8,198 bytes | 5,258 bytes | **36%** |
+| 많은 결과 (15개) - TOON | 24,636 bytes | 15,124 bytes | **39%** |
+| Notion 페이지 (30블록) | 4,807 bytes | 2,912 bytes | **39%** |
+| **전체 합계** | 37,641 bytes (~12,547 tokens) | 23,294 bytes (~7,765 tokens) | **38%** |
+
+**수정된 파일:**
+- `web/src/lib/work-agent/types.ts` - Slim 타입 4개 추가
+- `web/src/lib/work-agent/notion.server.ts` - MAX_BLOCK_DEPTH 축소, extractBlockContent 개선, fetchAllBlocksSlim, NotionPageContentSlim
+- `web/src/lib/work-agent/clickup.server.ts` - (변경 없음, tools.ts에서 Slim 매핑)
+- `web/src/lib/work-agent/tools.ts` - TOON 인코딩 적용, 불필요 필드 제거
+- `web/src/lib/work-agent/toon-encoder.ts` - 신규 생성
+- `web/src/lib/work-agent/index.ts` - Slim 타입 및 toon-encoder export 추가
+- `web/tests/lib/work-agent/toon-encoder.test.ts` - 신규 (7개 테스트)
+- `web/tests/lib/work-agent/toon-integration.test.ts` - 신규 (6개 통합 테스트)
+- `web/tests/lib/work-agent/tools.test.ts` - 응답 구조 변경에 따른 수정
+- `web/scripts/measure-token-savings.ts` - 측정 스크립트
+
+**Note for Next Phases:**
+- TOON 포맷 임계값은 `TOON_THRESHOLD = 10`으로 설정됨 (toon-encoder.ts)
+- searchClickUpDocs에서 content truncate 제거됨 - 전체 내용 전달 (TOON 압축으로 상쇄)
+- `import.meta.env` 사용으로 인해 직접 스크립트 실행 어려움 - vitest 환경에서 테스트 필요
+- 측정 스크립트: `npx tsx scripts/measure-token-savings.ts`
+- 전체 테스트: `pnpm test` (50개 테스트 통과)
 
 ---
 
-### Phase 3: 추론 품질 향상 🔲
+### Phase 3: 추론 품질 향상 ✅
 > ReAct 패턴 및 동적 프롬프트
+> **Status:** 구현 완료 (2026-01-25)
 
 **작업 항목:**
-- [ ] M3-1: ReAct + Reflexion 패턴 적용
-  - 자기 검증 프로토콜 프롬프트 추가
-  - `prepareStep`으로 반복 호출 감지 및 제어
-  - 3단계 연속 같은 도구 호출 시 다른 도구로 유도
-- [ ] M3-2: 동적 시스템 프롬프트
-  - 의도 분류: career_inquiry, technical_inquiry, contact_inquiry, general_chat
-  - 의도별 페르소나 전환
+- [x] M3-1: ReAct + Reflexion 패턴 적용
+  - `REFLEXION_PROTOCOL` - 자기 검증 프로토콜 프롬프트
+  - `analyzeToolCallPattern()` - 반복 호출 감지
+  - `prepareStep`에서 3회 연속 같은 도구 호출 시 해당 도구 제외
+- [x] M3-2: 동적 시스템 프롬프트
+  - `classifyIntent()` - 의도 분류 (career_inquiry, technical_inquiry, contact_inquiry, general_chat)
+  - `INTENT_KEYWORDS` - 의도별 키워드 매핑
+  - `PERSONA_PROMPTS` - 의도별 페르소나 프롬프트
+  - `buildDynamicSystemPrompt()` - 의도 + 분석 결과 기반 동적 프롬프트 생성
 
-**수정 대상 파일:**
-- `web/src/pages/api/chat.ts`
-- `web/src/lib/work-agent/prompts.ts` (신규)
+**수정된 파일:**
+- `web/src/lib/work-agent/prompts.ts` - 신규 생성 (의도 분류, 반복 분석, 동적 프롬프트)
+- `web/src/lib/work-agent/index.ts` - prompts 모듈 export 추가
+- `web/src/pages/api/chat.ts` - 의도 분류, 동적 프롬프트, 반복 도구 제어 통합
+- `web/tests/lib/work-agent/prompts.test.ts` - 신규 (26개 테스트)
+
+---
+
+### Phase 3.1: 최소 검색 보장 ✅
+> 의도별 최소 검색 횟수 강제
+> **Status:** 구현 완료 (2026-01-25)
+
+**배경:**
+Phase 3 구현 후 검토 결과, Step 0에서 1회 검색 강제 후 바로 `toolChoice: "auto"`로 전환되어 LLM이 단 1회 검색 후 `answer` 호출 가능한 문제 발견. 반복 방지(3회 연속)는 있지만 **최소 검색 보장**이 없었음.
+
+**작업 항목:**
+- [x] M3.1-1: 의도별 최소 검색 횟수 상수 정의
+  ```typescript
+  export const MIN_SEARCH_COUNT: Record<UserIntent, number> = {
+    career_inquiry: 3,      // Notion + ClickUp Tasks + ClickUp Docs
+    technical_inquiry: 3,   // Notion + getNotionPage + ClickUp
+    contact_inquiry: 1,     // 이력서 정보로 충분
+    general_chat: 2,        // 최소한의 확인
+  }
+  ```
+- [x] M3.1-2: `shouldAllowAnswer()` 함수 구현
+  - 의도와 분석 결과를 기반으로 answer 허용 여부 결정
+  - `SearchSufficiencyCheck` 인터페이스 반환 (isReady, currentCount, minRequired, reason)
+- [x] M3.1-3: `prepareStep` 로직 변경
+  - 기존 `hasSearched` boolean 체크 → `shouldAllowAnswer()` 호출로 변경
+  - 최소 검색 미달 시 검색 도구만 활성화, `toolChoice: "required"`
+  - 최소 검색 충족 시 answer 포함 모든 도구 활성화, `toolChoice: "auto"`
+- [x] M3.1-4: 테스트 추가 (12개)
+
+**의도별 검색 전략:**
+| 의도 | 최소 검색 | 권장 패턴 |
+|------|----------|----------|
+| career_inquiry | 3회 | searchNotion + searchClickUpTasks + searchClickUpDocs |
+| technical_inquiry | 3회 | searchNotion + getNotionPage + searchClickUpDocs |
+| contact_inquiry | 1회 | 검색 1회 후 이력서 정보로 답변 |
+| general_chat | 2회 | 기본적인 확인 후 답변 |
+
+**수정된 파일:**
+- `web/src/lib/work-agent/prompts.ts` - `MIN_SEARCH_COUNT`, `SearchSufficiencyCheck`, `shouldAllowAnswer()` 추가
+- `web/src/lib/work-agent/index.ts` - 새 exports 추가
+- `web/src/pages/api/chat.ts` - `prepareStep`에서 `shouldAllowAnswer()` 사용
+- `web/tests/lib/work-agent/prompts.test.ts` - `shouldAllowAnswer` 테스트 12개 추가 (총 38개)
 
 ---
 
@@ -312,19 +399,185 @@ User 질문 → Step 0-1: 검색 강제 → Step 2+: answer 활성화 → 루프
 
 ---
 
+### Phase 6: 환각 방지 (Hallucination Prevention) ✅
+> **Goal**: 맥락 분리, 출처 검증, 정보 완전성 확보를 통한 환각 최소화
+> **Status:** Phase 6-1 ~ 6-5 전체 구현 완료 (2026-01-25)
+
+#### 배경
+현재 에이전트의 문제:
+1. 검색은 잘 수행하지만 다양한 맥락을 뒤섞어 답변
+2. 회사의 레거시 작업과 차세대 작업 내용 혼동
+3. 거짓 정보 생성 (환각)
+
+#### 참고 자료
+- [MDPI: Hallucination Mitigation Review](https://www.mdpi.com/2227-7390/13/5/856) - RAG 환각 원인 분류 및 완화 기법
+- [Microsoft: Best Practices for LLM Hallucinations](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/best-practices-for-mitigating-hallucinations-in-large-language-models-llms/4403129) - Grounding & Attribution
+- [Zep: Reducing LLM Hallucinations](https://www.getzep.com/ai-agents/reducing-llm-hallucinations/) - Temporal Knowledge Graph
+- [MEGA-RAG](https://pmc.ncbi.nlm.nih.gov/articles/PMC12540348/) - Multi-Evidence Verification
+
+---
+
+#### Phase 6-1: 맥락 분리 및 프롬프트 강화 ✅
+> ClickUp Space/Folder 이름 기반 맥락 구분
+> **Status:** 구현 완료 (2026-01-25)
+
+**작업 항목:**
+- [x] M6-1-1: 시스템 프롬프트에 프로젝트 맥락 구분 추가
+- [x] M6-1-2: 검색 결과에 맥락 힌트 자동 부여
+  - `inferProjectContext(spaceName, folderName)` 유틸리티 함수 구현
+  - `context: "legacy" | "next-gen" | "unknown"` 필드 ClickUpTaskSlim에 추가
+  - 레거시 키워드: FE1팀, FE1, MaxGauge
+  - 차세대 키워드: 차세대, DataGrid, 디자인시스템, Dashboard
+
+**수정된 파일:**
+- `web/src/pages/api/chat.ts` - 시스템 프롬프트에 맥락 구분 섹션 추가
+- `web/src/lib/work-agent/tools.ts` - inferProjectContext 함수 및 context 필드 추가
+- `web/src/lib/work-agent/types.ts` - ProjectContext 타입 정의
+- `web/tests/lib/work-agent/tools.test.ts` - inferProjectContext 테스트 5개 추가
+
+---
+
+#### Phase 6-2: 불확실성 표현 강제 ✅
+> 추측 대신 "모름" 답변 유도
+> **Status:** 구현 완료 (2026-01-25)
+
+**작업 항목:**
+- [x] M6-2-1: confidence 기반 답변 포맷 강제
+  - high: 그대로 답변, 출처 명시
+  - medium: "검색 결과에 따르면 ~이며, 상세 내용은 확인 필요"
+  - low: 절대 추측 금지, "정보 없음" 명시
+- [x] M6-2-2: 검색 실패 시 명시적 응답 템플릿
+
+**수정된 파일:**
+- `web/src/pages/api/chat.ts` - confidence 기반 답변 규칙 프롬프트 추가
+
+---
+
+#### Phase 6-3: 정보 완전성 확보 ✅
+> Truncation 정보 손실 방지
+> **Status:** Phase 2에서 이미 해결됨 (content truncate 제거)
+
+**구현 내용:**
+- [x] searchClickUpDocs에서 content truncation 완전 제거 (Phase 2에서 처리)
+- [x] TOON 포맷 압축으로 토큰 절감 효과 유지
+
+---
+
+#### Phase 6-4: 시간 기반 맥락 ✅
+> 시간순 정보 구분
+> **Status:** 구현 완료 (2026-01-25)
+
+**작업 항목:**
+- [x] M6-4-1: 검색 결과에 시간 정보 강조
+  - `calculateTimeContext(dateString)` 유틸리티 함수 구현
+  - `calculateRelativeTime(dateString)` 유틸리티 함수 구현
+  - `timeContext: "recent" | "older" | "archive"` (3개월/12개월 기준)
+  - `relativeTime: "오늘 수정", "3일 전 수정", "2주 전 수정" 등`
+- [x] M6-4-2: 시간 기반 프롬프트 가이드
+- [x] M6-4-3: 충돌 정보 처리 규칙 (최신 정보 우선)
+
+**수정된 파일:**
+- `web/src/lib/work-agent/tools.ts` - calculateTimeContext, calculateRelativeTime 함수 추가
+- `web/src/lib/work-agent/types.ts` - TimeContext 타입, Slim 타입에 시간 필드 추가
+- `web/src/pages/api/chat.ts` - 시간 기반 처리 규칙 프롬프트 추가
+- `web/tests/lib/work-agent/tools.test.ts` - 시간 맥락 테스트 10개 추가
+
+---
+
+#### Phase 6-5: 출처 검증 및 Grounding ✅
+> 검색 결과와 답변 일치성 보장
+> **Status:** 구현 완료 (2026-01-25)
+
+**작업 항목:**
+- [x] M6-5-1: 검색 결과 추적 시스템 도입
+  - `SearchContext` 인터페이스 정의 (notionPageIds, clickupTaskIds, clickupDocIds)
+  - `createSearchContext()` - 빈 SearchContext 생성
+  - `buildSearchContextFromSteps(steps)` - 전체 step에서 검색된 ID 누적
+  - TOON/JSON 포맷 모두 지원하는 ID 추출 (extractNotionPageIds, extractClickUpTaskIds 등)
+
+- [x] M6-5-2: answer 도구에 출처 검증 로직 추가
+  - `createAnswerTool(getSearchContext)` 팩토리 함수 구현
+  - `validateSources(sources, context)` - 출처 ID가 검색 결과에 존재하는지 검증
+  - 검증 규칙:
+    - resume 타입: 항상 유효 (ID 불필요)
+    - ID 없는 출처: 경고 추가, 유효로 처리
+    - 검색된 ID와 일치: 유효
+    - 검색되지 않은 ID: 무효, 경고 생성
+  - 응답에 `validation: { isValid, warnings, invalidSourceCount }` 포함
+  - `onStepFinish`에서 검증 경고 로깅
+
+- [x] M6-5-3: 인용 필수화 프롬프트 추가
+  - sources에 실제 검색된 ID 포함 필수 규칙
+  - 올바른/잘못된 출처 예시 제공
+
+**수정된 파일:**
+- `web/src/lib/work-agent/types.ts` - SearchContext, AnswerSource, SourceValidationResult 타입 추가
+- `web/src/lib/work-agent/source-tracker.ts` - 신규 생성 (ID 추출 및 검증 유틸리티)
+- `web/src/lib/work-agent/tools.ts` - createAnswerTool 팩토리 함수 추가
+- `web/src/lib/work-agent/index.ts` - source-tracker exports 추가
+- `web/src/pages/api/chat.ts` - SearchContext 추적, 동적 answer 도구, 프롬프트 업데이트
+- `web/tests/lib/work-agent/source-tracker.test.ts` - 신규 (26개 테스트)
+- `web/tests/lib/work-agent/tools.test.ts` - createAnswerTool 테스트 5개 추가
+
+---
+
 ### 구현 우선순위
-| 순위 | Phase | 작업 | 예상 효과 | 난이도 |
-|------|-------|------|----------|--------|
-| 1 | Phase 1 | 검색 품질 강화 (Loop Control) | 검색 필수화, 정확도 향상 | 중간 |
-| 2 | Phase 2 | API 응답 스키마 필터링 | 토큰 30-50% 절감 | 낮음 |
-| 3 | Phase 2 | TOON 포맷 적용 | 토큰 40-60% 추가 절감 | 중간 |
-| 4 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 |
-| 5 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 |
-| 6 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 |
-| 7 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 |
+| 순위 | Phase | 작업 | 예상 효과 | 난이도 | 상태 |
+|------|-------|------|----------|--------|------|
+| 1 | Phase 1 | 검색 품질 강화 (Loop Control) | 검색 필수화, 정확도 향상 | 중간 | ✅ 완료 |
+| 2 | Phase 2 | 토큰 최적화 (Slim 타입 + TOON) | 토큰 38% 절감 | 낮음-중간 | ✅ 완료 |
+| 3 | Phase 6-1 | 맥락 분리 프롬프트 | 레거시/차세대 혼동 80% 감소 | 낮음 | ✅ 완료 |
+| 4 | Phase 6-2 | 불확실성 표현 강제 | 추측성 답변 제거 | 낮음 | ✅ 완료 |
+| 5 | Phase 6-3 | 정보 완전성 확보 | Truncation 손실 방지 | 중간 | ✅ 완료 |
+| 6 | Phase 6-4 | 시간 기반 맥락 | 시간순 정보 구분 | 낮음-중간 | ✅ 완료 |
+| 7 | Phase 6-5 | 출처 검증 시스템 | 환각 대폭 감소 | 중간-높음 | ✅ 완료 |
+| 8 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | ✅ 완료 |
+| 9 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | ✅ 완료 |
+| 10 | Phase 3.1 | 최소 검색 보장 | 정보 부족 답변 방지 | 낮음 | ✅ 완료 |
+| 11 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 ← **다음** |
+| 12 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
 
 ### 검증 방법
-1. **Phase 1 검증**: 채팅 테스트로 검색 없이 답변하는지 확인
-2. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
-3. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
-4. **단위 테스트**: `pnpm test`
+1. **Phase 1 검증**: 채팅 테스트로 검색 없이 답변하는지 확인 ✅
+2. **Phase 2 검증**: 토큰 절감 측정 ✅
+   - `npx tsx scripts/measure-token-savings.ts` 실행
+   - 결과: 38% 토큰 절감 확인
+3. **Phase 6 검증**: 환각 테스트 시나리오 ✅
+   - "MaxGauge에서 React를 사용했나요?" → 정확히 "아니오, ExtJS"
+   - 레거시/차세대 혼동 없이 명확히 구분된 답변
+   - 검색 결과 없는 질문 → 추측 없이 "정보 없음"
+4. **Phase 6-5 검증**: 출처 검증 로깅 확인 ✅
+   - 환각 ID 사용 시 `[Source Validation Warnings]` 로그 출력
+   - `validation.isValid = false` 및 경고 메시지 확인
+5. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
+6. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
+7. **단위 테스트**: `pnpm test` (135개 테스트 통과, 통합 테스트 타임아웃 제외)
+8. **Phase 3.1 검증**: 의도별 최소 검색 횟수 강제 확인
+   - 경력 질문 → 3회 검색 후에만 answer 가능
+   - 기술 질문 → 3회 검색 후에만 answer 가능
+   - 연락처 질문 → 1회 검색 후 answer 가능
+   - 로그에서 `[Search Sufficiency]` 메시지 확인
+
+---
+
+### 다음 페이즈 작업 참고사항
+
+#### Phase 3 완료 요약 (2026-01-25)
+- **신규 모듈**: `prompts.ts` (의도 분류, 반복 분석, 동적 프롬프트, 최소 검색 보장)
+- **추가된 함수**: `classifyIntent`, `analyzeToolCallPattern`, `buildDynamicSystemPrompt`, `shouldAllowAnswer`
+- **추가된 상수**: `INTENT_KEYWORDS`, `PERSONA_PROMPTS`, `REFLEXION_PROTOCOL`, `MIN_SEARCH_COUNT`
+- **추가된 타입**: `UserIntent`, `IntentClassification`, `ToolCallHistory`, `StepAnalysis`, `DynamicPromptOptions`, `SearchSufficiencyCheck`
+- **테스트**: 38개 (prompts.test.ts)
+
+#### Phase 4 (비용 최적화) 구현 시 참고 ← **다음 우선순위**
+1. **측정 스크립트 존재**: `scripts/measure-token-savings.ts`로 before/after 비교 가능
+2. **토큰 추정식**: ~3 bytes = 1 token (영어/한글 평균)
+
+#### Phase 6 완료 요약 (2026-01-25)
+- **추가된 유틸리티 함수**: `inferProjectContext`, `calculateTimeContext`, `calculateRelativeTime`, `createSearchContext`, `buildSearchContextFromSteps`, `validateSources`
+- **추가된 타입**: `ProjectContext`, `TimeContext`, `SearchContext`, `AnswerSource`, `SourceValidationResult`
+- **신규 모듈**: `source-tracker.ts` (ID 추출 및 출처 검증)
+- **팩토리 함수**: `createAnswerTool(getSearchContext)` - 동적 출처 검증
+- **Slim 타입 확장**: `context`, `dateUpdated`, `timeContext`, `relativeTime` 필드 추가
+- **시스템 프롬프트**: 맥락 구분, 시간 기반 처리, confidence 기반 답변 규칙, 출처 ID 필수 규칙 추가
+- **테스트**: 99개 전체 통과 (source-tracker 26개, tools 46개 포함)

@@ -74,6 +74,7 @@ const projects = defineCollection({
     github: z.string().url().optional(),
     dateStart: z.coerce.date(),
     dateEnd: z.coerce.date().optional(),
+    priority: z.number(),
   }),
 })
 

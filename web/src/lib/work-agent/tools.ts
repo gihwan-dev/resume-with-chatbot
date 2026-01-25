@@ -10,7 +10,18 @@ import {
   searchClickUpTasks as searchClickUpTasksApi,
 } from "./clickup.server"
 import { getNotionPageContent, searchNotionPages } from "./notion.server"
-import { WorkAgentError, type WorkAgentErrorCode } from "./types"
+import { encodeArrayResult, createFormatHint } from "./toon-encoder"
+import {
+  WorkAgentError,
+  type WorkAgentErrorCode,
+  type NotionPageSlim,
+  type ClickUpTaskSlim,
+  type ClickUpDocSlim,
+  type ProjectContext,
+  type TimeContext,
+  type SearchContext,
+} from "./types"
+import { validateSources } from "./source-tracker"
 
 // 에러 응답 타입
 interface ToolErrorResponse {
@@ -63,8 +74,55 @@ function createErrorResponse(error: unknown): ToolErrorResponse {
   }
 }
 
-// 스키마 정의
-const searchNotionSchema = z.object({
+// 프로젝트 맥락 추론 유틸리티
+const LEGACY_KEYWORDS = ["fe1팀", "fe1", "maxgauge"]
+const NEXTGEN_KEYWORDS = ["차세대", "datagrid", "디자인시스템", "dashboard"]
+
+export function inferProjectContext(
+  spaceName?: string,
+  folderName?: string
+): ProjectContext {
+  const searchText = `${spaceName || ""} ${folderName || ""}`.toLowerCase()
+
+  const isLegacy = LEGACY_KEYWORDS.some((keyword) =>
+    searchText.includes(keyword)
+  )
+  const isNextGen = NEXTGEN_KEYWORDS.some((keyword) =>
+    searchText.includes(keyword)
+  )
+
+  if (isLegacy && !isNextGen) return "legacy"
+  if (isNextGen && !isLegacy) return "next-gen"
+  return "unknown"
+}
+
+// 시간 맥락 추론 유틸리티
+export function calculateTimeContext(
+  dateString?: string
+): TimeContext | undefined {
+  if (!dateString) return undefined
+  const date = new Date(parseInt(dateString))
+  const diffMonths =
+    (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 30)
+  if (diffMonths < 3) return "recent"
+  if (diffMonths < 12) return "older"
+  return "archive"
+}
+
+export function calculateRelativeTime(dateString?: string): string | undefined {
+  if (!dateString) return undefined
+  const diffDays = Math.floor(
+    (Date.now() - parseInt(dateString)) / (1000 * 60 * 60 * 24)
+  )
+  if (diffDays === 0) return "오늘 수정"
+  if (diffDays < 7) return `${diffDays}일 전 수정`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전 수정`
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}개월 전 수정`
+  return `${Math.floor(diffDays / 365)}년 전 수정`
+}
+
+// 스키마 정의 (테스트용 export)
+export const searchNotionSchema = z.object({
   query: z.string().describe("검색할 키워드"),
   pageSize: z
     .number()
@@ -74,11 +132,11 @@ const searchNotionSchema = z.object({
     .describe("반환할 최대 페이지 수 (기본값: 10)"),
 })
 
-const getNotionPageSchema = z.object({
+export const getNotionPageSchema = z.object({
   pageId: z.string().describe("조회할 Notion 페이지 ID"),
 })
 
-const searchClickUpTasksSchema = z.object({
+export const searchClickUpTasksSchema = z.object({
   query: z
     .string()
     .optional()
@@ -93,11 +151,25 @@ const searchClickUpTasksSchema = z.object({
     .describe("완료된 태스크 포함 여부 (기본값: false)"),
 })
 
-const searchClickUpDocsSchema = z.object({
+export const searchClickUpDocsSchema = z.object({
   query: z
     .string()
     .optional()
     .describe("검색할 키워드 (문서 이름, 내용에서 검색)"),
+})
+
+export const answerSchema = z.object({
+  answer: z.string().describe("사용자 질문에 대한 최종 답변"),
+  sources: z
+    .array(
+      z.object({
+        type: z.enum(["notion", "clickup_task", "clickup_doc", "resume"]),
+        title: z.string(),
+        id: z.string().optional(),
+      })
+    )
+    .describe("답변에 사용된 정보 출처"),
+  confidence: z.enum(["high", "medium", "low"]).describe("답변 확신도"),
 })
 
 // Type definitions for inferred schemas
@@ -109,6 +181,7 @@ type SearchClickUpDocsInput = z.infer<typeof searchClickUpDocsSchema>
 /**
  * Notion 페이지 검색 도구
  * 업무 노트, 프로젝트 기록 등을 검색
+ * 토큰 최적화: 10개 이상 결과 시 TOON 포맷 적용
  */
 export const searchNotion = tool({
   description:
@@ -120,17 +193,24 @@ export const searchNotion = tool({
         query: params.query,
         pageSize: params.pageSize ?? 10,
       })
+
+      const slimPages: NotionPageSlim[] = result.pages.map((page) => ({
+        id: page.id,
+        title: page.title,
+        url: page.url,
+        lastEditedTime: page.lastEditedTime,
+      }))
+
+      const encoded = encodeArrayResult(slimPages)
+
       return {
         success: true as const,
         data: {
-          pages: result.pages.map((page) => ({
-            id: page.id,
-            title: page.title,
-            url: page.url,
-            lastEditedTime: page.lastEditedTime,
-          })),
+          format: encoded.format,
+          formatHint: createFormatHint(encoded.format),
+          pages: encoded.data,
           hasMore: result.hasMore,
-          totalFound: result.pages.length,
+          totalFound: encoded.count,
         },
       }
     } catch (error) {
@@ -142,6 +222,7 @@ export const searchNotion = tool({
 /**
  * Notion 페이지 상세 조회 도구
  * 특정 페이지의 전체 내용을 가져옴
+ * 토큰 최적화: createdTime 제거, placeholder 블록 스킵
  */
 export const getNotionPage = tool({
   description:
@@ -178,7 +259,6 @@ export const getNotionPage = tool({
             id: result.page.id,
             title: result.page.title,
             url: result.page.url,
-            createdTime: result.page.createdTime,
             lastEditedTime: result.page.lastEditedTime,
           },
           content: flattenBlocks(result.blocks).join("\n"),
@@ -194,6 +274,7 @@ export const getNotionPage = tool({
 /**
  * ClickUp 태스크 검색 도구
  * 본인에게 할당된 태스크를 검색
+ * 토큰 최적화: 10개 이상 결과 시 TOON 포맷 적용
  */
 export const searchClickUpTasks = tool({
   description:
@@ -209,23 +290,35 @@ export const searchClickUpTasks = tool({
         statuses: statusArray,
         includeCompleted: params.includeCompleted ?? false,
       })
+
+      const slimTasks: ClickUpTaskSlim[] = result.tasks.map((task) => ({
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        status: task.status.status,
+        priority: task.priority?.priority,
+        dueDate: task.dueDate,
+        url: task.url,
+        listName: task.listName,
+        folderName: task.folderName,
+        spaceName: task.spaceName,
+        tags: task.tags.map((t) => t.name),
+        // 환각 방지용 맥락 필드
+        context: inferProjectContext(task.spaceName, task.folderName),
+        dateUpdated: task.dateUpdated,
+        timeContext: calculateTimeContext(task.dateUpdated),
+        relativeTime: calculateRelativeTime(task.dateUpdated),
+      }))
+
+      const encoded = encodeArrayResult(slimTasks)
+
       return {
         success: true as const,
         data: {
-          tasks: result.tasks.map((task) => ({
-            id: task.id,
-            name: task.name,
-            description: task.description,
-            status: task.status.status,
-            priority: task.priority?.priority,
-            dueDate: task.dueDate,
-            url: task.url,
-            listName: task.listName,
-            folderName: task.folderName,
-            spaceName: task.spaceName,
-            tags: task.tags.map((t) => t.name),
-          })),
-          totalFound: result.tasks.length,
+          format: encoded.format,
+          formatHint: createFormatHint(encoded.format),
+          tasks: encoded.data,
+          totalFound: encoded.count,
           lastPage: result.lastPage,
         },
       }
@@ -238,6 +331,7 @@ export const searchClickUpTasks = tool({
 /**
  * ClickUp 문서 검색 도구
  * 본인이 작성한 문서를 검색
+ * 토큰 최적화: dateCreated/dateUpdated 제거, 10개 이상 결과 시 TOON 포맷 적용
  */
 export const searchClickUpDocs = tool({
   description:
@@ -246,20 +340,26 @@ export const searchClickUpDocs = tool({
   execute: async (params: SearchClickUpDocsInput) => {
     try {
       const result = await searchClickUpDocsApi({ query: params.query })
+
+      const slimDocs: ClickUpDocSlim[] = result.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.name,
+        content: doc.content,
+        // 환각 방지용 시간 맥락 필드
+        dateUpdated: doc.dateUpdated,
+        timeContext: calculateTimeContext(doc.dateUpdated),
+        relativeTime: calculateRelativeTime(doc.dateUpdated),
+      }))
+
+      const encoded = encodeArrayResult(slimDocs)
+
       return {
         success: true as const,
         data: {
-          docs: result.docs.map((doc) => ({
-            id: doc.id,
-            name: doc.name,
-            content: doc.content
-              ? doc.content.substring(0, 500) +
-                (doc.content.length > 500 ? "..." : "")
-              : undefined,
-            dateCreated: doc.dateCreated,
-            dateUpdated: doc.dateUpdated,
-          })),
-          totalFound: result.docs.length,
+          format: encoded.format,
+          formatHint: createFormatHint(encoded.format),
+          docs: encoded.data,
+          totalFound: encoded.count,
           hasMore: result.hasMore,
         },
       }
@@ -270,6 +370,51 @@ export const searchClickUpDocs = tool({
 })
 
 /**
+ * 최종 답변 도구
+ * execute 함수로 답변을 tool result로 반환
+ */
+export const answer = tool({
+  description:
+    "검색 완료 후 최종 답변을 제공합니다. 반드시 검색을 먼저 수행한 후 사용하세요.",
+  inputSchema: answerSchema,
+  execute: async (input) => {
+    // 구조화된 응답 반환 - 클라이언트에서 tool result로 수신
+    return {
+      answer: input.answer,
+      sources: input.sources,
+      confidence: input.confidence,
+    }
+  },
+})
+
+/**
+ * 출처 검증이 포함된 answer 도구 팩토리
+ * SearchContext를 통해 검색 결과와 출처 일치 여부 검증
+ */
+export function createAnswerTool(getSearchContext: () => SearchContext) {
+  return tool({
+    description:
+      "검색 완료 후 최종 답변을 제공합니다. sources에는 검색된 정보의 실제 ID를 포함해야 합니다.",
+    inputSchema: answerSchema,
+    execute: async (input) => {
+      const searchContext = getSearchContext()
+      const validation = validateSources(input.sources, searchContext)
+
+      return {
+        answer: input.answer,
+        sources: validation.validSources,
+        confidence: input.confidence,
+        validation: {
+          isValid: validation.isValid,
+          warnings: validation.warnings,
+          invalidSourceCount: validation.invalidSources.length,
+        },
+      }
+    },
+  })
+}
+
+/**
  * Work Agent 도구 통합 export
  * chat.ts에서 사용
  */
@@ -278,4 +423,5 @@ export const workAgentTools = {
   getNotionPage,
   searchClickUpTasks,
   searchClickUpDocs,
+  answer,
 }

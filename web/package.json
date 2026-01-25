@@ -50,6 +50,7 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tailwindcss/vite": "^4.1.18",
+    "@toon-format/toon": "^2.1.0",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3",
     "ai": "^6.0.42",

@@ -53,10 +53,23 @@ export function ChatMessages({
           {messages.map((message, index) => {
             const isLastMessage = index === messages.length - 1
 
-            // Get text content from message parts
+            // Get text content from message parts (text parts + answer tool result)
             const textContent = message.parts
-              .filter((part): part is { type: "text"; text: string } => part.type === "text")
-              .map((part) => part.text)
+              .map((part) => {
+                if (part.type === "text") {
+                  return part.text
+                }
+                // answer tool result에서 답변 텍스트 추출
+                if (
+                  part.type === "tool-answer" &&
+                  part.state === "output-available" &&
+                  part.output
+                ) {
+                  return (part.output as { answer?: string })?.answer || ""
+                }
+                return ""
+              })
+              .filter(Boolean)
               .join("")
 
             if (message.role === "user") {

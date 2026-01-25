@@ -103,8 +103,6 @@ export interface ClickUpDoc {
   dateUpdated: string
   creator: {
     id: number
-    username: string
-    email: string
   }
   workspaceId: string
   parentId?: string
@@ -130,4 +128,75 @@ export interface ClickUpTaskSearchOptions {
 export interface ClickUpDocSearchOptions {
   query?: string
   page?: number
+}
+
+// LLM 전달용 경량 타입 (토큰 최적화)
+export interface ClickUpTaskSlim {
+  id: string
+  name: string
+  description?: string
+  status: string
+  priority?: string
+  dueDate?: string
+  url: string
+  listName?: string
+  folderName?: string
+  spaceName?: string
+  tags: string[]
+  // 환각 방지용 맥락 필드
+  context: ProjectContext
+  dateUpdated?: string
+  timeContext?: TimeContext
+  relativeTime?: string
+}
+
+export interface ClickUpDocSlim {
+  id: string
+  name: string
+  content?: string
+  // 환각 방지용 시간 맥락 필드
+  dateUpdated?: string
+  timeContext?: TimeContext
+  relativeTime?: string
+}
+
+export interface NotionPageSlim {
+  id: string
+  title: string
+  url: string
+  lastEditedTime: string
+}
+
+export interface NotionBlockSlim {
+  type: string
+  content: string
+  children?: NotionBlockSlim[]
+}
+
+// 프로젝트 맥락 타입
+export type ProjectContext = "legacy" | "next-gen" | "unknown"
+
+// 시간 맥락 타입
+export type TimeContext = "recent" | "older" | "archive"
+
+// 검색 결과 추적 컨텍스트
+export interface SearchContext {
+  notionPageIds: Set<string>
+  clickupTaskIds: Set<string>
+  clickupDocIds: Set<string>
+}
+
+// answer 도구 출처 타입
+export interface AnswerSource {
+  type: "notion" | "clickup_task" | "clickup_doc" | "resume"
+  title: string
+  id?: string
+}
+
+// 출처 검증 결과
+export interface SourceValidationResult {
+  isValid: boolean
+  validSources: AnswerSource[]
+  invalidSources: AnswerSource[]
+  warnings: string[]
 }
