@@ -23,7 +23,7 @@ const sortedWork = work.sort((a, b) => b.data.dateStart.valueOf() - a.data.dateS
 
 const sortedAwards = awards.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
 const sortedProjects = projects.sort(
-  (a, b) => b.data.dateStart.valueOf() - a.data.dateStart.valueOf()
+  (a, b) => a.data.priority - b.data.priority
 )
 
 const workWithContent = await Promise.all(
