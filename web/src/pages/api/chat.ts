@@ -8,6 +8,10 @@ import {
   createAnswerTool,
   buildSearchContextFromSteps,
   createSearchContext,
+  classifyIntent,
+  analyzeToolCallPattern,
+  buildDynamicSystemPrompt,
+  shouldAllowAnswer,
   type SearchContext,
 } from "@/lib/work-agent"
 import { buildResumePrompt } from "@/lib/resume-prompt"
@@ -158,9 +162,11 @@ const SYSTEM_PROMPT_FOOTER = `## 도구 사용 전략
 
 /**
  * Content Collections 데이터를 기반으로 시스템 프롬프트를 동적 생성
+ * @param dynamicPrompt - 의도 분류 및 반복 호출 분석에 기반한 동적 프롬프트
  */
-async function getSystemPrompt(): Promise<string> {
+async function getSystemPrompt(dynamicPrompt?: string): Promise<string> {
   const resumeSection = await buildResumePrompt()
+  const dynamicSection = dynamicPrompt ? `\n\n---\n\n${dynamicPrompt}` : ""
   return `${SYSTEM_PROMPT_HEADER}
 
 ---
@@ -171,7 +177,7 @@ ${resumeSection}
 
 ---
 
-${SYSTEM_PROMPT_FOOTER}`
+${SYSTEM_PROMPT_FOOTER}${dynamicSection}`
 }
 
 // Lazy initialization: Vertex AI 인스턴스를 요청 시점에 생성
@@ -207,7 +213,32 @@ export const POST = async ({ request }: { request: Request }) => {
     const modelMessages = await convertToModelMessages(messages)
 
     const vertex = getVertex()
-    const systemPrompt = await getSystemPrompt()
+
+    // 마지막 사용자 메시지에서 의도 분류
+    const lastUserMessage = messages.filter((m) => m.role === "user").pop()
+    const userMessageText = lastUserMessage
+      ? lastUserMessage.parts
+          .filter((part): part is { type: "text"; text: string } => part.type === "text")
+          .map((part) => part.text)
+          .join(" ")
+      : ""
+    const intentClassification = classifyIntent(userMessageText)
+
+    console.log(
+      "[Intent Classification]",
+      JSON.stringify({
+        message: userMessageText.slice(0, 100),
+        intent: intentClassification.intent,
+        confidence: intentClassification.confidence,
+        keywords: intentClassification.keywords,
+      })
+    )
+
+    // 초기 동적 프롬프트 생성 (의도 기반)
+    const initialDynamicPrompt = buildDynamicSystemPrompt({
+      intent: intentClassification.intent,
+    })
+    const systemPrompt = await getSystemPrompt(initialDynamicPrompt)
 
     // SearchContext 추적: 검색된 모든 ID를 누적
     let currentSearchContext: SearchContext = createSearchContext()
@@ -248,6 +279,9 @@ export const POST = async ({ request }: { request: Request }) => {
         }))
         currentSearchContext = buildSearchContextFromSteps(stepsForContext)
 
+        // 도구 호출 패턴 분석
+        const analysis = analyzeToolCallPattern(steps)
+
         // Step 0: 검색 도구만 활성화, 필수 사용
         if (stepNumber === 0) {
           return {
@@ -256,25 +290,44 @@ export const POST = async ({ request }: { request: Request }) => {
           }
         }
 
-        // 검색 도구가 호출되었는지 확인
-        const hasSearched = steps.some(step =>
-          step.toolCalls?.some(call =>
-            SEARCH_TOOLS.includes(call.toolName as ToolName)
+        // 3회 연속 동일 도구 호출 시 해당 도구 제외 (ReAct + Reflexion)
+        if (analysis.consecutiveSameToolCount >= 3 && analysis.lastToolName) {
+          console.warn(
+            "[Repetitive Tool Call]",
+            JSON.stringify({
+              tool: analysis.lastToolName,
+              consecutiveCount: analysis.consecutiveSameToolCount,
+              lastQueries: analysis.lastQueries,
+            })
           )
-        )
 
-        // 검색 완료 시 answer 포함 모든 도구 활성화
-        if (hasSearched) {
+          // 반복된 도구를 제외한 대안 도구 목록
+          const alternativeTools = ALL_TOOLS.filter(
+            (t) => t !== analysis.lastToolName
+          )
+
           return {
-            activeTools: ALL_TOOLS,
-            toolChoice: "auto" as const,
+            activeTools: alternativeTools,
+            toolChoice: "required" as const,
           }
         }
 
-        // 아직 검색 안 했으면 계속 검색 도구만
+        // 검색 충분성 확인: 의도별 최소 검색 횟수 충족 여부
+        const sufficiency = shouldAllowAnswer(intentClassification.intent, analysis)
+
+        if (!sufficiency.isReady) {
+          // 최소 검색 미달 → 검색 도구만, 필수 사용
+          console.log("[Search Sufficiency]", sufficiency.reason)
+          return {
+            activeTools: SEARCH_TOOLS,
+            toolChoice: "required" as const,
+          }
+        }
+
+        // 최소 검색 충족 → answer 포함 모든 도구 활성화
         return {
-          activeTools: SEARCH_TOOLS,
-          toolChoice: "required" as const,
+          activeTools: ALL_TOOLS,
+          toolChoice: "auto" as const,
         }
       },
 

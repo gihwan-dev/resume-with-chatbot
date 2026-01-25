@@ -72,3 +72,21 @@ export {
   type FormatType,
   type EncodedResult,
 } from "./toon-encoder"
+
+// Prompts (의도 분류, 반복 분석, 동적 프롬프트, 검색 충분성)
+export {
+  classifyIntent,
+  analyzeToolCallPattern,
+  buildDynamicSystemPrompt,
+  shouldAllowAnswer,
+  INTENT_KEYWORDS,
+  PERSONA_PROMPTS,
+  REFLEXION_PROTOCOL,
+  MIN_SEARCH_COUNT,
+  type UserIntent,
+  type IntentClassification,
+  type ToolCallHistory,
+  type StepAnalysis,
+  type DynamicPromptOptions,
+  type SearchSufficiencyCheck,
+} from "./prompts"

@@ -301,21 +301,68 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
 
 ---
 
-### Phase 3: 추론 품질 향상 🔲
+### Phase 3: 추론 품질 향상 ✅
 > ReAct 패턴 및 동적 프롬프트
+> **Status:** 구현 완료 (2026-01-25)
 
 **작업 항목:**
-- [ ] M3-1: ReAct + Reflexion 패턴 적용
-  - 자기 검증 프로토콜 프롬프트 추가
-  - `prepareStep`으로 반복 호출 감지 및 제어
-  - 3단계 연속 같은 도구 호출 시 다른 도구로 유도
-- [ ] M3-2: 동적 시스템 프롬프트
-  - 의도 분류: career_inquiry, technical_inquiry, contact_inquiry, general_chat
-  - 의도별 페르소나 전환
+- [x] M3-1: ReAct + Reflexion 패턴 적용
+  - `REFLEXION_PROTOCOL` - 자기 검증 프로토콜 프롬프트
+  - `analyzeToolCallPattern()` - 반복 호출 감지
+  - `prepareStep`에서 3회 연속 같은 도구 호출 시 해당 도구 제외
+- [x] M3-2: 동적 시스템 프롬프트
+  - `classifyIntent()` - 의도 분류 (career_inquiry, technical_inquiry, contact_inquiry, general_chat)
+  - `INTENT_KEYWORDS` - 의도별 키워드 매핑
+  - `PERSONA_PROMPTS` - 의도별 페르소나 프롬프트
+  - `buildDynamicSystemPrompt()` - 의도 + 분석 결과 기반 동적 프롬프트 생성
 
-**수정 대상 파일:**
-- `web/src/pages/api/chat.ts`
-- `web/src/lib/work-agent/prompts.ts` (신규)
+**수정된 파일:**
+- `web/src/lib/work-agent/prompts.ts` - 신규 생성 (의도 분류, 반복 분석, 동적 프롬프트)
+- `web/src/lib/work-agent/index.ts` - prompts 모듈 export 추가
+- `web/src/pages/api/chat.ts` - 의도 분류, 동적 프롬프트, 반복 도구 제어 통합
+- `web/tests/lib/work-agent/prompts.test.ts` - 신규 (26개 테스트)
+
+---
+
+### Phase 3.1: 최소 검색 보장 ✅
+> 의도별 최소 검색 횟수 강제
+> **Status:** 구현 완료 (2026-01-25)
+
+**배경:**
+Phase 3 구현 후 검토 결과, Step 0에서 1회 검색 강제 후 바로 `toolChoice: "auto"`로 전환되어 LLM이 단 1회 검색 후 `answer` 호출 가능한 문제 발견. 반복 방지(3회 연속)는 있지만 **최소 검색 보장**이 없었음.
+
+**작업 항목:**
+- [x] M3.1-1: 의도별 최소 검색 횟수 상수 정의
+  ```typescript
+  export const MIN_SEARCH_COUNT: Record<UserIntent, number> = {
+    career_inquiry: 3,      // Notion + ClickUp Tasks + ClickUp Docs
+    technical_inquiry: 3,   // Notion + getNotionPage + ClickUp
+    contact_inquiry: 1,     // 이력서 정보로 충분
+    general_chat: 2,        // 최소한의 확인
+  }
+  ```
+- [x] M3.1-2: `shouldAllowAnswer()` 함수 구현
+  - 의도와 분석 결과를 기반으로 answer 허용 여부 결정
+  - `SearchSufficiencyCheck` 인터페이스 반환 (isReady, currentCount, minRequired, reason)
+- [x] M3.1-3: `prepareStep` 로직 변경
+  - 기존 `hasSearched` boolean 체크 → `shouldAllowAnswer()` 호출로 변경
+  - 최소 검색 미달 시 검색 도구만 활성화, `toolChoice: "required"`
+  - 최소 검색 충족 시 answer 포함 모든 도구 활성화, `toolChoice: "auto"`
+- [x] M3.1-4: 테스트 추가 (12개)
+
+**의도별 검색 전략:**
+| 의도 | 최소 검색 | 권장 패턴 |
+|------|----------|----------|
+| career_inquiry | 3회 | searchNotion + searchClickUpTasks + searchClickUpDocs |
+| technical_inquiry | 3회 | searchNotion + getNotionPage + searchClickUpDocs |
+| contact_inquiry | 1회 | 검색 1회 후 이력서 정보로 답변 |
+| general_chat | 2회 | 기본적인 확인 후 답변 |
+
+**수정된 파일:**
+- `web/src/lib/work-agent/prompts.ts` - `MIN_SEARCH_COUNT`, `SearchSufficiencyCheck`, `shouldAllowAnswer()` 추가
+- `web/src/lib/work-agent/index.ts` - 새 exports 추가
+- `web/src/pages/api/chat.ts` - `prepareStep`에서 `shouldAllowAnswer()` 사용
+- `web/tests/lib/work-agent/prompts.test.ts` - `shouldAllowAnswer` 테스트 12개 추가 (총 38개)
 
 ---
 
@@ -484,10 +531,11 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
 | 5 | Phase 6-3 | 정보 완전성 확보 | Truncation 손실 방지 | 중간 | ✅ 완료 |
 | 6 | Phase 6-4 | 시간 기반 맥락 | 시간순 정보 구분 | 낮음-중간 | ✅ 완료 |
 | 7 | Phase 6-5 | 출처 검증 시스템 | 환각 대폭 감소 | 중간-높음 | ✅ 완료 |
-| 8 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | 🔲 ← **다음** |
-| 9 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | 🔲 |
-| 10 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 |
-| 11 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
+| 8 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | ✅ 완료 |
+| 9 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | ✅ 완료 |
+| 10 | Phase 3.1 | 최소 검색 보장 | 정보 부족 답변 방지 | 낮음 | ✅ 완료 |
+| 11 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 ← **다음** |
+| 12 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
 
 ### 검증 방법
 1. **Phase 1 검증**: 채팅 테스트로 검색 없이 답변하는지 확인 ✅
@@ -503,19 +551,25 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
    - `validation.isValid = false` 및 경고 메시지 확인
 5. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
 6. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
-7. **단위 테스트**: `pnpm test` (99개 테스트 통과, 통합 테스트 타임아웃 제외)
+7. **단위 테스트**: `pnpm test` (135개 테스트 통과, 통합 테스트 타임아웃 제외)
+8. **Phase 3.1 검증**: 의도별 최소 검색 횟수 강제 확인
+   - 경력 질문 → 3회 검색 후에만 answer 가능
+   - 기술 질문 → 3회 검색 후에만 answer 가능
+   - 연락처 질문 → 1회 검색 후 answer 가능
+   - 로그에서 `[Search Sufficiency]` 메시지 확인
 
 ---
 
 ### 다음 페이즈 작업 참고사항
 
-#### Phase 3 (추론 품질) 구현 시 참고 ← **다음 우선순위**
-1. **응답 구조 변경됨**: tools.ts의 응답에 format, formatHint 필드 추가됨
-2. **prepareStep 활용**: Phase 1에서 이미 구현됨 - 확장 가능
-3. **환각 방지 필드**: context, timeContext, relativeTime 필드로 맥락 파악 용이
-4. **출처 검증 활용**: `createAnswerTool`의 validation 결과로 환각 탐지 가능
+#### Phase 3 완료 요약 (2026-01-25)
+- **신규 모듈**: `prompts.ts` (의도 분류, 반복 분석, 동적 프롬프트, 최소 검색 보장)
+- **추가된 함수**: `classifyIntent`, `analyzeToolCallPattern`, `buildDynamicSystemPrompt`, `shouldAllowAnswer`
+- **추가된 상수**: `INTENT_KEYWORDS`, `PERSONA_PROMPTS`, `REFLEXION_PROTOCOL`, `MIN_SEARCH_COUNT`
+- **추가된 타입**: `UserIntent`, `IntentClassification`, `ToolCallHistory`, `StepAnalysis`, `DynamicPromptOptions`, `SearchSufficiencyCheck`
+- **테스트**: 38개 (prompts.test.ts)
 
-#### Phase 4 (비용 최적화) 구현 시 참고
+#### Phase 4 (비용 최적화) 구현 시 참고 ← **다음 우선순위**
 1. **측정 스크립트 존재**: `scripts/measure-token-savings.ts`로 before/after 비교 가능
 2. **토큰 추정식**: ~3 bytes = 1 token (영어/한글 평균)
 
