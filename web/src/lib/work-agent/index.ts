@@ -23,6 +23,10 @@ export {
   type ClickUpDocSlim,
   type NotionPageSlim,
   type NotionBlockSlim,
+  // Source tracking types (출처 검증)
+  type SearchContext,
+  type AnswerSource,
+  type SourceValidationResult,
 } from "./types"
 
 // Notion Client
@@ -47,7 +51,19 @@ export {
   searchClickUpDocs as searchClickUpDocsTool,
   answer,
   workAgentTools,
+  createAnswerTool,
 } from "./tools"
+
+// Source Tracker (출처 검증)
+export {
+  createSearchContext,
+  buildSearchContextFromSteps,
+  validateSources,
+  extractNotionPageIds,
+  extractNotionPageId,
+  extractClickUpTaskIds,
+  extractClickUpDocIds,
+} from "./source-tracker"
 
 // TOON Encoder
 export {

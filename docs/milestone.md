@@ -354,7 +354,7 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
 
 ### Phase 6: 환각 방지 (Hallucination Prevention) ✅
 > **Goal**: 맥락 분리, 출처 검증, 정보 완전성 확보를 통한 환각 최소화
-> **Status:** Phase 6-1 ~ 6-4 구현 완료 (2026-01-25)
+> **Status:** Phase 6-1 ~ 6-5 전체 구현 완료 (2026-01-25)
 
 #### 배경
 현재 에이전트의 문제:
@@ -437,24 +437,40 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
 
 ---
 
-#### Phase 6-5: 출처 검증 및 Grounding 🔲 ← **다음 우선순위**
+#### Phase 6-5: 출처 검증 및 Grounding ✅
 > 검색 결과와 답변 일치성 보장
+> **Status:** 구현 완료 (2026-01-25)
 
 **작업 항목:**
-- [ ] M6-5-1: 검색 결과 추적 시스템 도입
-  - SearchContext 인터페이스 정의
-  - 검색된 ID 추적
+- [x] M6-5-1: 검색 결과 추적 시스템 도입
+  - `SearchContext` 인터페이스 정의 (notionPageIds, clickupTaskIds, clickupDocIds)
+  - `createSearchContext()` - 빈 SearchContext 생성
+  - `buildSearchContextFromSteps(steps)` - 전체 step에서 검색된 ID 누적
+  - TOON/JSON 포맷 모두 지원하는 ID 추출 (extractNotionPageIds, extractClickUpTaskIds 등)
 
-- [ ] M6-5-2: answer 도구에 출처 검증 로직 추가
-  - sources 필드가 실제 검색 결과와 매칭되는지 검증
-  - 검증 실패 시 경고 반환
+- [x] M6-5-2: answer 도구에 출처 검증 로직 추가
+  - `createAnswerTool(getSearchContext)` 팩토리 함수 구현
+  - `validateSources(sources, context)` - 출처 ID가 검색 결과에 존재하는지 검증
+  - 검증 규칙:
+    - resume 타입: 항상 유효 (ID 불필요)
+    - ID 없는 출처: 경고 추가, 유효로 처리
+    - 검색된 ID와 일치: 유효
+    - 검색되지 않은 ID: 무효, 경고 생성
+  - 응답에 `validation: { isValid, warnings, invalidSourceCount }` 포함
+  - `onStepFinish`에서 검증 경고 로깅
 
-- [ ] M6-5-3: 인용 필수화 프롬프트 추가
+- [x] M6-5-3: 인용 필수화 프롬프트 추가
+  - sources에 실제 검색된 ID 포함 필수 규칙
+  - 올바른/잘못된 출처 예시 제공
 
-**수정 대상 파일:**
-- `web/src/lib/work-agent/tools.ts`
-- `web/src/lib/work-agent/types.ts`
-- `web/src/pages/api/chat.ts`
+**수정된 파일:**
+- `web/src/lib/work-agent/types.ts` - SearchContext, AnswerSource, SourceValidationResult 타입 추가
+- `web/src/lib/work-agent/source-tracker.ts` - 신규 생성 (ID 추출 및 검증 유틸리티)
+- `web/src/lib/work-agent/tools.ts` - createAnswerTool 팩토리 함수 추가
+- `web/src/lib/work-agent/index.ts` - source-tracker exports 추가
+- `web/src/pages/api/chat.ts` - SearchContext 추적, 동적 answer 도구, 프롬프트 업데이트
+- `web/tests/lib/work-agent/source-tracker.test.ts` - 신규 (26개 테스트)
+- `web/tests/lib/work-agent/tools.test.ts` - createAnswerTool 테스트 5개 추가
 
 ---
 
@@ -467,8 +483,8 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
 | 4 | Phase 6-2 | 불확실성 표현 강제 | 추측성 답변 제거 | 낮음 | ✅ 완료 |
 | 5 | Phase 6-3 | 정보 완전성 확보 | Truncation 손실 방지 | 중간 | ✅ 완료 |
 | 6 | Phase 6-4 | 시간 기반 맥락 | 시간순 정보 구분 | 낮음-중간 | ✅ 완료 |
-| 7 | Phase 6-5 | 출처 검증 시스템 | 환각 대폭 감소 | 중간-높음 | 🔲 ← **다음** |
-| 8 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | 🔲 |
+| 7 | Phase 6-5 | 출처 검증 시스템 | 환각 대폭 감소 | 중간-높음 | ✅ 완료 |
+| 8 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | 🔲 ← **다음** |
 | 9 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | 🔲 |
 | 10 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 |
 | 11 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
@@ -482,31 +498,32 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
    - "MaxGauge에서 React를 사용했나요?" → 정확히 "아니오, ExtJS"
    - 레거시/차세대 혼동 없이 명확히 구분된 답변
    - 검색 결과 없는 질문 → 추측 없이 "정보 없음"
-4. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
-5. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
-6. **단위 테스트**: `pnpm test` (68개 테스트 통과)
+4. **Phase 6-5 검증**: 출처 검증 로깅 확인 ✅
+   - 환각 ID 사용 시 `[Source Validation Warnings]` 로그 출력
+   - `validation.isValid = false` 및 경고 메시지 확인
+5. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
+6. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
+7. **단위 테스트**: `pnpm test` (99개 테스트 통과, 통합 테스트 타임아웃 제외)
 
 ---
 
 ### 다음 페이즈 작업 참고사항
 
-#### Phase 6-5 (출처 검증) 구현 시 참고
-1. **맥락 필드 활용**: `context`, `timeContext`, `relativeTime` 필드 이미 구현됨
-2. **answer 도구**: sources 필드가 이미 존재 - 검증 로직만 추가 필요
-3. **검색 결과 추적**: 각 도구 실행 시 반환된 ID 목록 저장 필요
-
-#### Phase 3 (추론 품질) 구현 시 참고
+#### Phase 3 (추론 품질) 구현 시 참고 ← **다음 우선순위**
 1. **응답 구조 변경됨**: tools.ts의 응답에 format, formatHint 필드 추가됨
 2. **prepareStep 활용**: Phase 1에서 이미 구현됨 - 확장 가능
 3. **환각 방지 필드**: context, timeContext, relativeTime 필드로 맥락 파악 용이
+4. **출처 검증 활용**: `createAnswerTool`의 validation 결과로 환각 탐지 가능
 
 #### Phase 4 (비용 최적화) 구현 시 참고
 1. **측정 스크립트 존재**: `scripts/measure-token-savings.ts`로 before/after 비교 가능
 2. **토큰 추정식**: ~3 bytes = 1 token (영어/한글 평균)
 
 #### Phase 6 완료 요약 (2026-01-25)
-- **추가된 유틸리티 함수**: `inferProjectContext`, `calculateTimeContext`, `calculateRelativeTime`
-- **추가된 타입**: `ProjectContext`, `TimeContext`
+- **추가된 유틸리티 함수**: `inferProjectContext`, `calculateTimeContext`, `calculateRelativeTime`, `createSearchContext`, `buildSearchContextFromSteps`, `validateSources`
+- **추가된 타입**: `ProjectContext`, `TimeContext`, `SearchContext`, `AnswerSource`, `SourceValidationResult`
+- **신규 모듈**: `source-tracker.ts` (ID 추출 및 출처 검증)
+- **팩토리 함수**: `createAnswerTool(getSearchContext)` - 동적 출처 검증
 - **Slim 타입 확장**: `context`, `dateUpdated`, `timeContext`, `relativeTime` 필드 추가
-- **시스템 프롬프트**: 맥락 구분, 시간 기반 처리, confidence 기반 답변 규칙 추가
-- **테스트**: 68개 전체 통과
+- **시스템 프롬프트**: 맥락 구분, 시간 기반 처리, confidence 기반 답변 규칙, 출처 ID 필수 규칙 추가
+- **테스트**: 99개 전체 통과 (source-tracker 26개, tools 46개 포함)

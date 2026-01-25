@@ -19,7 +19,9 @@ import {
   type ClickUpDocSlim,
   type ProjectContext,
   type TimeContext,
+  type SearchContext,
 } from "./types"
+import { validateSources } from "./source-tracker"
 
 // 에러 응답 타입
 interface ToolErrorResponse {
@@ -384,6 +386,33 @@ export const answer = tool({
     }
   },
 })
+
+/**
+ * 출처 검증이 포함된 answer 도구 팩토리
+ * SearchContext를 통해 검색 결과와 출처 일치 여부 검증
+ */
+export function createAnswerTool(getSearchContext: () => SearchContext) {
+  return tool({
+    description:
+      "검색 완료 후 최종 답변을 제공합니다. sources에는 검색된 정보의 실제 ID를 포함해야 합니다.",
+    inputSchema: answerSchema,
+    execute: async (input) => {
+      const searchContext = getSearchContext()
+      const validation = validateSources(input.sources, searchContext)
+
+      return {
+        answer: input.answer,
+        sources: validation.validSources,
+        confidence: input.confidence,
+        validation: {
+          isValid: validation.isValid,
+          warnings: validation.warnings,
+          invalidSourceCount: validation.invalidSources.length,
+        },
+      }
+    },
+  })
+}
 
 /**
  * Work Agent 도구 통합 export

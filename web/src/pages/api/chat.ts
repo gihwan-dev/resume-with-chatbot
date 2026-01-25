@@ -3,7 +3,13 @@ export const prerender = false
 import { createVertex } from "@ai-sdk/google-vertex"
 import type { UIMessage } from "ai"
 import { convertToModelMessages, hasToolCall, stepCountIs, streamText } from "ai"
-import { workAgentTools } from "@/lib/work-agent"
+import {
+  workAgentTools,
+  createAnswerTool,
+  buildSearchContextFromSteps,
+  createSearchContext,
+  type SearchContext,
+} from "@/lib/work-agent"
 import { buildResumePrompt } from "@/lib/resume-prompt"
 
 type ToolName = keyof typeof workAgentTools
@@ -121,7 +127,34 @@ const SYSTEM_PROMPT_FOOTER = `## 도구 사용 전략
 
 ### 주의사항
 - 도구 호출 실패 시 에러 메시지에 따라 대응
-- retryable: true인 에러는 잠시 후 재시도`
+- retryable: true인 에러는 잠시 후 재시도
+
+### answer 도구 출처 규칙 (중요!)
+- sources에는 검색 결과에서 받은 **실제 ID**를 반드시 포함
+  - Notion 페이지: searchNotion/getNotionPage에서 받은 id
+  - ClickUp 태스크: searchClickUpTasks에서 받은 id
+  - ClickUp 문서: searchClickUpDocs에서 받은 id
+  - resume 타입만 id 없이 사용 가능
+- 시스템이 자동으로 출처 ID가 실제 검색 결과와 일치하는지 검증
+- 검색되지 않은 ID를 출처로 지정하면 경고 발생
+
+### 출처 작성 예시
+
+**올바른 예시:**
+{
+  "sources": [
+    { "type": "notion", "title": "DataGrid 구현 노트", "id": "abc-123" },
+    { "type": "clickup_task", "title": "가상화 적용", "id": "task456" }
+  ]
+}
+
+**잘못된 예시:**
+{
+  "sources": [
+    { "type": "notion", "title": "페이지" },
+    { "type": "clickup_task", "title": "가상 태스크", "id": "fake-id" }
+  ]
+}`
 
 /**
  * Content Collections 데이터를 기반으로 시스템 프롬프트를 동적 생성
@@ -176,6 +209,21 @@ export const POST = async ({ request }: { request: Request }) => {
     const vertex = getVertex()
     const systemPrompt = await getSystemPrompt()
 
+    // SearchContext 추적: 검색된 모든 ID를 누적
+    let currentSearchContext: SearchContext = createSearchContext()
+
+    // 동적 answer 도구 생성 (출처 검증 포함)
+    const dynamicAnswerTool = createAnswerTool(() => currentSearchContext)
+
+    // 도구 객체 구성 (answer만 동적으로 교체)
+    const tools = {
+      searchNotion: workAgentTools.searchNotion,
+      getNotionPage: workAgentTools.getNotionPage,
+      searchClickUpTasks: workAgentTools.searchClickUpTasks,
+      searchClickUpDocs: workAgentTools.searchClickUpDocs,
+      answer: dynamicAnswerTool,
+    }
+
     const result = streamText({
       model: vertex("gemini-2.5-pro"),
       providerOptions: {
@@ -187,9 +235,19 @@ export const POST = async ({ request }: { request: Request }) => {
       },
       system: systemPrompt,
       messages: modelMessages,
-      tools: workAgentTools,
+      tools,
 
       prepareStep: ({ stepNumber, steps }) => {
+        // SearchContext 업데이트: 이전 step들의 검색 결과 ID 누적
+        // steps 타입을 StepLike[]로 변환 (toolResults 구조 호환)
+        const stepsForContext = steps.map((step) => ({
+          toolResults: step.toolResults?.map((tr) => ({
+            toolName: tr.toolName,
+            result: tr.output, // SDK의 output을 source-tracker의 result로 매핑
+          })),
+        }))
+        currentSearchContext = buildSearchContextFromSteps(stepsForContext)
+
         // Step 0: 검색 도구만 활성화, 필수 사용
         if (stepNumber === 0) {
           return {
@@ -227,6 +285,17 @@ export const POST = async ({ request }: { request: Request }) => {
 
       onStepFinish: ({ toolCalls, toolResults, finishReason, usage }) => {
         if (toolCalls.length > 0) {
+          // answer 도구 호출 시 validation 결과 추출
+          const answerResult = toolResults.find((tr) => tr.toolName === "answer")
+          const validation =
+            answerResult &&
+            "result" in answerResult &&
+            typeof answerResult.result === "object" &&
+            answerResult.result !== null &&
+            "validation" in answerResult.result
+              ? (answerResult.result as { validation?: { warnings?: string[]; isValid?: boolean } }).validation
+              : undefined
+
           console.log(
             "[Tool Calls]",
             JSON.stringify(
@@ -239,20 +308,35 @@ export const POST = async ({ request }: { request: Request }) => {
                 results: toolResults.map((tr) => ({
                   name: tr.toolName,
                   success:
-                    "output" in tr &&
-                    typeof tr.output === "object" &&
-                    tr.output !== null &&
-                    "success" in tr.output
-                      ? tr.output.success
+                    "result" in tr &&
+                    typeof tr.result === "object" &&
+                    tr.result !== null &&
+                    "success" in tr.result
+                      ? (tr.result as { success?: boolean }).success
                       : true,
                 })),
                 usage,
                 finishReason,
+                // 출처 검증 결과 로깅
+                ...(validation && {
+                  sourceValidation: {
+                    isValid: validation.isValid,
+                    warningCount: validation.warnings?.length ?? 0,
+                  },
+                }),
               },
               null,
               2
             )
           )
+
+          // 출처 검증 경고가 있으면 별도 로깅
+          if (validation?.warnings && validation.warnings.length > 0) {
+            console.warn(
+              "[Source Validation Warnings]",
+              validation.warnings.join("\n")
+            )
+          }
         }
       },
     })

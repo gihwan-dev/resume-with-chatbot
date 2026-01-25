@@ -38,7 +38,9 @@ import {
   inferProjectContext,
   calculateTimeContext,
   calculateRelativeTime,
+  createAnswerTool,
 } from "../../../src/lib/work-agent/tools"
+import type { SearchContext } from "../../../src/lib/work-agent/types"
 
 // 타입 캐스팅
 const mockSearchNotionPages = searchNotionPages as ReturnType<typeof vi.fn>
@@ -817,6 +819,141 @@ describe("Work Agent Tools", () => {
       expect(result.data.docs[0].dateUpdated).toBe(twoWeeksAgo.toString())
       expect(result.data.docs[0].timeContext).toBe("recent")
       expect(result.data.docs[0].relativeTime).toBe("2주 전 수정")
+    })
+  })
+
+  // ============================================
+  // createAnswerTool Tests (출처 검증)
+  // ============================================
+  describe("createAnswerTool", () => {
+    const mockSearchContext: SearchContext = {
+      notionPageIds: new Set(["notion-1", "notion-2"]),
+      clickupTaskIds: new Set(["task-1"]),
+      clickupDocIds: new Set(["doc-1"]),
+    }
+
+    // createAnswerTool 결과 타입
+    type AnswerToolResult = {
+      answer: string
+      sources: Array<{ type: string; title: string; id?: string }>
+      confidence: string
+      validation: {
+        isValid: boolean
+        warnings: string[]
+        invalidSourceCount: number
+      }
+    }
+
+    it("유효한 출처로 응답 시 validation.isValid = true", async () => {
+      const answerTool = createAnswerTool(() => mockSearchContext)
+      const input = {
+        answer: "테스트 답변",
+        sources: [
+          { type: "notion" as const, title: "Notion 페이지", id: "notion-1" },
+          { type: "resume" as const, title: "이력서" },
+        ],
+        confidence: "high" as const,
+      }
+
+      const result = await answerTool.execute!(input, testContext) as AnswerToolResult
+
+      expect(result.answer).toBe("테스트 답변")
+      expect(result.confidence).toBe("high")
+      expect(result.validation.isValid).toBe(true)
+      expect(result.validation.warnings).toHaveLength(0)
+      expect(result.validation.invalidSourceCount).toBe(0)
+      expect(result.sources).toHaveLength(2)
+    })
+
+    it("무효한 ID 출처 → validation.isValid = false, validSources에서 제외", async () => {
+      const answerTool = createAnswerTool(() => mockSearchContext)
+      const input = {
+        answer: "테스트 답변",
+        sources: [
+          { type: "notion" as const, title: "유효한 페이지", id: "notion-1" },
+          { type: "notion" as const, title: "환각 페이지", id: "fake-id" },
+        ],
+        confidence: "medium" as const,
+      }
+
+      const result = await answerTool.execute!(input, testContext) as AnswerToolResult
+
+      expect(result.validation.isValid).toBe(false)
+      expect(result.validation.invalidSourceCount).toBe(1)
+      expect(result.validation.warnings).toHaveLength(1)
+      expect(result.validation.warnings[0]).toContain("검색 결과에 존재하지 않습니다")
+      expect(result.sources).toHaveLength(1) // 유효한 것만 포함
+      expect(result.sources[0].id).toBe("notion-1")
+    })
+
+    it("ID 없는 출처 → 경고 추가, 유효로 처리", async () => {
+      const answerTool = createAnswerTool(() => mockSearchContext)
+      const input = {
+        answer: "테스트 답변",
+        sources: [
+          { type: "clickup_task" as const, title: "ID 없는 태스크" },
+        ],
+        confidence: "low" as const,
+      }
+
+      const result = await answerTool.execute!(input, testContext) as AnswerToolResult
+
+      expect(result.validation.isValid).toBe(true)
+      expect(result.validation.warnings).toHaveLength(1)
+      expect(result.validation.warnings[0]).toContain("ID가 없습니다")
+      expect(result.sources).toHaveLength(1)
+    })
+
+    it("resume 타입은 ID 검증 없이 항상 유효", async () => {
+      const emptyContext: SearchContext = {
+        notionPageIds: new Set(),
+        clickupTaskIds: new Set(),
+        clickupDocIds: new Set(),
+      }
+      const answerTool = createAnswerTool(() => emptyContext)
+      const input = {
+        answer: "이력서 기반 답변",
+        sources: [
+          { type: "resume" as const, title: "이력서 기본 정보" },
+        ],
+        confidence: "high" as const,
+      }
+
+      const result = await answerTool.execute!(input, testContext) as AnswerToolResult
+
+      expect(result.validation.isValid).toBe(true)
+      expect(result.validation.warnings).toHaveLength(0)
+      expect(result.sources).toHaveLength(1)
+    })
+
+    it("동적 SearchContext 업데이트 반영", async () => {
+      let dynamicContext: SearchContext = {
+        notionPageIds: new Set(),
+        clickupTaskIds: new Set(),
+        clickupDocIds: new Set(),
+      }
+      const answerTool = createAnswerTool(() => dynamicContext)
+
+      // 첫 번째 호출: context 비어있음 → 무효
+      const input = {
+        answer: "테스트",
+        sources: [{ type: "notion" as const, title: "페이지", id: "page-1" }],
+        confidence: "high" as const,
+      }
+
+      const result1 = await answerTool.execute!(input, testContext) as AnswerToolResult
+      expect(result1.validation.isValid).toBe(false)
+
+      // context 업데이트
+      dynamicContext = {
+        notionPageIds: new Set(["page-1"]),
+        clickupTaskIds: new Set(),
+        clickupDocIds: new Set(),
+      }
+
+      // 두 번째 호출: context에 ID 있음 → 유효
+      const result2 = await answerTool.execute!(input, testContext) as AnswerToolResult
+      expect(result2.validation.isValid).toBe(true)
     })
   })
 })

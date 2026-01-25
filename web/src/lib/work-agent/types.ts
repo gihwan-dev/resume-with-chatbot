@@ -178,3 +178,25 @@ export type ProjectContext = "legacy" | "next-gen" | "unknown"
 
 // 시간 맥락 타입
 export type TimeContext = "recent" | "older" | "archive"
+
+// 검색 결과 추적 컨텍스트
+export interface SearchContext {
+  notionPageIds: Set<string>
+  clickupTaskIds: Set<string>
+  clickupDocIds: Set<string>
+}
+
+// answer 도구 출처 타입
+export interface AnswerSource {
+  type: "notion" | "clickup_task" | "clickup_doc" | "resume"
+  title: string
+  id?: string
+}
+
+// 출처 검증 결과
+export interface SourceValidationResult {
+  isValid: boolean
+  validSources: AnswerSource[]
+  invalidSources: AnswerSource[]
+  warnings: string[]
+}
