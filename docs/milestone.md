@@ -332,19 +332,159 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
 
 ---
 
+### Phase 6: 환각 방지 (Hallucination Prevention) 🔲 ← **다음 우선순위**
+> **Goal**: 맥락 분리, 출처 검증, 정보 완전성 확보를 통한 환각 최소화
+> **Status:** 대기 중
+
+#### 배경
+현재 에이전트의 문제:
+1. 검색은 잘 수행하지만 다양한 맥락을 뒤섞어 답변
+2. 회사의 레거시 작업과 차세대 작업 내용 혼동
+3. 거짓 정보 생성 (환각)
+
+#### 참고 자료
+- [MDPI: Hallucination Mitigation Review](https://www.mdpi.com/2227-7390/13/5/856) - RAG 환각 원인 분류 및 완화 기법
+- [Microsoft: Best Practices for LLM Hallucinations](https://techcommunity.microsoft.com/blog/azure-ai-foundry-blog/best-practices-for-mitigating-hallucinations-in-large-language-models-llms/4403129) - Grounding & Attribution
+- [Zep: Reducing LLM Hallucinations](https://www.getzep.com/ai-agents/reducing-llm-hallucinations/) - Temporal Knowledge Graph
+- [MEGA-RAG](https://pmc.ncbi.nlm.nih.gov/articles/PMC12540348/) - Multi-Evidence Verification
+
+---
+
+#### Phase 6-1: 맥락 분리 및 프롬프트 강화 🔲 ← **즉시 시작**
+> ClickUp Space/Folder 이름 기반 맥락 구분
+
+**작업 항목:**
+- [ ] M6-1-1: 시스템 프롬프트에 프로젝트 맥락 구분 추가
+  ```markdown
+  ## 프로젝트 맥락 구분 (중요!)
+
+  ### 레거시 시스템 (MaxGauge)
+  - 기술: ExtJS, JavaScript
+  - 특징: 기존 코드 유지보수, 버그 수정
+
+  ### 차세대 시스템
+  - 기술: React, TypeScript, Radix UI, TanStack
+  - 특징: 새로운 아키텍처, 성능 최적화
+
+  ### 답변 규칙
+  - 검색 결과의 Space/Folder명으로 맥락 구분
+  - 혼동 가능성 있으면 명시적으로 구분하여 답변
+  ```
+
+- [ ] M6-1-2: 검색 결과에 맥락 힌트 자동 부여
+  - ClickUp: spaceName, folderName으로 맥락 추론
+  - `context: "legacy" | "next-gen" | "unknown"` 필드 추가
+
+**수정 대상 파일:**
+- `web/src/pages/api/chat.ts` - 시스템 프롬프트 확장
+- `web/src/lib/work-agent/tools.ts` - 맥락 필드 추가
+- `web/src/lib/work-agent/types.ts` - 맥락 타입 정의
+
+---
+
+#### Phase 6-2: 불확실성 표현 강제 🔲
+> 추측 대신 "모름" 답변 유도
+
+**작업 항목:**
+- [ ] M6-2-1: confidence 기반 답변 포맷 강제
+  - high: 그대로 답변, 출처 명시
+  - medium: "검색 결과에 따르면 ~이며, 상세 내용은 확인 필요"
+  - low: 절대 추측 금지, "정보 없음" 명시
+
+- [ ] M6-2-2: 검색 실패 시 명시적 응답 템플릿
+  ```
+  "해당 질문에 대한 구체적인 정보를 찾지 못했습니다.
+  이력서 기본 정보로는 [간단한 정보]를 확인할 수 있습니다."
+  ```
+
+**수정 대상 파일:**
+- `web/src/pages/api/chat.ts` - 불확실성 표현 프롬프트
+
+---
+
+#### Phase 6-3: 정보 완전성 확보 🔲
+> Truncation 정보 손실 방지
+
+**작업 항목:**
+- [ ] M6-3-1: ClickUp 문서 Truncation 개선
+  - 500자 → 2000자 확장
+  - `hasMoreContent`, `contentLength` 필드 추가
+
+- [ ] M6-3-2: Notion 블록 우선순위 로직
+  - heading, paragraph, list 우선
+  - image, video, embed 압축
+
+- [ ] M6-3-3: getNotionPage 자동 호출 가이드 프롬프트
+
+**수정 대상 파일:**
+- `web/src/lib/work-agent/tools.ts` - truncation 로직 개선
+- `web/src/lib/work-agent/notion.server.ts` - 블록 우선순위
+- `web/src/pages/api/chat.ts` - 프롬프트 보완
+
+---
+
+#### Phase 6-4: 시간 기반 맥락 🔲
+> 시간순 정보 구분
+
+**작업 항목:**
+- [ ] M6-4-1: 검색 결과에 시간 정보 강조
+  - `timeContext: "recent" | "older" | "archive"` (3개월 기준)
+  - `relativeTime: "2주 전 수정"`
+
+- [ ] M6-4-2: 시간 기반 프롬프트 가이드
+- [ ] M6-4-3: 충돌 정보 처리 규칙
+
+**수정 대상 파일:**
+- `web/src/lib/work-agent/tools.ts`
+- `web/src/lib/work-agent/notion.server.ts`
+- `web/src/lib/work-agent/clickup.server.ts`
+- `web/src/pages/api/chat.ts`
+
+---
+
+#### Phase 6-5: 출처 검증 및 Grounding 🔲
+> 검색 결과와 답변 일치성 보장
+
+**작업 항목:**
+- [ ] M6-5-1: 검색 결과 추적 시스템 도입
+  - SearchContext 인터페이스 정의
+  - 검색된 ID 추적
+
+- [ ] M6-5-2: answer 도구에 출처 검증 로직 추가
+  - sources 필드가 실제 검색 결과와 매칭되는지 검증
+  - 검증 실패 시 경고 반환
+
+- [ ] M6-5-3: 인용 필수화 프롬프트 추가
+
+**수정 대상 파일:**
+- `web/src/lib/work-agent/tools.ts`
+- `web/src/lib/work-agent/types.ts`
+- `web/src/pages/api/chat.ts`
+
+---
+
 ### 구현 우선순위
 | 순위 | Phase | 작업 | 예상 효과 | 난이도 | 상태 |
 |------|-------|------|----------|--------|------|
 | 1 | Phase 1 | 검색 품질 강화 (Loop Control) | 검색 필수화, 정확도 향상 | 중간 | ✅ 완료 |
-| 2 | Phase 2 | API 응답 스키마 필터링 | 토큰 30-50% 절감 | 낮음 | 🔲 |
-| 3 | Phase 2 | TOON 포맷 적용 | 토큰 40-60% 추가 절감 | 중간 | 🔲 |
-| 4 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | 🔲 |
-| 5 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | 🔲 |
-| 6 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 |
-| 7 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
+| 2 | Phase 6-1 | 맥락 분리 프롬프트 | 레거시/차세대 혼동 80% 감소 | 낮음 | 🔲 |
+| 3 | Phase 6-2 | 불확실성 표현 강제 | 추측성 답변 제거 | 낮음 | 🔲 |
+| 4 | Phase 2 | API 응답 스키마 필터링 | 토큰 30-50% 절감 | 낮음 | 🔲 |
+| 5 | Phase 6-3 | 정보 완전성 확보 | Truncation 손실 방지 | 중간 | 🔲 |
+| 6 | Phase 2 | TOON 포맷 적용 | 토큰 40-60% 추가 절감 | 중간 | 🔲 |
+| 7 | Phase 6-4 | 시간 기반 맥락 | 시간순 정보 구분 | 낮음-중간 | 🔲 |
+| 8 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | 🔲 |
+| 9 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | 🔲 |
+| 10 | Phase 6-5 | 출처 검증 시스템 | 환각 대폭 감소 | 중간-높음 | 🔲 |
+| 11 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 |
+| 12 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
 
 ### 검증 방법
 1. **Phase 1 검증**: 채팅 테스트로 검색 없이 답변하는지 확인
-2. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
-3. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
-4. **단위 테스트**: `pnpm test`
+2. **Phase 6 검증**: 환각 테스트 시나리오
+   - "MaxGauge에서 React를 사용했나요?" → 정확히 "아니오, ExtJS"
+   - 레거시/차세대 혼동 없이 명확히 구분된 답변
+   - 검색 결과 없는 질문 → 추측 없이 "정보 없음"
+3. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
+4. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
+5. **단위 테스트**: `pnpm test`
