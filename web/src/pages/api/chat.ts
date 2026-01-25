@@ -2,8 +2,12 @@ export const prerender = false
 
 import { createVertex } from "@ai-sdk/google-vertex"
 import type { UIMessage } from "ai"
-import { convertToModelMessages, stepCountIs, streamText } from "ai"
+import { convertToModelMessages, hasToolCall, stepCountIs, streamText } from "ai"
 import { workAgentTools } from "@/lib/work-agent"
+
+type ToolName = keyof typeof workAgentTools
+const SEARCH_TOOLS: ToolName[] = ["searchNotion", "getNotionPage", "searchClickUpTasks", "searchClickUpDocs"]
+const ALL_TOOLS: ToolName[] = [...SEARCH_TOOLS, "answer"]
 
 const SYSTEM_PROMPT = `당신은 최기환의 포트폴리오 웹사이트에서 방문자의 질문에 답변하는 AI 어시스턴트입니다.
 
@@ -106,6 +110,14 @@ React, zustand, react-query, vite, vitest, playwright, TailwindCSS, TypeScript, 
 - 검색 결과가 0건이거나 관련성이 낮으면 반드시 재검색
 - "정보를 찾을 수 없다"고 답변하기 전에 최소 2-3가지 다른 접근 시도
 
+### answer 도구 사용 가이드
+- **반드시 검색 후 사용**: 최소 1회 이상 검색을 수행한 후에만 answer 도구 사용
+- **출처 명시**: 검색 결과에서 정보를 찾았다면 sources에 포함
+- **confidence 설정**:
+  - high: 검색 결과에서 직접 확인한 정보
+  - medium: 부분적 정보만 찾은 경우
+  - low: 이력서 기반 추론 또는 정보 없음
+
 ### 주의사항
 - 도구 호출 실패 시 에러 메시지에 따라 대응
 - retryable: true인 에러는 잠시 후 재시도`
@@ -148,7 +160,7 @@ export const POST = async ({ request }: { request: Request }) => {
       model: vertex("gemini-2.5-pro"),
       providerOptions: {
         google: {
-          thinking: {
+          thinkingConfig: {
             includeThoughts: true,
           },
         },
@@ -156,9 +168,43 @@ export const POST = async ({ request }: { request: Request }) => {
       system: SYSTEM_PROMPT,
       messages: modelMessages,
       tools: workAgentTools,
-      activeTools: ["searchNotion", "getNotionPage", "searchClickUpTasks", "searchClickUpDocs"],
-      stopWhen: stepCountIs(20),
-      toolChoice: "auto",
+
+      prepareStep: ({ stepNumber, steps }) => {
+        // Step 0: 검색 도구만 활성화, 필수 사용
+        if (stepNumber === 0) {
+          return {
+            activeTools: SEARCH_TOOLS,
+            toolChoice: "required" as const,
+          }
+        }
+
+        // 검색 도구가 호출되었는지 확인
+        const hasSearched = steps.some(step =>
+          step.toolCalls?.some(call =>
+            SEARCH_TOOLS.includes(call.toolName as ToolName)
+          )
+        )
+
+        // 검색 완료 시 answer 포함 모든 도구 활성화
+        if (hasSearched) {
+          return {
+            activeTools: ALL_TOOLS,
+            toolChoice: "auto" as const,
+          }
+        }
+
+        // 아직 검색 안 했으면 계속 검색 도구만
+        return {
+          activeTools: SEARCH_TOOLS,
+          toolChoice: "required" as const,
+        }
+      },
+
+      stopWhen: [
+        stepCountIs(15),
+        hasToolCall("answer"),
+      ],
+
       onStepFinish: ({ toolCalls, toolResults, finishReason, usage }) => {
         if (toolCalls.length > 0) {
           console.log(

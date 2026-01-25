@@ -63,8 +63,8 @@ function createErrorResponse(error: unknown): ToolErrorResponse {
   }
 }
 
-// 스키마 정의
-const searchNotionSchema = z.object({
+// 스키마 정의 (테스트용 export)
+export const searchNotionSchema = z.object({
   query: z.string().describe("검색할 키워드"),
   pageSize: z
     .number()
@@ -74,11 +74,11 @@ const searchNotionSchema = z.object({
     .describe("반환할 최대 페이지 수 (기본값: 10)"),
 })
 
-const getNotionPageSchema = z.object({
+export const getNotionPageSchema = z.object({
   pageId: z.string().describe("조회할 Notion 페이지 ID"),
 })
 
-const searchClickUpTasksSchema = z.object({
+export const searchClickUpTasksSchema = z.object({
   query: z
     .string()
     .optional()
@@ -93,11 +93,25 @@ const searchClickUpTasksSchema = z.object({
     .describe("완료된 태스크 포함 여부 (기본값: false)"),
 })
 
-const searchClickUpDocsSchema = z.object({
+export const searchClickUpDocsSchema = z.object({
   query: z
     .string()
     .optional()
     .describe("검색할 키워드 (문서 이름, 내용에서 검색)"),
+})
+
+export const answerSchema = z.object({
+  answer: z.string().describe("사용자 질문에 대한 최종 답변"),
+  sources: z
+    .array(
+      z.object({
+        type: z.enum(["notion", "clickup_task", "clickup_doc", "resume"]),
+        title: z.string(),
+        id: z.string().optional(),
+      })
+    )
+    .describe("답변에 사용된 정보 출처"),
+  confidence: z.enum(["high", "medium", "low"]).describe("답변 확신도"),
 })
 
 // Type definitions for inferred schemas
@@ -270,6 +284,24 @@ export const searchClickUpDocs = tool({
 })
 
 /**
+ * 최종 답변 도구
+ * execute 함수로 답변을 tool result로 반환
+ */
+export const answer = tool({
+  description:
+    "검색 완료 후 최종 답변을 제공합니다. 반드시 검색을 먼저 수행한 후 사용하세요.",
+  inputSchema: answerSchema,
+  execute: async (input) => {
+    // 구조화된 응답 반환 - 클라이언트에서 tool result로 수신
+    return {
+      answer: input.answer,
+      sources: input.sources,
+      confidence: input.confidence,
+    }
+  },
+})
+
+/**
  * Work Agent 도구 통합 export
  * chat.ts에서 사용
  */
@@ -278,4 +310,5 @@ export const workAgentTools = {
   getNotionPage,
   searchClickUpTasks,
   searchClickUpDocs,
+  answer,
 }

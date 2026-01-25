@@ -219,12 +219,14 @@ export async function searchClickUpTasks(
 
   // 쿼리가 있으면 클라이언트 사이드 필터링
   if (query) {
-    const lowerQuery = query.toLowerCase()
-    tasks = tasks.filter(
-      (task) =>
-        task.name.toLowerCase().includes(lowerQuery) ||
-        task.description?.toLowerCase().includes(lowerQuery)
-    )
+    // 검색어를 공백으로 분리하여 토큰화
+    const queryTokens = query.toLowerCase().split(/\s+/).filter(Boolean)
+
+    tasks = tasks.filter((task) => {
+      const searchText = `${task.name} ${task.description || ''}`.toLowerCase()
+      // 모든 토큰이 포함되어야 매칭 (AND 조건)
+      return queryTokens.every((token) => searchText.includes(token))
+    })
   }
 
   return {
@@ -250,8 +252,18 @@ export async function searchClickUpDocs(
     true // Use v3 API for Docs
   )
 
+  // 디버깅: 워크스페이스의 모든 creator ID 확인
+  const allCreatorIds = [...new Set((response.docs || []).map((doc) => doc.creator))]
+  console.log("[ClickUp Docs] Creator ID 목록:", {
+    configUserId: config.userId,
+    uniqueCreatorIds: allCreatorIds,
+    matchCount: (response.docs || []).filter((doc) => String(doc.creator) === config.userId).length,
+    totalDocs: (response.docs || []).length,
+  })
+
+  // 본인이 작성한 문서만 필터링 (V3 API에서 creator는 숫자 ID)
   let docs: ClickUpDoc[] = (response.docs || [])
-    .filter((doc) => doc.creator?.id?.toString() === config.userId)
+    .filter((doc) => String(doc.creator) === config.userId)
     .map((doc) => ({
       id: doc.id,
       name: doc.name,
@@ -259,9 +271,7 @@ export async function searchClickUpDocs(
       dateCreated: doc.date_created,
       dateUpdated: doc.date_updated,
       creator: {
-        id: doc.creator.id,
-        username: doc.creator.username,
-        email: doc.creator.email,
+        id: doc.creator,
       },
       workspaceId: config.workspaceId,
       parentId: doc.parent?.id,
@@ -269,12 +279,14 @@ export async function searchClickUpDocs(
 
   // 쿼리가 있으면 클라이언트 사이드 필터링
   if (query) {
-    const lowerQuery = query.toLowerCase()
-    docs = docs.filter(
-      (doc) =>
-        doc.name.toLowerCase().includes(lowerQuery) ||
-        doc.content?.toLowerCase().includes(lowerQuery)
-    )
+    // 검색어를 공백으로 분리하여 토큰화
+    const queryTokens = query.toLowerCase().split(/\s+/).filter(Boolean)
+
+    docs = docs.filter((doc) => {
+      const searchText = `${doc.name} ${doc.content || ''}`.toLowerCase()
+      // 모든 토큰이 포함되어야 매칭 (AND 조건)
+      return queryTokens.every((token) => searchText.includes(token))
+    })
   }
 
   return {
@@ -345,11 +357,7 @@ interface ClickUpApiDocsResponse {
     content?: string
     date_created: string
     date_updated: string
-    creator: {
-      id: number
-      username: string
-      email: string
-    }
+    creator: number // V3 API는 creator ID를 숫자로 직접 반환
     parent?: {
       id: string
     }

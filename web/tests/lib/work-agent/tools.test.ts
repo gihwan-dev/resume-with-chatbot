@@ -18,8 +18,14 @@ vi.mock("../../../src/lib/work-agent/clickup.server", () => ({
 }))
 
 // 모킹된 함수 import
-import { searchNotionPages, getNotionPageContent } from "../../../src/lib/work-agent/notion.server"
-import { searchClickUpTasks as searchClickUpTasksApi, searchClickUpDocs as searchClickUpDocsApi } from "../../../src/lib/work-agent/clickup.server"
+import {
+  searchNotionPages,
+  getNotionPageContent,
+} from "../../../src/lib/work-agent/notion.server"
+import {
+  searchClickUpTasks as searchClickUpTasksApi,
+  searchClickUpDocs as searchClickUpDocsApi,
+} from "../../../src/lib/work-agent/clickup.server"
 
 // 테스트 대상 import
 import {
@@ -27,6 +33,8 @@ import {
   getNotionPage,
   searchClickUpTasks,
   searchClickUpDocs,
+  answer,
+  answerSchema,
 } from "../../../src/lib/work-agent/tools"
 
 // 타입 캐스팅
@@ -34,6 +42,13 @@ const mockSearchNotionPages = searchNotionPages as ReturnType<typeof vi.fn>
 const mockGetNotionPageContent = getNotionPageContent as ReturnType<typeof vi.fn>
 const mockSearchClickUpTasks = searchClickUpTasksApi as ReturnType<typeof vi.fn>
 const mockSearchClickUpDocs = searchClickUpDocsApi as ReturnType<typeof vi.fn>
+
+// 테스트용 컨텍스트
+const testContext = {
+  toolCallId: "test-call",
+  messages: [],
+  abortSignal: new AbortController().signal,
+}
 
 describe("Work Agent Tools", () => {
   beforeEach(() => {
@@ -67,9 +82,9 @@ describe("Work Agent Tools", () => {
         hasMore: false,
       })
 
-      const result = await searchNotion.execute(
+      const result = await searchNotion.execute!(
         { query: "테스트" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -104,9 +119,9 @@ describe("Work Agent Tools", () => {
         new WorkAgentError("Rate limit exceeded", "RATE_LIMIT", 429)
       )
 
-      const result = await searchNotion.execute(
+      const result = await searchNotion.execute!(
         { query: "테스트" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -124,9 +139,9 @@ describe("Work Agent Tools", () => {
         new WorkAgentError("Unauthorized", "UNAUTHORIZED", 401)
       )
 
-      const result = await searchNotion.execute(
+      const result = await searchNotion.execute!(
         { query: "테스트" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -170,9 +185,9 @@ describe("Work Agent Tools", () => {
         ],
       })
 
-      const result = await getNotionPage.execute(
+      const result = await getNotionPage.execute!(
         { pageId: "page-1" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -219,15 +234,13 @@ describe("Work Agent Tools", () => {
         ],
       })
 
-      const result = await getNotionPage.execute(
+      const result = (await getNotionPage.execute!(
         { pageId: "page-1" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
-      )
+        testContext
+      )) as { success: true; data: { content: string } }
 
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.content).toBe("토글 블록\n  중첩된 내용")
-      }
+      expect(result.data.content).toBe("토글 블록\n  중첩된 내용")
     })
 
     it("에러: NOT_FOUND", async () => {
@@ -235,9 +248,9 @@ describe("Work Agent Tools", () => {
         new WorkAgentError("Page not found", "NOT_FOUND", 404)
       )
 
-      const result = await getNotionPage.execute(
+      const result = await getNotionPage.execute!(
         { pageId: "non-existent" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -275,9 +288,9 @@ describe("Work Agent Tools", () => {
         lastPage: true,
       })
 
-      const result = await searchClickUpTasks.execute(
-        { query: "버그", statuses: ["in progress"] },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+      const result = await searchClickUpTasks.execute!(
+        { query: "버그", statuses: "in progress" },
+        testContext
       )
 
       expect(result).toEqual({
@@ -310,10 +323,10 @@ describe("Work Agent Tools", () => {
         lastPage: true,
       })
 
-      const result = await searchClickUpTasks.execute(
+      const result = (await searchClickUpTasks.execute!(
         {},
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
-      )
+        testContext
+      )) as { success: true }
 
       expect(result.success).toBe(true)
       expect(mockSearchClickUpTasks).toHaveBeenCalledWith({
@@ -328,9 +341,9 @@ describe("Work Agent Tools", () => {
         new WorkAgentError("ClickUp API error", "CLICKUP_API_ERROR", 500)
       )
 
-      const result = await searchClickUpTasks.execute(
+      const result = await searchClickUpTasks.execute!(
         { query: "테스트" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -364,9 +377,9 @@ describe("Work Agent Tools", () => {
         hasMore: false,
       })
 
-      const result = await searchClickUpDocs.execute(
+      const result = await searchClickUpDocs.execute!(
         { query: "API" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -405,16 +418,14 @@ describe("Work Agent Tools", () => {
         hasMore: false,
       })
 
-      const result = await searchClickUpDocs.execute(
+      const result = (await searchClickUpDocs.execute!(
         { query: "문서" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
-      )
+        testContext
+      )) as { success: true; data: { docs: { content?: string }[] } }
 
       expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.docs[0].content).toBe("a".repeat(500) + "...")
-        expect(result.data.docs[0].content?.length).toBe(503) // 500 + "..."
-      }
+      expect(result.data.docs[0].content).toBe("a".repeat(500) + "...")
+      expect(result.data.docs[0].content?.length).toBe(503) // 500 + "..."
     })
 
     it("에러: INVALID_CONFIG", async () => {
@@ -422,9 +433,9 @@ describe("Work Agent Tools", () => {
         new WorkAgentError("Invalid configuration", "INVALID_CONFIG")
       )
 
-      const result = await searchClickUpDocs.execute(
+      const result = await searchClickUpDocs.execute!(
         { query: "테스트" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -445,9 +456,9 @@ describe("Work Agent Tools", () => {
     it("일반 Error 객체 처리", async () => {
       mockSearchNotionPages.mockRejectedValue(new Error("Network error"))
 
-      const result = await searchNotion.execute(
+      const result = await searchNotion.execute!(
         { query: "테스트" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -463,9 +474,9 @@ describe("Work Agent Tools", () => {
     it("unknown 에러 처리", async () => {
       mockSearchNotionPages.mockRejectedValue("string error")
 
-      const result = await searchNotion.execute(
+      const result = await searchNotion.execute!(
         { query: "테스트" },
-        { toolCallId: "test-call", messages: [], abortSignal: new AbortController().signal }
+        testContext
       )
 
       expect(result).toEqual({
@@ -476,6 +487,65 @@ describe("Work Agent Tools", () => {
           retryable: false,
         },
       })
+    })
+  })
+
+  // ============================================
+  // answer Tool Tests
+  // ============================================
+  describe("answer", () => {
+    it("스키마 검증: 유효한 입력 파싱", () => {
+      const validInput = {
+        answer: "테스트 답변입니다.",
+        sources: [{ type: "notion", title: "테스트 페이지", id: "page-1" }],
+        confidence: "high",
+      }
+      const result = answerSchema.safeParse(validInput)
+      expect(result.success).toBe(true)
+    })
+
+    it("스키마 검증: id 없는 source도 유효", () => {
+      const validInput = {
+        answer: "테스트 답변입니다.",
+        sources: [{ type: "resume", title: "이력서 정보" }],
+        confidence: "medium",
+      }
+      const result = answerSchema.safeParse(validInput)
+      expect(result.success).toBe(true)
+    })
+
+    it("스키마 검증: 잘못된 confidence 거부", () => {
+      const invalidInput = {
+        answer: "테스트",
+        sources: [],
+        confidence: "invalid",
+      }
+      const result = answerSchema.safeParse(invalidInput)
+      expect(result.success).toBe(false)
+    })
+
+    it("스키마 검증: 잘못된 source type 거부", () => {
+      const invalidInput = {
+        answer: "테스트",
+        sources: [{ type: "invalid_type", title: "테스트" }],
+        confidence: "high",
+      }
+      const result = answerSchema.safeParse(invalidInput)
+      expect(result.success).toBe(false)
+    })
+
+    it("execute 함수 존재 확인", () => {
+      expect(answer.execute).toBeDefined()
+    })
+
+    it("execute 함수가 입력을 그대로 반환", async () => {
+      const input = {
+        answer: "테스트 답변",
+        sources: [{ type: "resume" as const, title: "이력서" }],
+        confidence: "high" as const,
+      }
+      const result = await answer.execute!(input, testContext)
+      expect(result).toEqual(input)
     })
   })
 })

@@ -103,8 +103,6 @@ export interface ClickUpDoc {
   dateUpdated: string
   creator: {
     id: number
-    username: string
-    email: string
   }
   workspaceId: string
   parentId?: string

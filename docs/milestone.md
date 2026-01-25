@@ -185,9 +185,9 @@ CLICKUP_USER_ID       ✅ 설정됨
 
 ---
 
-## Next: 에이전트 최적화 (Agent Optimization) 🔲
+## Current: 에이전트 최적화 (Agent Optimization) 🔄
 > **Goal:** 검색 품질 강화 및 토큰/비용 최적화
-> **Status:** 계획 수립 완료 (2026-01-24)
+> **Status:** Phase 1 완료 (2026-01-24)
 
 ### 배경
 현재 에이전트의 두 가지 문제:
@@ -202,8 +202,9 @@ CLICKUP_USER_ID       ✅ 설정됨
 
 ---
 
-### Phase 1: 검색 품질 강화 (Loop Control) 🔲 ← **우선순위 1**
+### Phase 1: 검색 품질 강화 (Loop Control) ✅
 > `answer` 도구 + `prepareStep` 패턴으로 검색 필수화
+> **Status:** 구현 완료 (2026-01-24)
 
 **핵심 전략:**
 1. `answer` 도구를 `execute` 없이 정의 → 호출 시 에이전트 루프 종료
@@ -212,36 +213,49 @@ CLICKUP_USER_ID       ✅ 설정됨
 
 **동작 흐름:**
 ```
-User 질문 → Step 0-1: 검색 강제 → Step 2+: answer 활성화 → 루프 종료
+User 질문 → Step 0: 검색 도구만 (toolChoice: required)
+          → Step 1+: 검색 완료 시 answer 활성화 (toolChoice: auto)
+          → answer 호출 시 루프 종료
 ```
 
 **작업 항목:**
-- [ ] M1-1: `answer` 도구 정의 (execute 없음)
+- [x] M1-1: `answer` 도구 정의 (execute 없음)
   ```typescript
   export const answer = tool({
     description: "검색 완료 후 최종 답변을 제공합니다.",
     inputSchema: z.object({
       answer: z.string(),
-      searchSummary: z.string().optional(),
+      sources: z.array(z.object({
+        type: z.enum(["notion", "clickup_task", "clickup_doc", "resume"]),
+        title: z.string(),
+        id: z.string().optional(),
+      })),
       confidence: z.enum(["high", "medium", "low"]),
     }),
     // execute 없음 - 호출 시 루프 종료
   })
   ```
-- [ ] M1-2: `prepareStep` 콜백 구현
-- [ ] M1-3: 커스텀 `StopCondition` 정의
-- [ ] M1-4: 시스템 프롬프트 업데이트
-- [ ] M1-5: 테스트 추가
+- [x] M1-2: `prepareStep` 콜백 구현
+- [x] M1-3: `stopWhen` 조건 정의 (`hasToolCall("answer")` + `stepCountIs(15)`)
+- [x] M1-4: 시스템 프롬프트 업데이트 (answer 도구 사용 가이드 추가)
+- [x] M1-5: 테스트 추가 (answer 도구 스키마 검증 5개 테스트)
 
-**수정 대상 파일:**
-- `web/src/lib/work-agent/tools.ts` - answer 도구 추가
-- `web/src/lib/work-agent/index.ts` - export 추가
-- `web/src/pages/api/chat.ts` - prepareStep, StopCondition, 프롬프트
-- `web/tests/lib/work-agent/tools.test.ts` - 테스트
+**수정된 파일:**
+- `web/src/lib/work-agent/tools.ts` - answer 도구 추가, answerSchema 정의
+- `web/src/lib/work-agent/index.ts` - answer export 추가
+- `web/src/pages/api/chat.ts` - prepareStep, stopWhen, 프롬프트 업데이트
+- `web/tests/lib/work-agent/tools.test.ts` - answer 도구 테스트 5개 추가
+
+**Note for Next Phase:**
+- `hasToolCall` 유틸리티는 `ai` 패키지에서 import하여 사용
+- `prepareStep`의 반환 타입은 `activeTools`가 tool name literal의 배열이어야 함 (`ToolName[]`)
+- `as const` 대신 명시적 타입 `ToolName[]`을 사용해야 타입 오류 방지
+- Step 0에서 `toolChoice: "required"`로 검색 강제, 검색 완료 후 `toolChoice: "auto"`로 전환
+- maxSteps 20 → 15로 조정 (stopWhen 배열 사용)
 
 ---
 
-### Phase 2: 토큰 최적화 🔲
+### Phase 2: 토큰 최적화 🔲 ← **다음 우선순위**
 > API 응답 필터링 및 TOON 포맷 적용
 
 **작업 항목:**
@@ -258,6 +272,12 @@ User 질문 → Step 0-1: 검색 강제 → Step 2+: answer 활성화 → 루프
 - `web/src/lib/work-agent/notion.server.ts`
 - `web/src/lib/work-agent/tools.ts`
 - `web/src/lib/work-agent/toon-encoder.ts` (신규)
+
+**Note for Phase 2:**
+- Phase 1에서 answer 도구의 sources 필드에 검색 결과 출처를 구조화하여 전달하도록 구현됨
+- 이 sources 데이터를 활용하여 토큰 최적화 시 어떤 필드가 실제로 답변에 사용되는지 분석 가능
+- answer 도구의 confidence 레벨 (high/medium/low)로 검색 품질 측정 가능
+- `onStepFinish` 콜백에서 이미 도구 호출 로깅 중 - 토큰 사용량 분석에 활용 가능
 
 ---
 
@@ -313,15 +333,15 @@ User 질문 → Step 0-1: 검색 강제 → Step 2+: answer 활성화 → 루프
 ---
 
 ### 구현 우선순위
-| 순위 | Phase | 작업 | 예상 효과 | 난이도 |
-|------|-------|------|----------|--------|
-| 1 | Phase 1 | 검색 품질 강화 (Loop Control) | 검색 필수화, 정확도 향상 | 중간 |
-| 2 | Phase 2 | API 응답 스키마 필터링 | 토큰 30-50% 절감 | 낮음 |
-| 3 | Phase 2 | TOON 포맷 적용 | 토큰 40-60% 추가 절감 | 중간 |
-| 4 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 |
-| 5 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 |
-| 6 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 |
-| 7 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 |
+| 순위 | Phase | 작업 | 예상 효과 | 난이도 | 상태 |
+|------|-------|------|----------|--------|------|
+| 1 | Phase 1 | 검색 품질 강화 (Loop Control) | 검색 필수화, 정확도 향상 | 중간 | ✅ 완료 |
+| 2 | Phase 2 | API 응답 스키마 필터링 | 토큰 30-50% 절감 | 낮음 | 🔲 |
+| 3 | Phase 2 | TOON 포맷 적용 | 토큰 40-60% 추가 절감 | 중간 | 🔲 |
+| 4 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | 🔲 |
+| 5 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | 🔲 |
+| 6 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 |
+| 7 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
 
 ### 검증 방법
 1. **Phase 1 검증**: 채팅 테스트로 검색 없이 답변하는지 확인

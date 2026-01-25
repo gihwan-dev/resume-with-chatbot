@@ -36,5 +36,6 @@ export {
   getNotionPage,
   searchClickUpTasks as searchClickUpTasksTool,
   searchClickUpDocs as searchClickUpDocsTool,
+  answer,
   workAgentTools,
 } from "./tools"
