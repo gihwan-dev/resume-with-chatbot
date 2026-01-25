@@ -18,10 +18,19 @@ export {
   type ClickUpDocsResult,
   type ClickUpTaskSearchOptions,
   type ClickUpDocSearchOptions,
+  // Slim types (토큰 최적화)
+  type ClickUpTaskSlim,
+  type ClickUpDocSlim,
+  type NotionPageSlim,
+  type NotionBlockSlim,
 } from "./types"
 
 // Notion Client
-export { searchNotionPages, getNotionPageContent } from "./notion.server"
+export {
+  searchNotionPages,
+  getNotionPageContent,
+  type NotionPageContentSlim,
+} from "./notion.server"
 
 // ClickUp Client
 export {
@@ -39,3 +48,11 @@ export {
   answer,
   workAgentTools,
 } from "./tools"
+
+// TOON Encoder
+export {
+  encodeArrayResult,
+  createFormatHint,
+  type FormatType,
+  type EncodedResult,
+} from "./toon-encoder"

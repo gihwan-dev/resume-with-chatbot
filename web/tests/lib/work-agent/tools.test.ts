@@ -59,7 +59,7 @@ describe("Work Agent Tools", () => {
   // searchNotion Tests
   // ============================================
   describe("searchNotion", () => {
-    it("성공: 검색 결과 반환", async () => {
+    it("성공: 검색 결과 반환 (10개 미만 JSON 포맷)", async () => {
       mockSearchNotionPages.mockResolvedValue({
         pages: [
           {
@@ -90,6 +90,8 @@ describe("Work Agent Tools", () => {
       expect(result).toEqual({
         success: true,
         data: {
+          format: "json",
+          formatHint: undefined,
           pages: [
             {
               id: "page-1",
@@ -112,6 +114,33 @@ describe("Work Agent Tools", () => {
         query: "테스트",
         pageSize: 10,
       })
+    })
+
+    it("성공: 10개 이상 결과 TOON 포맷 적용", async () => {
+      const pages = Array.from({ length: 12 }, (_, i) => ({
+        id: `page-${i + 1}`,
+        title: `페이지 ${i + 1}`,
+        url: `https://notion.so/page-${i + 1}`,
+        createdTime: "2024-01-01T00:00:00.000Z",
+        lastEditedTime: "2024-01-02T00:00:00.000Z",
+        parentType: "workspace" as const,
+      }))
+
+      mockSearchNotionPages.mockResolvedValue({
+        pages,
+        hasMore: true,
+      })
+
+      const result = (await searchNotion.execute!(
+        { query: "테스트" },
+        testContext
+      )) as { success: true; data: { format: string; formatHint: string } }
+
+      expect(result.success).toBe(true)
+      expect(result.data.format).toBe("toon")
+      expect(result.data.formatHint).toBe(
+        "Data in TOON format. Parse comma-separated values per row."
+      )
     })
 
     it("에러: RATE_LIMIT → retryable: true", async () => {
@@ -159,28 +188,22 @@ describe("Work Agent Tools", () => {
   // getNotionPage Tests
   // ============================================
   describe("getNotionPage", () => {
-    it("성공: 페이지 콘텐츠 반환", async () => {
+    it("성공: 페이지 콘텐츠 반환 (createdTime 제외)", async () => {
       mockGetNotionPageContent.mockResolvedValue({
         page: {
           id: "page-1",
           title: "테스트 페이지",
           url: "https://notion.so/page-1",
-          createdTime: "2024-01-01T00:00:00.000Z",
           lastEditedTime: "2024-01-02T00:00:00.000Z",
-          parentType: "workspace",
         },
         blocks: [
           {
-            id: "block-1",
             type: "paragraph",
             content: "첫 번째 문단입니다.",
-            hasChildren: false,
           },
           {
-            id: "block-2",
             type: "paragraph",
             content: "두 번째 문단입니다.",
-            hasChildren: false,
           },
         ],
       })
@@ -197,7 +220,6 @@ describe("Work Agent Tools", () => {
             id: "page-1",
             title: "테스트 페이지",
             url: "https://notion.so/page-1",
-            createdTime: "2024-01-01T00:00:00.000Z",
             lastEditedTime: "2024-01-02T00:00:00.000Z",
           },
           content: "첫 번째 문단입니다.\n두 번째 문단입니다.",
@@ -212,22 +234,16 @@ describe("Work Agent Tools", () => {
           id: "page-1",
           title: "중첩 테스트",
           url: "https://notion.so/page-1",
-          createdTime: "2024-01-01T00:00:00.000Z",
           lastEditedTime: "2024-01-02T00:00:00.000Z",
-          parentType: "workspace",
         },
         blocks: [
           {
-            id: "block-1",
             type: "toggle",
             content: "토글 블록",
-            hasChildren: true,
             children: [
               {
-                id: "block-1-1",
                 type: "paragraph",
                 content: "중첩된 내용",
-                hasChildren: false,
               },
             ],
           },
@@ -268,7 +284,7 @@ describe("Work Agent Tools", () => {
   // searchClickUpTasks Tests
   // ============================================
   describe("searchClickUpTasks", () => {
-    it("성공: 태스크 목록 반환", async () => {
+    it("성공: 태스크 목록 반환 (10개 미만 JSON 포맷)", async () => {
       mockSearchClickUpTasks.mockResolvedValue({
         tasks: [
           {
@@ -296,6 +312,8 @@ describe("Work Agent Tools", () => {
       expect(result).toEqual({
         success: true,
         data: {
+          format: "json",
+          formatHint: undefined,
           tasks: [
             {
               id: "task-1",
@@ -317,6 +335,38 @@ describe("Work Agent Tools", () => {
       })
     })
 
+    it("성공: 10개 이상 결과 TOON 포맷 적용", async () => {
+      const tasks = Array.from({ length: 15 }, (_, i) => ({
+        id: `task-${i + 1}`,
+        name: `태스크 ${i + 1}`,
+        description: `설명 ${i + 1}`,
+        status: { status: "in progress", color: "#4194f6" },
+        priority: { priority: "normal", color: "#ccc" },
+        dueDate: "2024-01-15",
+        url: `https://app.clickup.com/t/task-${i + 1}`,
+        listName: "Sprint 1",
+        folderName: "Backend",
+        spaceName: "Development",
+        tags: [],
+      }))
+
+      mockSearchClickUpTasks.mockResolvedValue({
+        tasks,
+        lastPage: false,
+      })
+
+      const result = (await searchClickUpTasks.execute!(
+        { query: "태스크" },
+        testContext
+      )) as { success: true; data: { format: string; formatHint: string } }
+
+      expect(result.success).toBe(true)
+      expect(result.data.format).toBe("toon")
+      expect(result.data.formatHint).toBe(
+        "Data in TOON format. Parse comma-separated values per row."
+      )
+    })
+
     it("성공: 빈 파라미터로 호출", async () => {
       mockSearchClickUpTasks.mockResolvedValue({
         tasks: [],
@@ -326,9 +376,10 @@ describe("Work Agent Tools", () => {
       const result = (await searchClickUpTasks.execute!(
         {},
         testContext
-      )) as { success: true }
+      )) as { success: true; data: { format: string } }
 
       expect(result.success).toBe(true)
+      expect(result.data.format).toBe("json")
       expect(mockSearchClickUpTasks).toHaveBeenCalledWith({
         query: undefined,
         statuses: undefined,
@@ -361,7 +412,7 @@ describe("Work Agent Tools", () => {
   // searchClickUpDocs Tests
   // ============================================
   describe("searchClickUpDocs", () => {
-    it("성공: 문서 목록 반환", async () => {
+    it("성공: 문서 목록 반환 (dateCreated/dateUpdated 제거)", async () => {
       mockSearchClickUpDocs.mockResolvedValue({
         docs: [
           {
@@ -385,13 +436,13 @@ describe("Work Agent Tools", () => {
       expect(result).toEqual({
         success: true,
         data: {
+          format: "json",
+          formatHint: undefined,
           docs: [
             {
               id: "doc-1",
               name: "API 설계 문서",
               content: "REST API 엔드포인트 설계",
-              dateCreated: "2024-01-01T00:00:00.000Z",
-              dateUpdated: "2024-01-02T00:00:00.000Z",
             },
           ],
           totalFound: 1,
@@ -400,7 +451,7 @@ describe("Work Agent Tools", () => {
       })
     })
 
-    it("성공: content 500자 truncate 확인", async () => {
+    it("성공: content 전체 전달 (truncate 제거)", async () => {
       const longContent = "a".repeat(600)
 
       mockSearchClickUpDocs.mockResolvedValue({
@@ -424,8 +475,37 @@ describe("Work Agent Tools", () => {
       )) as { success: true; data: { docs: { content?: string }[] } }
 
       expect(result.success).toBe(true)
-      expect(result.data.docs[0].content).toBe("a".repeat(500) + "...")
-      expect(result.data.docs[0].content?.length).toBe(503) // 500 + "..."
+      // 전체 내용 전달 (truncate 제거됨)
+      expect(result.data.docs[0].content).toBe(longContent)
+      expect(result.data.docs[0].content?.length).toBe(600)
+    })
+
+    it("성공: 10개 이상 결과 TOON 포맷 적용", async () => {
+      const docs = Array.from({ length: 10 }, (_, i) => ({
+        id: `doc-${i + 1}`,
+        name: `문서 ${i + 1}`,
+        content: `내용 ${i + 1}`,
+        dateCreated: "2024-01-01T00:00:00.000Z",
+        dateUpdated: "2024-01-02T00:00:00.000Z",
+        creator: { id: 1, username: "user1", email: "user1@example.com" },
+        workspaceId: "workspace-1",
+      }))
+
+      mockSearchClickUpDocs.mockResolvedValue({
+        docs,
+        hasMore: true,
+      })
+
+      const result = (await searchClickUpDocs.execute!(
+        { query: "문서" },
+        testContext
+      )) as { success: true; data: { format: string; formatHint: string } }
+
+      expect(result.success).toBe(true)
+      expect(result.data.format).toBe("toon")
+      expect(result.data.formatHint).toBe(
+        "Data in TOON format. Parse comma-separated values per row."
+      )
     })
 
     it("에러: INVALID_CONFIG", async () => {

@@ -255,29 +255,49 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
 
 ---
 
-### Phase 2: 토큰 최적화 🔲 ← **다음 우선순위**
+### Phase 2: 토큰 최적화 ✅
 > API 응답 필터링 및 TOON 포맷 적용
+> **Status:** 구현 완료 (2026-01-25)
 
 **작업 항목:**
-- [ ] M2-1: API 응답 스키마 필터링
-  - ClickUp: `ClickUpTaskSlim` 타입 도입 (필수 필드만)
-  - Notion: 불필요한 블록 타입 스킵 (image, video, divider 등)
-  - 예상 효과: 토큰 30-50% 절감
-- [ ] M2-2: TOON 포맷 적용
-  - 10개 이상 결과 시 TOON 포맷으로 자동 전환
-  - 예상 효과: 대량 데이터에서 추가 40-60% 절감
+- [x] M2-1: API 응답 스키마 필터링
+  - ClickUp: `ClickUpTaskSlim`, `ClickUpDocSlim` 타입 도입
+  - Notion: `NotionPageSlim`, `NotionBlockSlim` 타입 도입
+  - Notion 블록: image, video, divider, breadcrumb, table_of_contents 스킵
+  - MAX_BLOCK_DEPTH: 3 → 2 축소
+  - 불필요 필드 제거: createdTime, parentType, parentId, dateCreated, dateUpdated, color 등
+- [x] M2-2: TOON 포맷 적용
+  - `@toon-format/toon` 패키지 설치
+  - `toon-encoder.ts` 모듈 생성 (encodeArrayResult, createFormatHint)
+  - 10개 이상 결과 시 TOON 포맷 자동 적용
+  - 응답 구조: `{ format: "json" | "toon", formatHint, data, ... }`
 
-**수정 대상 파일:**
-- `web/src/lib/work-agent/clickup.server.ts`
-- `web/src/lib/work-agent/notion.server.ts`
-- `web/src/lib/work-agent/tools.ts`
-- `web/src/lib/work-agent/toon-encoder.ts` (신규)
+**측정 결과 (2026-01-25):**
+| 시나리오 | Before | After | 절감율 |
+|----------|--------|-------|--------|
+| 적은 결과 (5개) - JSON | 8,198 bytes | 5,258 bytes | **36%** |
+| 많은 결과 (15개) - TOON | 24,636 bytes | 15,124 bytes | **39%** |
+| Notion 페이지 (30블록) | 4,807 bytes | 2,912 bytes | **39%** |
+| **전체 합계** | 37,641 bytes (~12,547 tokens) | 23,294 bytes (~7,765 tokens) | **38%** |
 
-**Note for Phase 2:**
-- Phase 1에서 answer 도구의 sources 필드에 검색 결과 출처를 구조화하여 전달하도록 구현됨
-- 이 sources 데이터를 활용하여 토큰 최적화 시 어떤 필드가 실제로 답변에 사용되는지 분석 가능
-- answer 도구의 confidence 레벨 (high/medium/low)로 검색 품질 측정 가능
-- `onStepFinish` 콜백에서 이미 도구 호출 로깅 중 - 토큰 사용량 분석에 활용 가능
+**수정된 파일:**
+- `web/src/lib/work-agent/types.ts` - Slim 타입 4개 추가
+- `web/src/lib/work-agent/notion.server.ts` - MAX_BLOCK_DEPTH 축소, extractBlockContent 개선, fetchAllBlocksSlim, NotionPageContentSlim
+- `web/src/lib/work-agent/clickup.server.ts` - (변경 없음, tools.ts에서 Slim 매핑)
+- `web/src/lib/work-agent/tools.ts` - TOON 인코딩 적용, 불필요 필드 제거
+- `web/src/lib/work-agent/toon-encoder.ts` - 신규 생성
+- `web/src/lib/work-agent/index.ts` - Slim 타입 및 toon-encoder export 추가
+- `web/tests/lib/work-agent/toon-encoder.test.ts` - 신규 (7개 테스트)
+- `web/tests/lib/work-agent/toon-integration.test.ts` - 신규 (6개 통합 테스트)
+- `web/tests/lib/work-agent/tools.test.ts` - 응답 구조 변경에 따른 수정
+- `web/scripts/measure-token-savings.ts` - 측정 스크립트
+
+**Note for Next Phases:**
+- TOON 포맷 임계값은 `TOON_THRESHOLD = 10`으로 설정됨 (toon-encoder.ts)
+- searchClickUpDocs에서 content truncate 제거됨 - 전체 내용 전달 (TOON 압축으로 상쇄)
+- `import.meta.env` 사용으로 인해 직접 스크립트 실행 어려움 - vitest 환경에서 테스트 필요
+- 측정 스크립트: `npx tsx scripts/measure-token-savings.ts`
+- 전체 테스트: `pnpm test` (50개 테스트 통과)
 
 ---
 
@@ -467,24 +487,44 @@ User 질문 → Step 0: 검색 도구만 (toolChoice: required)
 | 순위 | Phase | 작업 | 예상 효과 | 난이도 | 상태 |
 |------|-------|------|----------|--------|------|
 | 1 | Phase 1 | 검색 품질 강화 (Loop Control) | 검색 필수화, 정확도 향상 | 중간 | ✅ 완료 |
-| 2 | Phase 6-1 | 맥락 분리 프롬프트 | 레거시/차세대 혼동 80% 감소 | 낮음 | 🔲 |
-| 3 | Phase 6-2 | 불확실성 표현 강제 | 추측성 답변 제거 | 낮음 | 🔲 |
-| 4 | Phase 2 | API 응답 스키마 필터링 | 토큰 30-50% 절감 | 낮음 | 🔲 |
+| 2 | Phase 2 | 토큰 최적화 (Slim 타입 + TOON) | 토큰 38% 절감 | 낮음-중간 | ✅ 완료 |
+| 3 | Phase 6-1 | 맥락 분리 프롬프트 | 레거시/차세대 혼동 80% 감소 | 낮음 | 🔲 ← **다음** |
+| 4 | Phase 6-2 | 불확실성 표현 강제 | 추측성 답변 제거 | 낮음 | 🔲 |
 | 5 | Phase 6-3 | 정보 완전성 확보 | Truncation 손실 방지 | 중간 | 🔲 |
-| 6 | Phase 2 | TOON 포맷 적용 | 토큰 40-60% 추가 절감 | 중간 | 🔲 |
-| 7 | Phase 6-4 | 시간 기반 맥락 | 시간순 정보 구분 | 낮음-중간 | 🔲 |
-| 8 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | 🔲 |
-| 9 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | 🔲 |
-| 10 | Phase 6-5 | 출처 검증 시스템 | 환각 대폭 감소 | 중간-높음 | 🔲 |
-| 11 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 |
-| 12 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
+| 6 | Phase 6-4 | 시간 기반 맥락 | 시간순 정보 구분 | 낮음-중간 | 🔲 |
+| 7 | Phase 3 | ReAct + Reflexion 패턴 | 정확도/신뢰성 향상 | 중간 | 🔲 |
+| 8 | Phase 3 | 동적 시스템 프롬프트 | 맥락 적합성 향상 | 낮음 | 🔲 |
+| 9 | Phase 6-5 | 출처 검증 시스템 | 환각 대폭 감소 | 중간-높음 | 🔲 |
+| 10 | Phase 4 | Thinking Budget 최적화 | 비용/속도 최적화 | 중간 | 🔲 |
+| 11 | Phase 5 | 평가 프레임워크 | 품질 측정 자동화 | 높음 | 🔲 |
 
 ### 검증 방법
-1. **Phase 1 검증**: 채팅 테스트로 검색 없이 답변하는지 확인
-2. **Phase 6 검증**: 환각 테스트 시나리오
+1. **Phase 1 검증**: 채팅 테스트로 검색 없이 답변하는지 확인 ✅
+2. **Phase 2 검증**: 토큰 절감 측정 ✅
+   - `npx tsx scripts/measure-token-savings.ts` 실행
+   - 결과: 38% 토큰 절감 확인
+3. **Phase 6 검증**: 환각 테스트 시나리오
    - "MaxGauge에서 React를 사용했나요?" → 정확히 "아니오, ExtJS"
    - 레거시/차세대 혼동 없이 명확히 구분된 답변
    - 검색 결과 없는 질문 → 추측 없이 "정보 없음"
-3. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
-4. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
-5. **단위 테스트**: `pnpm test`
+4. **토큰 사용량 비교**: 최적화 전/후 동일 질문에 대한 토큰 측정
+5. **응답 품질 테스트**: 골든 데이터셋으로 품질 점수 비교
+6. **단위 테스트**: `pnpm test` (50개 테스트 통과)
+
+---
+
+### 다음 페이즈 작업 참고사항
+
+#### Phase 6 (환각 방지) 구현 시 참고
+1. **Slim 타입 활용**: 이미 spaceName, folderName이 ClickUpTaskSlim에 포함됨 - 맥락 구분에 활용 가능
+2. **TOON 포맷 주의**: 10개 이상 결과는 TOON 문자열로 반환됨 - 파싱 로직 필요 시 고려
+3. **content 전체 전달**: searchClickUpDocs에서 truncate 제거됨 - 정보 완전성 이미 일부 확보
+4. **블록 스킵 로직**: image, video 등 이미 스킵 중 - Phase 6-3 작업량 감소
+
+#### Phase 3 (추론 품질) 구현 시 참고
+1. **응답 구조 변경됨**: tools.ts의 응답에 format, formatHint 필드 추가됨
+2. **prepareStep 활용**: Phase 1에서 이미 구현됨 - 확장 가능
+
+#### Phase 4 (비용 최적화) 구현 시 참고
+1. **측정 스크립트 존재**: `scripts/measure-token-savings.ts`로 before/after 비교 가능
+2. **토큰 추정식**: ~3 bytes = 1 token (영어/한글 평균)

@@ -129,3 +129,37 @@ export interface ClickUpDocSearchOptions {
   query?: string
   page?: number
 }
+
+// LLM 전달용 경량 타입 (토큰 최적화)
+export interface ClickUpTaskSlim {
+  id: string
+  name: string
+  description?: string
+  status: string
+  priority?: string
+  dueDate?: string
+  url: string
+  listName?: string
+  folderName?: string
+  spaceName?: string
+  tags: string[]
+}
+
+export interface ClickUpDocSlim {
+  id: string
+  name: string
+  content?: string
+}
+
+export interface NotionPageSlim {
+  id: string
+  title: string
+  url: string
+  lastEditedTime: string
+}
+
+export interface NotionBlockSlim {
+  type: string
+  content: string
+  children?: NotionBlockSlim[]
+}

@@ -10,7 +10,14 @@ import {
   searchClickUpTasks as searchClickUpTasksApi,
 } from "./clickup.server"
 import { getNotionPageContent, searchNotionPages } from "./notion.server"
-import { WorkAgentError, type WorkAgentErrorCode } from "./types"
+import { encodeArrayResult, createFormatHint } from "./toon-encoder"
+import {
+  WorkAgentError,
+  type WorkAgentErrorCode,
+  type NotionPageSlim,
+  type ClickUpTaskSlim,
+  type ClickUpDocSlim,
+} from "./types"
 
 // 에러 응답 타입
 interface ToolErrorResponse {
@@ -123,6 +130,7 @@ type SearchClickUpDocsInput = z.infer<typeof searchClickUpDocsSchema>
 /**
  * Notion 페이지 검색 도구
  * 업무 노트, 프로젝트 기록 등을 검색
+ * 토큰 최적화: 10개 이상 결과 시 TOON 포맷 적용
  */
 export const searchNotion = tool({
   description:
@@ -134,17 +142,24 @@ export const searchNotion = tool({
         query: params.query,
         pageSize: params.pageSize ?? 10,
       })
+
+      const slimPages: NotionPageSlim[] = result.pages.map((page) => ({
+        id: page.id,
+        title: page.title,
+        url: page.url,
+        lastEditedTime: page.lastEditedTime,
+      }))
+
+      const encoded = encodeArrayResult(slimPages)
+
       return {
         success: true as const,
         data: {
-          pages: result.pages.map((page) => ({
-            id: page.id,
-            title: page.title,
-            url: page.url,
-            lastEditedTime: page.lastEditedTime,
-          })),
+          format: encoded.format,
+          formatHint: createFormatHint(encoded.format),
+          pages: encoded.data,
           hasMore: result.hasMore,
-          totalFound: result.pages.length,
+          totalFound: encoded.count,
         },
       }
     } catch (error) {
@@ -156,6 +171,7 @@ export const searchNotion = tool({
 /**
  * Notion 페이지 상세 조회 도구
  * 특정 페이지의 전체 내용을 가져옴
+ * 토큰 최적화: createdTime 제거, placeholder 블록 스킵
  */
 export const getNotionPage = tool({
   description:
@@ -192,7 +208,6 @@ export const getNotionPage = tool({
             id: result.page.id,
             title: result.page.title,
             url: result.page.url,
-            createdTime: result.page.createdTime,
             lastEditedTime: result.page.lastEditedTime,
           },
           content: flattenBlocks(result.blocks).join("\n"),
@@ -208,6 +223,7 @@ export const getNotionPage = tool({
 /**
  * ClickUp 태스크 검색 도구
  * 본인에게 할당된 태스크를 검색
+ * 토큰 최적화: 10개 이상 결과 시 TOON 포맷 적용
  */
 export const searchClickUpTasks = tool({
   description:
@@ -223,23 +239,30 @@ export const searchClickUpTasks = tool({
         statuses: statusArray,
         includeCompleted: params.includeCompleted ?? false,
       })
+
+      const slimTasks: ClickUpTaskSlim[] = result.tasks.map((task) => ({
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        status: task.status.status,
+        priority: task.priority?.priority,
+        dueDate: task.dueDate,
+        url: task.url,
+        listName: task.listName,
+        folderName: task.folderName,
+        spaceName: task.spaceName,
+        tags: task.tags.map((t) => t.name),
+      }))
+
+      const encoded = encodeArrayResult(slimTasks)
+
       return {
         success: true as const,
         data: {
-          tasks: result.tasks.map((task) => ({
-            id: task.id,
-            name: task.name,
-            description: task.description,
-            status: task.status.status,
-            priority: task.priority?.priority,
-            dueDate: task.dueDate,
-            url: task.url,
-            listName: task.listName,
-            folderName: task.folderName,
-            spaceName: task.spaceName,
-            tags: task.tags.map((t) => t.name),
-          })),
-          totalFound: result.tasks.length,
+          format: encoded.format,
+          formatHint: createFormatHint(encoded.format),
+          tasks: encoded.data,
+          totalFound: encoded.count,
           lastPage: result.lastPage,
         },
       }
@@ -252,6 +275,7 @@ export const searchClickUpTasks = tool({
 /**
  * ClickUp 문서 검색 도구
  * 본인이 작성한 문서를 검색
+ * 토큰 최적화: dateCreated/dateUpdated 제거, 10개 이상 결과 시 TOON 포맷 적용
  */
 export const searchClickUpDocs = tool({
   description:
@@ -260,20 +284,22 @@ export const searchClickUpDocs = tool({
   execute: async (params: SearchClickUpDocsInput) => {
     try {
       const result = await searchClickUpDocsApi({ query: params.query })
+
+      const slimDocs: ClickUpDocSlim[] = result.docs.map((doc) => ({
+        id: doc.id,
+        name: doc.name,
+        content: doc.content,
+      }))
+
+      const encoded = encodeArrayResult(slimDocs)
+
       return {
         success: true as const,
         data: {
-          docs: result.docs.map((doc) => ({
-            id: doc.id,
-            name: doc.name,
-            content: doc.content
-              ? doc.content.substring(0, 500) +
-                (doc.content.length > 500 ? "..." : "")
-              : undefined,
-            dateCreated: doc.dateCreated,
-            dateUpdated: doc.dateUpdated,
-          })),
-          totalFound: result.docs.length,
+          format: encoded.format,
+          formatHint: createFormatHint(encoded.format),
+          docs: encoded.data,
+          totalFound: encoded.count,
           hasMore: result.hasMore,
         },
       }
