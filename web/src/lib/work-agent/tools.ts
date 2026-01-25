@@ -17,6 +17,8 @@ import {
   type NotionPageSlim,
   type ClickUpTaskSlim,
   type ClickUpDocSlim,
+  type ProjectContext,
+  type TimeContext,
 } from "./types"
 
 // 에러 응답 타입
@@ -68,6 +70,53 @@ function createErrorResponse(error: unknown): ToolErrorResponse {
       retryable: false,
     },
   }
+}
+
+// 프로젝트 맥락 추론 유틸리티
+const LEGACY_KEYWORDS = ["fe1팀", "fe1", "maxgauge"]
+const NEXTGEN_KEYWORDS = ["차세대", "datagrid", "디자인시스템", "dashboard"]
+
+export function inferProjectContext(
+  spaceName?: string,
+  folderName?: string
+): ProjectContext {
+  const searchText = `${spaceName || ""} ${folderName || ""}`.toLowerCase()
+
+  const isLegacy = LEGACY_KEYWORDS.some((keyword) =>
+    searchText.includes(keyword)
+  )
+  const isNextGen = NEXTGEN_KEYWORDS.some((keyword) =>
+    searchText.includes(keyword)
+  )
+
+  if (isLegacy && !isNextGen) return "legacy"
+  if (isNextGen && !isLegacy) return "next-gen"
+  return "unknown"
+}
+
+// 시간 맥락 추론 유틸리티
+export function calculateTimeContext(
+  dateString?: string
+): TimeContext | undefined {
+  if (!dateString) return undefined
+  const date = new Date(parseInt(dateString))
+  const diffMonths =
+    (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 30)
+  if (diffMonths < 3) return "recent"
+  if (diffMonths < 12) return "older"
+  return "archive"
+}
+
+export function calculateRelativeTime(dateString?: string): string | undefined {
+  if (!dateString) return undefined
+  const diffDays = Math.floor(
+    (Date.now() - parseInt(dateString)) / (1000 * 60 * 60 * 24)
+  )
+  if (diffDays === 0) return "오늘 수정"
+  if (diffDays < 7) return `${diffDays}일 전 수정`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전 수정`
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)}개월 전 수정`
+  return `${Math.floor(diffDays / 365)}년 전 수정`
 }
 
 // 스키마 정의 (테스트용 export)
@@ -252,6 +301,11 @@ export const searchClickUpTasks = tool({
         folderName: task.folderName,
         spaceName: task.spaceName,
         tags: task.tags.map((t) => t.name),
+        // 환각 방지용 맥락 필드
+        context: inferProjectContext(task.spaceName, task.folderName),
+        dateUpdated: task.dateUpdated,
+        timeContext: calculateTimeContext(task.dateUpdated),
+        relativeTime: calculateRelativeTime(task.dateUpdated),
       }))
 
       const encoded = encodeArrayResult(slimTasks)
@@ -289,6 +343,10 @@ export const searchClickUpDocs = tool({
         id: doc.id,
         name: doc.name,
         content: doc.content,
+        // 환각 방지용 시간 맥락 필드
+        dateUpdated: doc.dateUpdated,
+        timeContext: calculateTimeContext(doc.dateUpdated),
+        relativeTime: calculateRelativeTime(doc.dateUpdated),
       }))
 
       const encoded = encodeArrayResult(slimDocs)

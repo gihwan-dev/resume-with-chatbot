@@ -143,12 +143,21 @@ export interface ClickUpTaskSlim {
   folderName?: string
   spaceName?: string
   tags: string[]
+  // 환각 방지용 맥락 필드
+  context: ProjectContext
+  dateUpdated?: string
+  timeContext?: TimeContext
+  relativeTime?: string
 }
 
 export interface ClickUpDocSlim {
   id: string
   name: string
   content?: string
+  // 환각 방지용 시간 맥락 필드
+  dateUpdated?: string
+  timeContext?: TimeContext
+  relativeTime?: string
 }
 
 export interface NotionPageSlim {
@@ -163,3 +172,9 @@ export interface NotionBlockSlim {
   content: string
   children?: NotionBlockSlim[]
 }
+
+// 프로젝트 맥락 타입
+export type ProjectContext = "legacy" | "next-gen" | "unknown"
+
+// 시간 맥락 타입
+export type TimeContext = "recent" | "older" | "archive"

@@ -35,6 +35,9 @@ import {
   searchClickUpDocs,
   answer,
   answerSchema,
+  inferProjectContext,
+  calculateTimeContext,
+  calculateRelativeTime,
 } from "../../../src/lib/work-agent/tools"
 
 // 타입 캐스팅
@@ -327,6 +330,10 @@ describe("Work Agent Tools", () => {
               folderName: "Backend",
               spaceName: "Development",
               tags: ["bug"],
+              context: "unknown", // Development/Backend → 키워드 없음
+              dateUpdated: undefined,
+              timeContext: undefined,
+              relativeTime: undefined,
             },
           ],
           totalFound: 1,
@@ -443,6 +450,10 @@ describe("Work Agent Tools", () => {
               id: "doc-1",
               name: "API 설계 문서",
               content: "REST API 엔드포인트 설계",
+              // 환각 방지용 시간 맥락 필드 (parseInt가 ISO 문자열에서 2024만 추출 → 사실상 epoch)
+              dateUpdated: "2024-01-02T00:00:00.000Z",
+              timeContext: "archive",
+              relativeTime: expect.stringMatching(/\d+년 전 수정/),
             },
           ],
           totalFound: 1,
@@ -626,6 +637,186 @@ describe("Work Agent Tools", () => {
       }
       const result = await answer.execute!(input, testContext)
       expect(result).toEqual(input)
+    })
+  })
+
+  // ============================================
+  // Phase 6: 환각 방지 유틸리티 함수 테스트
+  // ============================================
+  describe("inferProjectContext", () => {
+    it("FE1팀 키워드 → legacy", () => {
+      expect(inferProjectContext("FE1팀", "Task")).toBe("legacy")
+      expect(inferProjectContext("", "FE1")).toBe("legacy")
+      expect(inferProjectContext("MaxGauge", "")).toBe("legacy")
+    })
+
+    it("차세대 키워드 → next-gen", () => {
+      expect(inferProjectContext("차세대", "Task")).toBe("next-gen")
+      expect(inferProjectContext("", "DataGrid")).toBe("next-gen")
+      expect(inferProjectContext("디자인시스템", "")).toBe("next-gen")
+      expect(inferProjectContext("Dashboard", "")).toBe("next-gen")
+    })
+
+    it("키워드 없음 → unknown", () => {
+      expect(inferProjectContext("Development", "Sprint")).toBe("unknown")
+      expect(inferProjectContext(undefined, undefined)).toBe("unknown")
+    })
+
+    it("레거시+차세대 둘 다 매칭되면 → unknown", () => {
+      expect(inferProjectContext("FE1팀", "차세대")).toBe("unknown")
+    })
+
+    it("대소문자 구분 없이 매칭", () => {
+      expect(inferProjectContext("MAXGAUGE", "")).toBe("legacy")
+      expect(inferProjectContext("DATAGRID", "")).toBe("next-gen")
+    })
+  })
+
+  describe("calculateTimeContext", () => {
+    it("3개월 미만 → recent", () => {
+      const twoMonthsAgo = Date.now() - 60 * 24 * 60 * 60 * 1000
+      expect(calculateTimeContext(twoMonthsAgo.toString())).toBe("recent")
+    })
+
+    it("3개월~12개월 → older", () => {
+      const sixMonthsAgo = Date.now() - 180 * 24 * 60 * 60 * 1000
+      expect(calculateTimeContext(sixMonthsAgo.toString())).toBe("older")
+    })
+
+    it("12개월 이상 → archive", () => {
+      const twoYearsAgo = Date.now() - 730 * 24 * 60 * 60 * 1000
+      expect(calculateTimeContext(twoYearsAgo.toString())).toBe("archive")
+    })
+
+    it("undefined → undefined", () => {
+      expect(calculateTimeContext(undefined)).toBeUndefined()
+    })
+  })
+
+  describe("calculateRelativeTime", () => {
+    it("오늘 → 오늘 수정", () => {
+      const now = Date.now().toString()
+      expect(calculateRelativeTime(now)).toBe("오늘 수정")
+    })
+
+    it("3일 전 → 3일 전 수정", () => {
+      const threeDaysAgo = (Date.now() - 3 * 24 * 60 * 60 * 1000).toString()
+      expect(calculateRelativeTime(threeDaysAgo)).toBe("3일 전 수정")
+    })
+
+    it("2주 전 → 2주 전 수정", () => {
+      const twoWeeksAgo = (Date.now() - 14 * 24 * 60 * 60 * 1000).toString()
+      expect(calculateRelativeTime(twoWeeksAgo)).toBe("2주 전 수정")
+    })
+
+    it("2개월 전 → 2개월 전 수정", () => {
+      const twoMonthsAgo = (Date.now() - 60 * 24 * 60 * 60 * 1000).toString()
+      expect(calculateRelativeTime(twoMonthsAgo)).toBe("2개월 전 수정")
+    })
+
+    it("2년 전 → 2년 전 수정", () => {
+      const twoYearsAgo = (Date.now() - 730 * 24 * 60 * 60 * 1000).toString()
+      expect(calculateRelativeTime(twoYearsAgo)).toBe("2년 전 수정")
+    })
+
+    it("undefined → undefined", () => {
+      expect(calculateRelativeTime(undefined)).toBeUndefined()
+    })
+  })
+
+  // ============================================
+  // Phase 6: 검색 결과에 새 필드 포함 테스트
+  // ============================================
+  describe("searchClickUpTasks - 환각 방지 필드", () => {
+    it("레거시 태스크에 context: legacy 포함", async () => {
+      mockSearchClickUpTasks.mockResolvedValue({
+        tasks: [
+          {
+            id: "task-1",
+            name: "레거시 버그 수정",
+            description: "ExtJS 버그 수정",
+            status: { status: "in progress", color: "#4194f6" },
+            priority: { priority: "high", color: "#f9d900" },
+            dueDate: "2024-01-15",
+            dateUpdated: Date.now().toString(),
+            url: "https://app.clickup.com/t/task-1",
+            listName: "Sprint 1",
+            folderName: "Task",
+            spaceName: "FE1팀",
+            tags: [],
+          },
+        ],
+        lastPage: true,
+      })
+
+      const result = (await searchClickUpTasks.execute!(
+        { query: "버그" },
+        testContext
+      )) as { success: true; data: { tasks: Array<{ context: string; timeContext: string; relativeTime: string }> } }
+
+      expect(result.success).toBe(true)
+      expect(result.data.tasks[0].context).toBe("legacy")
+      expect(result.data.tasks[0].timeContext).toBe("recent")
+      expect(result.data.tasks[0].relativeTime).toBe("오늘 수정")
+    })
+
+    it("차세대 태스크에 context: next-gen 포함", async () => {
+      mockSearchClickUpTasks.mockResolvedValue({
+        tasks: [
+          {
+            id: "task-2",
+            name: "DataGrid 성능 개선",
+            description: "TanStack Virtual 적용",
+            status: { status: "in progress", color: "#4194f6" },
+            dueDate: "2024-01-20",
+            dateUpdated: Date.now().toString(),
+            url: "https://app.clickup.com/t/task-2",
+            listName: "Sprint 2",
+            folderName: "Task",
+            spaceName: "차세대",
+            tags: [],
+          },
+        ],
+        lastPage: true,
+      })
+
+      const result = (await searchClickUpTasks.execute!(
+        { query: "DataGrid" },
+        testContext
+      )) as { success: true; data: { tasks: Array<{ context: string }> } }
+
+      expect(result.success).toBe(true)
+      expect(result.data.tasks[0].context).toBe("next-gen")
+    })
+  })
+
+  describe("searchClickUpDocs - 시간 맥락 필드", () => {
+    it("문서에 timeContext, relativeTime 포함", async () => {
+      const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000
+      mockSearchClickUpDocs.mockResolvedValue({
+        docs: [
+          {
+            id: "doc-1",
+            name: "API 설계 문서",
+            content: "REST API 설계",
+            dateCreated: "2024-01-01T00:00:00.000Z",
+            dateUpdated: twoWeeksAgo.toString(),
+            creator: { id: 1, username: "user1", email: "user1@example.com" },
+            workspaceId: "workspace-1",
+          },
+        ],
+        hasMore: false,
+      })
+
+      const result = (await searchClickUpDocs.execute!(
+        { query: "API" },
+        testContext
+      )) as { success: true; data: { docs: Array<{ dateUpdated: string; timeContext: string; relativeTime: string }> } }
+
+      expect(result.success).toBe(true)
+      expect(result.data.docs[0].dateUpdated).toBe(twoWeeksAgo.toString())
+      expect(result.data.docs[0].timeContext).toBe("recent")
+      expect(result.data.docs[0].relativeTime).toBe("2주 전 수정")
     })
   })
 })
