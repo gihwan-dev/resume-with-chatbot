@@ -1,7 +1,7 @@
 "use client"
 
 import { useAuiState } from "@assistant-ui/react"
-import { CheckIcon, ChevronRightIcon, LoaderIcon } from "lucide-react"
+import { CheckIcon, ChevronRightIcon } from "lucide-react"
 import {
   createContext,
   type PropsWithChildren,
@@ -129,15 +129,24 @@ export function ThinkingProcessProvider({ children }: PropsWithChildren) {
         label: "생각 중...",
         status: isStreaming ? "running" : "complete",
       })
+    } else if (isStreaming) {
+      // reasoning 파트 도착 전에도 헤더를 즉시 표시
+      all.push({
+        id: "initial",
+        type: "reasoning",
+        label: "생각 중...",
+        status: "running",
+      })
     }
     all.push(...computeToolSteps(message.content, isComplete))
     return all
   }, [message.content, hasReasoning, isStreaming, isComplete])
 
-  const currentStep = useMemo(
-    () => computeCurrentStep(message.content, steps, isComplete),
-    [steps, message.content, isComplete]
-  )
+  const currentStep = useMemo(() => {
+    const computed = computeCurrentStep(message.content, steps, isComplete)
+    if (!computed && isStreaming && steps.length > 0) return steps[0]
+    return computed
+  }, [steps, message.content, isComplete, isStreaming])
 
   const contextValue = useMemo(
     () => ({ steps, currentStep, isOpen, setIsOpen, reasoningTitle }),
@@ -182,11 +191,7 @@ function ThinkingProcessHeader({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="my-1">
       <CollapsibleTrigger className="flex w-full items-center gap-1.5 rounded-lg border border-border/30 bg-muted/20 px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/40">
-        {isRunning ? (
-          <LoaderIcon className="size-3.5 shrink-0 animate-spin" />
-        ) : (
-          <CheckIcon className="size-3.5 shrink-0 text-green-500" />
-        )}
+        {!isRunning && <CheckIcon className="size-3.5 shrink-0 text-green-500" />}
         <StepTicker
           currentStep={currentStep}
           isComplete={isComplete}
@@ -221,9 +226,9 @@ function StepTicker({
   isComplete: boolean
   reasoningTitle: string
 }) {
-  const [displayLabel, setDisplayLabel] = useState("")
+  const [displayLabel, setDisplayLabel] = useState("생각 중...")
   const [prevLabel, setPrevLabel] = useState<string | null>(null)
-  const displayLabelRef = useRef("")
+  const displayLabelRef = useRef("생각 중...")
   const pendingRef = useRef<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
