@@ -9,6 +9,9 @@ const colors = {
   parProblem: "#be185d",
   parAction: "#4338ca",
   parResult: "#059669",
+  parProblemBg: "#fdf2f8",
+  parActionBg: "#eef2ff",
+  parResultBg: "#ecfdf5",
   highlight: "#fef9c3",
   linkText: "#4338ca",
 }
@@ -92,6 +95,12 @@ export const styles = StyleSheet.create({
   itemSeparator: {
     marginBottom: 12,
   },
+  projectContainer: {
+    marginBottom: 24,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    paddingLeft: 10,
+  },
 
   // Tech stack badges
   techStackRow: {
@@ -113,11 +122,9 @@ export const styles = StyleSheet.create({
   mdH4: {
     fontSize: 10,
     fontWeight: 700,
-    marginTop: 8,
+    marginTop: 10,
     marginBottom: 4,
     paddingLeft: 6,
-    borderLeftWidth: 2,
-    borderLeftColor: colors.primary,
   },
   mdH3: {
     fontSize: 10,
@@ -147,7 +154,7 @@ export const styles = StyleSheet.create({
   mdHr: {
     borderBottomWidth: 0.5,
     borderBottomColor: colors.border,
-    marginVertical: 8,
+    marginVertical: 10,
   },
   mdBold: {
     fontWeight: 700,
@@ -174,6 +181,38 @@ export const styles = StyleSheet.create({
   parResultLabel: {
     fontWeight: 700,
     color: colors.parResult,
+  },
+  parBadgeRow: {
+    flexDirection: "row",
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  parProblemBadge: {
+    fontSize: 7,
+    fontWeight: 700,
+    color: colors.parProblem,
+    backgroundColor: colors.parProblemBg,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
+  parActionBadge: {
+    fontSize: 7,
+    fontWeight: 700,
+    color: colors.parAction,
+    backgroundColor: colors.parActionBg,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
+  parResultBadge: {
+    fontSize: 7,
+    fontWeight: 700,
+    color: colors.parResult,
+    backgroundColor: colors.parResultBg,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
   },
 
   // Footer

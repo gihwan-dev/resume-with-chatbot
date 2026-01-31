@@ -73,22 +73,24 @@ function ProjectSection({ projects }: { projects: SerializedResumeData["projects
     <View>
       <Text style={styles.sectionTitle}>Projects</Text>
       {projects.map((p) => (
-        <View key={`${p.title}-${p.dateStart}`} style={styles.itemSeparator}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle}>{p.title}</Text>
-            <Text style={styles.itemDate}>{formatDateRange(p.dateStart, p.dateEnd)}</Text>
-          </View>
-          {p.company && <Text style={styles.itemSubtitle}>{p.company}</Text>}
-          <Text style={styles.itemSummary}>{p.description}</Text>
-          {p.techStack.length > 0 && (
-            <View style={styles.techStackRow}>
-              {p.techStack.map((t) => (
-                <Text key={t} style={styles.techBadge}>
-                  {t}
-                </Text>
-              ))}
+        <View key={`${p.title}-${p.dateStart}`} style={styles.projectContainer}>
+          <View minPresenceAhead={60}>
+            <View style={styles.itemHeader}>
+              <Text style={styles.itemTitle}>{p.title}</Text>
+              <Text style={styles.itemDate}>{formatDateRange(p.dateStart, p.dateEnd)}</Text>
             </View>
-          )}
+            {p.company && <Text style={styles.itemSubtitle}>{p.company}</Text>}
+            <Text style={styles.itemSummary}>{p.description}</Text>
+            {p.techStack.length > 0 && (
+              <View style={styles.techStackRow}>
+                {p.techStack.map((t) => (
+                  <Text key={t} style={styles.techBadge}>
+                    {t}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </View>
           {p.body && <View>{markdownToPdf(p.body)}</View>}
         </View>
       ))}
