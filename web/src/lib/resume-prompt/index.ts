@@ -12,11 +12,7 @@ function formatDate(date: Date): string {
 /**
  * 날짜 범위 문자열 생성
  */
-function formatDateRange(
-  dateStart: Date,
-  dateEnd?: Date,
-  isCurrent?: boolean
-): string {
+function formatDateRange(dateStart: Date, dateEnd?: Date, isCurrent?: boolean): string {
   const start = formatDate(dateStart)
   if (isCurrent) {
     return `${start} ~ 현재`
@@ -31,15 +27,14 @@ function formatDateRange(
  * Content Collections 데이터를 읽어 프롬프트 문자열로 변환
  */
 export async function buildResumePrompt(): Promise<string> {
-  const [basics, work, projects, education, certificates, awards] =
-    await Promise.all([
-      getCollection("basics"),
-      getCollection("work"),
-      getCollection("projects"),
-      getCollection("education"),
-      getCollection("certificates"),
-      getCollection("awards"),
-    ])
+  const [basics, work, projects, education, certificates, awards] = await Promise.all([
+    getCollection("basics"),
+    getCollection("work"),
+    getCollection("projects"),
+    getCollection("education"),
+    getCollection("certificates"),
+    getCollection("awards"),
+  ])
 
   const sections: string[] = []
 
@@ -62,11 +57,7 @@ ${profile.summary}`)
     )
 
     const workSection = sortedWork.map((w) => {
-      const dateRange = formatDateRange(
-        w.data.dateStart,
-        w.data.dateEnd,
-        w.data.isCurrent
-      )
+      const dateRange = formatDateRange(w.data.dateStart, w.data.dateEnd, w.data.isCurrent)
       return `### ${w.data.company} (${dateRange})
 - 직무: ${w.data.role}
 - ${w.data.summary}`
@@ -153,7 +144,7 @@ ${awardSections.join("\n\n")}`)
   // 7. 링크
   if (profile?.profiles && profile.profiles.length > 0) {
     const linkSection = profile.profiles
-      .map((p) => `- ${p.network}: ${p.url}`)
+      .map((p: { network: string; url: string }) => `- ${p.network}: ${p.url}`)
       .join("\n")
 
     sections.push(`## 링크

@@ -3,16 +3,16 @@
  * 의도 분류, 반복 호출 분석, 동적 프롬프트 생성 테스트
  */
 
-import { describe, it, expect } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
-  classifyIntent,
   analyzeToolCallPattern,
   buildDynamicSystemPrompt,
-  shouldAllowAnswer,
+  classifyIntent,
   INTENT_KEYWORDS,
+  MIN_SEARCH_COUNT,
   PERSONA_PROMPTS,
   REFLEXION_PROTOCOL,
-  MIN_SEARCH_COUNT,
+  shouldAllowAnswer,
   type UserIntent,
 } from "../../../src/lib/work-agent/prompts"
 
@@ -46,7 +46,11 @@ describe("prompts", () => {
       it("구현 방법 질문 인식", () => {
         const result = classifyIntent("DataGrid 가상화는 어떻게 구현했나요?")
         expect(result.intent).toBe("technical_inquiry")
-        expect(result.keywords.some((k) => ["datagrid", "가상화", "구현", "어떻게"].includes(k.toLowerCase()))).toBe(true)
+        expect(
+          result.keywords.some((k) =>
+            ["datagrid", "가상화", "구현", "어떻게"].includes(k.toLowerCase())
+          )
+        ).toBe(true)
       })
     })
 
@@ -156,7 +160,7 @@ describe("prompts", () => {
       const steps = [
         { text: "some text" },
         { toolCalls: [{ toolName: "searchNotion", args: { query: "test" } }] },
-      ] as any
+      ] as Parameters<typeof analyzeToolCallPattern>[0]
       const result = analyzeToolCallPattern(steps)
       expect(result.consecutiveSameToolCount).toBe(1)
       expect(result.lastToolName).toBe("searchNotion")
@@ -329,7 +333,12 @@ describe("prompts", () => {
   // ============================================
   describe("상수 검증", () => {
     it("INTENT_KEYWORDS에 모든 의도 정의됨", () => {
-      const intents: UserIntent[] = ["career_inquiry", "technical_inquiry", "contact_inquiry", "general_chat"]
+      const intents: UserIntent[] = [
+        "career_inquiry",
+        "technical_inquiry",
+        "contact_inquiry",
+        "general_chat",
+      ]
       for (const intent of intents) {
         expect(INTENT_KEYWORDS[intent]).toBeDefined()
         expect(INTENT_KEYWORDS[intent].length).toBeGreaterThan(0)
@@ -337,7 +346,12 @@ describe("prompts", () => {
     })
 
     it("PERSONA_PROMPTS에 모든 의도 정의됨", () => {
-      const intents: UserIntent[] = ["career_inquiry", "technical_inquiry", "contact_inquiry", "general_chat"]
+      const intents: UserIntent[] = [
+        "career_inquiry",
+        "technical_inquiry",
+        "contact_inquiry",
+        "general_chat",
+      ]
       for (const intent of intents) {
         expect(PERSONA_PROMPTS[intent]).toBeDefined()
         expect(PERSONA_PROMPTS[intent].length).toBeGreaterThan(0)
@@ -350,7 +364,12 @@ describe("prompts", () => {
     })
 
     it("MIN_SEARCH_COUNT에 모든 의도 정의됨", () => {
-      const intents: UserIntent[] = ["career_inquiry", "technical_inquiry", "contact_inquiry", "general_chat"]
+      const intents: UserIntent[] = [
+        "career_inquiry",
+        "technical_inquiry",
+        "contact_inquiry",
+        "general_chat",
+      ]
       for (const intent of intents) {
         expect(MIN_SEARCH_COUNT[intent]).toBeDefined()
         expect(MIN_SEARCH_COUNT[intent]).toBeGreaterThanOrEqual(1)

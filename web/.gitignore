@@ -1,0 +1,14 @@
+# Node & Package Managers
+node_modules/
+
+# Build Output
+dist/
+.astro/
+.next/
+.vercel/
+next-env.d.ts
+
+# Environment Variables
+.env
+.env.*
+!.env.example

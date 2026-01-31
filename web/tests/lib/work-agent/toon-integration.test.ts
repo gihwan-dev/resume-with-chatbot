@@ -7,19 +7,19 @@
  * @vitest-environment node
  */
 
-import { describe, it, expect, beforeAll } from "vitest"
+import path from "node:path"
 import * as dotenv from "dotenv"
-import path from "path"
+import { describe, expect, it } from "vitest"
 
 // 환경변수 로드
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") })
 
 // 실제 tools import (mock 없음)
 import {
-  searchNotion,
   getNotionPage,
-  searchClickUpTasks,
   searchClickUpDocs,
+  searchClickUpTasks,
+  searchNotion,
 } from "../../../src/lib/work-agent/tools"
 
 // 테스트용 컨텍스트
@@ -32,10 +32,10 @@ const testContext = {
 describe("TOON 포맷 통합 테스트", () => {
   describe("searchNotion TOON 적용", () => {
     it("검색 결과에 format 필드 존재", async () => {
-      const result = (await searchNotion.execute!(
-        { query: "", pageSize: 5 },
-        testContext
-      )) as { success: true; data: { format: string; pages: unknown } }
+      const result = (await searchNotion.execute?.({ query: "", pageSize: 5 }, testContext)) as {
+        success: true
+        data: { format: string; pages: unknown }
+      }
 
       console.log("searchNotion 결과:", JSON.stringify(result, null, 2))
 
@@ -46,10 +46,10 @@ describe("TOON 포맷 통합 테스트", () => {
     })
 
     it("5개 결과 → JSON 포맷", async () => {
-      const result = (await searchNotion.execute!(
-        { query: "", pageSize: 5 },
-        testContext
-      )) as { success: true; data: { format: string; totalFound: number } }
+      const result = (await searchNotion.execute?.({ query: "", pageSize: 5 }, testContext)) as {
+        success: true
+        data: { format: string; totalFound: number }
+      }
 
       if (result.success && result.data.totalFound < 10) {
         expect(result.data.format).toBe("json")
@@ -58,17 +58,12 @@ describe("TOON 포맷 통합 테스트", () => {
     })
 
     it("20개 결과 → TOON 포맷 (충분한 데이터가 있는 경우)", async () => {
-      const result = (await searchNotion.execute!(
-        { query: "", pageSize: 20 },
-        testContext
-      )) as {
+      const result = (await searchNotion.execute?.({ query: "", pageSize: 20 }, testContext)) as {
         success: true
         data: { format: string; formatHint?: string; totalFound: number }
       }
 
-      console.log(
-        `결과 수: ${result.data.totalFound}, format: ${result.data.format}`
-      )
+      console.log(`결과 수: ${result.data.totalFound}, format: ${result.data.format}`)
 
       if (result.success && result.data.totalFound >= 10) {
         expect(result.data.format).toBe("toon")
@@ -77,9 +72,7 @@ describe("TOON 포맷 통합 테스트", () => {
         )
         console.log(`✅ ${result.data.totalFound}개 결과 → TOON 포맷`)
       } else {
-        console.log(
-          `⚠️ 데이터가 10개 미만 (${result.data.totalFound}개) - TOON 테스트 스킵`
-        )
+        console.log(`⚠️ 데이터가 10개 미만 (${result.data.totalFound}개) - TOON 테스트 스킵`)
       }
     })
   })
@@ -87,21 +80,19 @@ describe("TOON 포맷 통합 테스트", () => {
   describe("getNotionPage createdTime 제거", () => {
     it("응답에 createdTime 없음", async () => {
       // 먼저 페이지 ID 가져오기
-      const searchResult = (await searchNotion.execute!(
+      const searchResult = (await searchNotion.execute?.(
         { query: "", pageSize: 1 },
         testContext
       )) as { success: true; data: { pages: Array<{ id: string }> } }
 
       if (searchResult.success && searchResult.data.pages.length > 0) {
-        const pageId = Array.isArray(searchResult.data.pages)
-          ? searchResult.data.pages[0].id
-          : null
+        const pageId = Array.isArray(searchResult.data.pages) ? searchResult.data.pages[0].id : null
 
         if (pageId) {
-          const result = (await getNotionPage.execute!(
-            { pageId },
-            testContext
-          )) as { success: true; data: { page: Record<string, unknown> } }
+          const result = (await getNotionPage.execute?.({ pageId }, testContext)) as {
+            success: true
+            data: { page: Record<string, unknown> }
+          }
 
           console.log("getNotionPage 결과:", JSON.stringify(result, null, 2))
 
@@ -116,7 +107,7 @@ describe("TOON 포맷 통합 테스트", () => {
 
   describe("searchClickUpTasks TOON 적용", () => {
     it("검색 결과에 format 필드 존재", async () => {
-      const result = (await searchClickUpTasks.execute!(
+      const result = (await searchClickUpTasks.execute?.(
         { includeCompleted: true },
         testContext
       )) as { success: true; data: { format: string; totalFound: number } }
@@ -144,7 +135,7 @@ describe("TOON 포맷 통합 테스트", () => {
 
   describe("searchClickUpDocs 필드 최적화", () => {
     it("dateCreated/dateUpdated 제거됨", async () => {
-      const result = (await searchClickUpDocs.execute!({}, testContext)) as {
+      const result = (await searchClickUpDocs.execute?.({}, testContext)) as {
         success: true
         data: {
           format: string

@@ -4,7 +4,7 @@
  * Global mocks and setup for all tests.
  */
 
-import { vi, beforeEach, afterEach } from "vitest"
+import { afterEach, beforeEach, vi } from "vitest"
 
 // Mock console for cleaner test output
 const originalConsoleLog = console.log

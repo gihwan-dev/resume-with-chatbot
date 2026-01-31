@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, FileSearch } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Carousel, CarouselContent, CarouselItem, useCarousel } from "@/components/ui/carousel"
 import { cn } from "@/lib/utils"
-import { SourceCard } from "./SourceCard"
+import { SourceCard } from "./source-card"
 import type { Source } from "./types"
 
 interface SourceCarouselProps {

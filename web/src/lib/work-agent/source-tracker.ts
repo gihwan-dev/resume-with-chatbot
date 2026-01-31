@@ -5,12 +5,12 @@
 
 import { decode } from "@toon-format/toon"
 import type {
-  SearchContext,
   AnswerSource,
-  SourceValidationResult,
-  NotionPageSlim,
-  ClickUpTaskSlim,
   ClickUpDocSlim,
+  ClickUpTaskSlim,
+  NotionPageSlim,
+  SearchContext,
+  SourceValidationResult,
 } from "./types"
 
 // Tool result 타입 정의
@@ -145,7 +145,7 @@ export function buildSearchContextFromSteps(steps: StepLike[]): SearchContext {
       switch (toolResult.toolName) {
         case "searchNotion": {
           const ids = extractNotionPageIds(toolResult.result)
-          ids.forEach((id) => context.notionPageIds.add(id))
+          for (const id of ids) context.notionPageIds.add(id)
           break
         }
         case "getNotionPage": {
@@ -155,12 +155,12 @@ export function buildSearchContextFromSteps(steps: StepLike[]): SearchContext {
         }
         case "searchClickUpTasks": {
           const ids = extractClickUpTaskIds(toolResult.result)
-          ids.forEach((id) => context.clickupTaskIds.add(id))
+          for (const id of ids) context.clickupTaskIds.add(id)
           break
         }
         case "searchClickUpDocs": {
           const ids = extractClickUpDocIds(toolResult.result)
-          ids.forEach((id) => context.clickupDocIds.add(id))
+          for (const id of ids) context.clickupDocIds.add(id)
           break
         }
       }

@@ -4,13 +4,13 @@
  */
 
 import {
-  WorkAgentError,
   type ClickUpDoc,
   type ClickUpDocSearchOptions,
   type ClickUpDocsResult,
   type ClickUpTask,
   type ClickUpTaskSearchOptions,
   type ClickUpTasksResult,
+  WorkAgentError,
 } from "./types"
 
 const CLICKUP_V2_BASE_URL = "https://api.clickup.com/api/v2"
@@ -30,28 +30,16 @@ function getClickUpConfig(): ClickUpConfig {
   const userId = import.meta.env.CLICKUP_USER_ID
 
   if (!apiToken) {
-    throw new WorkAgentError(
-      "CLICKUP_API_TOKEN is not configured",
-      "INVALID_CONFIG"
-    )
+    throw new WorkAgentError("CLICKUP_API_TOKEN is not configured", "INVALID_CONFIG")
   }
   if (!teamId) {
-    throw new WorkAgentError(
-      "CLICKUP_TEAM_ID is not configured",
-      "INVALID_CONFIG"
-    )
+    throw new WorkAgentError("CLICKUP_TEAM_ID is not configured", "INVALID_CONFIG")
   }
   if (!workspaceId) {
-    throw new WorkAgentError(
-      "CLICKUP_WORKSPACE_ID is not configured",
-      "INVALID_CONFIG"
-    )
+    throw new WorkAgentError("CLICKUP_WORKSPACE_ID is not configured", "INVALID_CONFIG")
   }
   if (!userId) {
-    throw new WorkAgentError(
-      "CLICKUP_USER_ID is not configured",
-      "INVALID_CONFIG"
-    )
+    throw new WorkAgentError("CLICKUP_USER_ID is not configured", "INVALID_CONFIG")
   }
 
   return { apiToken, teamId, workspaceId, userId }
@@ -65,11 +53,7 @@ function getHeaders(): Record<string, string> {
   }
 }
 
-async function clickUpFetch<T>(
-  endpoint: string,
-  options?: RequestInit,
-  useV3 = false
-): Promise<T> {
+async function clickUpFetch<T>(endpoint: string, options?: RequestInit, useV3 = false): Promise<T> {
   const baseUrl = useV3 ? CLICKUP_V3_BASE_URL : CLICKUP_V2_BASE_URL
   const url = `${baseUrl}${endpoint}`
 
@@ -115,18 +99,15 @@ async function clickUpFetch<T>(
         throw new WorkAgentError(errorMessage, "NOT_FOUND", response.status)
       }
 
-      throw new WorkAgentError(
-        errorMessage,
-        "CLICKUP_API_ERROR",
-        response.status
-      )
+      throw new WorkAgentError(errorMessage, "CLICKUP_API_ERROR", response.status)
     }
 
     const data = await response.json()
     console.log("[ClickUp API] Success:", {
       url,
-      resultCount:
-        Array.isArray(data) ? data.length : data.tasks?.length ?? data.docs?.length ?? "N/A",
+      resultCount: Array.isArray(data)
+        ? data.length
+        : (data.tasks?.length ?? data.docs?.length ?? "N/A"),
     })
 
     return data
@@ -223,7 +204,7 @@ export async function searchClickUpTasks(
     const queryTokens = query.toLowerCase().split(/\s+/).filter(Boolean)
 
     tasks = tasks.filter((task) => {
-      const searchText = `${task.name} ${task.description || ''}`.toLowerCase()
+      const searchText = `${task.name} ${task.description || ""}`.toLowerCase()
       // 모든 토큰이 포함되어야 매칭 (AND 조건)
       return queryTokens.every((token) => searchText.includes(token))
     })
@@ -283,7 +264,7 @@ export async function searchClickUpDocs(
     const queryTokens = query.toLowerCase().split(/\s+/).filter(Boolean)
 
     docs = docs.filter((doc) => {
-      const searchText = `${doc.name} ${doc.content || ''}`.toLowerCase()
+      const searchText = `${doc.name} ${doc.content || ""}`.toLowerCase()
       // 모든 토큰이 포함되어야 매칭 (AND 조건)
       return queryTokens.every((token) => searchText.includes(token))
     })

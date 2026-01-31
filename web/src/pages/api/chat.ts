@@ -3,21 +3,26 @@ export const prerender = false
 import { createVertex } from "@ai-sdk/google-vertex"
 import type { UIMessage } from "ai"
 import { convertToModelMessages, hasToolCall, stepCountIs, streamText } from "ai"
+import { buildResumePrompt } from "@/lib/resume-prompt"
 import {
-  workAgentTools,
-  createAnswerTool,
-  buildSearchContextFromSteps,
-  createSearchContext,
-  classifyIntent,
   analyzeToolCallPattern,
   buildDynamicSystemPrompt,
-  shouldAllowAnswer,
+  buildSearchContextFromSteps,
+  classifyIntent,
+  createAnswerTool,
+  createSearchContext,
   type SearchContext,
+  shouldAllowAnswer,
+  workAgentTools,
 } from "@/lib/work-agent"
-import { buildResumePrompt } from "@/lib/resume-prompt"
 
 type ToolName = keyof typeof workAgentTools
-const SEARCH_TOOLS: ToolName[] = ["searchNotion", "getNotionPage", "searchClickUpTasks", "searchClickUpDocs"]
+const SEARCH_TOOLS: ToolName[] = [
+  "searchNotion",
+  "getNotionPage",
+  "searchClickUpTasks",
+  "searchClickUpDocs",
+]
 const ALL_TOOLS: ToolName[] = [...SEARCH_TOOLS, "answer"]
 
 const SYSTEM_PROMPT_HEADER = `당신은 최기환의 포트폴리오 웹사이트에서 방문자의 질문에 답변하는 AI 어시스턴트입니다.
@@ -302,9 +307,7 @@ export const POST = async ({ request }: { request: Request }) => {
           )
 
           // 반복된 도구를 제외한 대안 도구 목록
-          const alternativeTools = ALL_TOOLS.filter(
-            (t) => t !== analysis.lastToolName
-          )
+          const alternativeTools = ALL_TOOLS.filter((t) => t !== analysis.lastToolName)
 
           return {
             activeTools: alternativeTools,
@@ -331,10 +334,7 @@ export const POST = async ({ request }: { request: Request }) => {
         }
       },
 
-      stopWhen: [
-        stepCountIs(15),
-        hasToolCall("answer"),
-      ],
+      stopWhen: [stepCountIs(15), hasToolCall("answer")],
 
       onStepFinish: ({ toolCalls, toolResults, finishReason, usage }) => {
         if (toolCalls.length > 0) {
@@ -346,7 +346,8 @@ export const POST = async ({ request }: { request: Request }) => {
             typeof answerResult.result === "object" &&
             answerResult.result !== null &&
             "validation" in answerResult.result
-              ? (answerResult.result as { validation?: { warnings?: string[]; isValid?: boolean } }).validation
+              ? (answerResult.result as { validation?: { warnings?: string[]; isValid?: boolean } })
+                  .validation
               : undefined
 
           console.log(
@@ -385,10 +386,7 @@ export const POST = async ({ request }: { request: Request }) => {
 
           // 출처 검증 경고가 있으면 별도 로깅
           if (validation?.warnings && validation.warnings.length > 0) {
-            console.warn(
-              "[Source Validation Warnings]",
-              validation.warnings.join("\n")
-            )
+            console.warn("[Source Validation Warnings]", validation.warnings.join("\n"))
           }
         }
       },

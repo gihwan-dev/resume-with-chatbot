@@ -1,8 +1,8 @@
 "use client"
 
-import { DesktopNav } from "./DesktopNav"
-import { MobileNav } from "./MobileNav"
-import { ThemeProvider } from "./ThemeProvider"
+import { DesktopNav } from "./desktop-nav"
+import { MobileNav } from "./mobile-nav"
+import { ThemeProvider } from "./theme-provider"
 
 export function Navigation() {
   return (

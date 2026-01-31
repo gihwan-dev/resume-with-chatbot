@@ -1,7 +1,7 @@
 "use client"
 
-import { SectionNav } from "./SectionNav"
-import { ThemeToggle } from "./ThemeToggle"
+import { SectionNav } from "./section-nav"
+import { ThemeToggle } from "./theme-toggle"
 
 export function DesktopNav() {
   return (

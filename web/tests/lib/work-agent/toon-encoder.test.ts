@@ -3,11 +3,8 @@
  * TOON 포맷 인코딩 유틸리티 테스트
  */
 
-import { describe, it, expect } from "vitest"
-import {
-  encodeArrayResult,
-  createFormatHint,
-} from "../../../src/lib/work-agent/toon-encoder"
+import { describe, expect, it } from "vitest"
+import { createFormatHint, encodeArrayResult } from "../../../src/lib/work-agent/toon-encoder"
 
 describe("TOON Encoder", () => {
   describe("encodeArrayResult", () => {
@@ -79,9 +76,7 @@ describe("TOON Encoder", () => {
     it("TOON 포맷일 때 힌트 반환", () => {
       const hint = createFormatHint("toon")
 
-      expect(hint).toBe(
-        "Data in TOON format. Parse comma-separated values per row."
-      )
+      expect(hint).toBe("Data in TOON format. Parse comma-separated values per row.")
     })
 
     it("JSON 포맷일 때 undefined 반환", () => {

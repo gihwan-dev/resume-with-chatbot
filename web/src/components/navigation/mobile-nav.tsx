@@ -5,8 +5,8 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
-import { SectionNav } from "./SectionNav"
-import { ThemeToggle } from "./ThemeToggle"
+import { SectionNav } from "./section-nav"
+import { ThemeToggle } from "./theme-toggle"
 
 export function MobileNav() {
   const [open, setOpen] = React.useState(false)

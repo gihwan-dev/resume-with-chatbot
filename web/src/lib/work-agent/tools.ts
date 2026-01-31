@@ -10,18 +10,18 @@ import {
   searchClickUpTasks as searchClickUpTasksApi,
 } from "./clickup.server"
 import { getNotionPageContent, searchNotionPages } from "./notion.server"
-import { encodeArrayResult, createFormatHint } from "./toon-encoder"
+import { validateSources } from "./source-tracker"
+import { createFormatHint, encodeArrayResult } from "./toon-encoder"
 import {
+  type ClickUpDocSlim,
+  type ClickUpTaskSlim,
+  type NotionPageSlim,
+  type ProjectContext,
+  type SearchContext,
+  type TimeContext,
   WorkAgentError,
   type WorkAgentErrorCode,
-  type NotionPageSlim,
-  type ClickUpTaskSlim,
-  type ClickUpDocSlim,
-  type ProjectContext,
-  type TimeContext,
-  type SearchContext,
 } from "./types"
-import { validateSources } from "./source-tracker"
 
 // 에러 응답 타입
 interface ToolErrorResponse {
@@ -65,10 +65,7 @@ function createErrorResponse(error: unknown): ToolErrorResponse {
     success: false,
     error: {
       code: "NOTION_API_ERROR",
-      message:
-        error instanceof Error
-          ? error.message
-          : "알 수 없는 오류가 발생했습니다.",
+      message: error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.",
       retryable: false,
     },
   }
@@ -78,18 +75,11 @@ function createErrorResponse(error: unknown): ToolErrorResponse {
 const LEGACY_KEYWORDS = ["fe1팀", "fe1", "maxgauge"]
 const NEXTGEN_KEYWORDS = ["차세대", "datagrid", "디자인시스템", "dashboard"]
 
-export function inferProjectContext(
-  spaceName?: string,
-  folderName?: string
-): ProjectContext {
+export function inferProjectContext(spaceName?: string, folderName?: string): ProjectContext {
   const searchText = `${spaceName || ""} ${folderName || ""}`.toLowerCase()
 
-  const isLegacy = LEGACY_KEYWORDS.some((keyword) =>
-    searchText.includes(keyword)
-  )
-  const isNextGen = NEXTGEN_KEYWORDS.some((keyword) =>
-    searchText.includes(keyword)
-  )
+  const isLegacy = LEGACY_KEYWORDS.some((keyword) => searchText.includes(keyword))
+  const isNextGen = NEXTGEN_KEYWORDS.some((keyword) => searchText.includes(keyword))
 
   if (isLegacy && !isNextGen) return "legacy"
   if (isNextGen && !isLegacy) return "next-gen"
@@ -97,13 +87,10 @@ export function inferProjectContext(
 }
 
 // 시간 맥락 추론 유틸리티
-export function calculateTimeContext(
-  dateString?: string
-): TimeContext | undefined {
+export function calculateTimeContext(dateString?: string): TimeContext | undefined {
   if (!dateString) return undefined
-  const date = new Date(parseInt(dateString))
-  const diffMonths =
-    (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 30)
+  const date = new Date(parseInt(dateString, 10))
+  const diffMonths = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 30)
   if (diffMonths < 3) return "recent"
   if (diffMonths < 12) return "older"
   return "archive"
@@ -111,9 +98,7 @@ export function calculateTimeContext(
 
 export function calculateRelativeTime(dateString?: string): string | undefined {
   if (!dateString) return undefined
-  const diffDays = Math.floor(
-    (Date.now() - parseInt(dateString)) / (1000 * 60 * 60 * 24)
-  )
+  const diffDays = Math.floor((Date.now() - parseInt(dateString, 10)) / (1000 * 60 * 60 * 24))
   if (diffDays === 0) return "오늘 수정"
   if (diffDays < 7) return `${diffDays}일 전 수정`
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전 수정`
@@ -124,12 +109,7 @@ export function calculateRelativeTime(dateString?: string): string | undefined {
 // 스키마 정의 (테스트용 export)
 export const searchNotionSchema = z.object({
   query: z.string().describe("검색할 키워드"),
-  pageSize: z
-    .number()
-    .min(1)
-    .max(100)
-    .optional()
-    .describe("반환할 최대 페이지 수 (기본값: 10)"),
+  pageSize: z.number().min(1).max(100).optional().describe("반환할 최대 페이지 수 (기본값: 10)"),
 })
 
 export const getNotionPageSchema = z.object({
@@ -137,25 +117,13 @@ export const getNotionPageSchema = z.object({
 })
 
 export const searchClickUpTasksSchema = z.object({
-  query: z
-    .string()
-    .optional()
-    .describe("검색할 키워드 (태스크 이름, 설명에서 검색)"),
-  statuses: z
-    .string()
-    .optional()
-    .describe("필터링할 상태 (쉼표로 구분, 예: 'in progress,review')"),
-  includeCompleted: z
-    .boolean()
-    .optional()
-    .describe("완료된 태스크 포함 여부 (기본값: false)"),
+  query: z.string().optional().describe("검색할 키워드 (태스크 이름, 설명에서 검색)"),
+  statuses: z.string().optional().describe("필터링할 상태 (쉼표로 구분, 예: 'in progress,review')"),
+  includeCompleted: z.boolean().optional().describe("완료된 태스크 포함 여부 (기본값: false)"),
 })
 
 export const searchClickUpDocsSchema = z.object({
-  query: z
-    .string()
-    .optional()
-    .describe("검색할 키워드 (문서 이름, 내용에서 검색)"),
+  query: z.string().optional().describe("검색할 키워드 (문서 이름, 내용에서 검색)"),
 })
 
 export const answerSchema = z.object({
@@ -233,10 +201,7 @@ export const getNotionPage = tool({
       const result = await getNotionPageContent(params.pageId)
 
       // 블록 콘텐츠를 텍스트로 변환
-      const flattenBlocks = (
-        blocks: typeof result.blocks,
-        depth = 0
-      ): string[] => {
+      const flattenBlocks = (blocks: typeof result.blocks, depth = 0): string[] => {
         const lines: string[] = []
         const indent = "  ".repeat(depth)
 
@@ -374,8 +339,7 @@ export const searchClickUpDocs = tool({
  * execute 함수로 답변을 tool result로 반환
  */
 export const answer = tool({
-  description:
-    "검색 완료 후 최종 답변을 제공합니다. 반드시 검색을 먼저 수행한 후 사용하세요.",
+  description: "검색 완료 후 최종 답변을 제공합니다. 반드시 검색을 먼저 수행한 후 사용하세요.",
   inputSchema: answerSchema,
   execute: async (input) => {
     // 구조화된 응답 반환 - 클라이언트에서 tool result로 수신
