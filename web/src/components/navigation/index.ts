@@ -1,6 +1,4 @@
 export { DesktopNav } from "./desktop-nav"
 export { MobileNav } from "./mobile-nav"
 export { Navigation } from "./navigation"
-export { SectionNav } from "./section-nav"
 export { ThemeProvider } from "./theme-provider"
-export { ThemeToggle } from "./theme-toggle"

@@ -37,10 +37,6 @@ export {
 export {
   buildSearchContextFromSteps,
   createSearchContext,
-  extractClickUpDocIds,
-  extractClickUpTaskIds,
-  extractNotionPageId,
-  extractNotionPageIds,
   validateSources,
 } from "./source-tracker"
 // AI Tools
