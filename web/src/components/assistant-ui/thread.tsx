@@ -4,9 +4,8 @@ import {
   ErrorPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
-  useMessage,
-  useThread,
-  useThreadRuntime,
+  useAui,
+  useAuiState,
 } from "@assistant-ui/react"
 import {
   ArrowDownIcon,
@@ -21,6 +20,7 @@ import {
 import { type FC, useEffect, useRef } from "react"
 import { MarkdownText } from "@/components/assistant-ui/markdown-text"
 import { Reasoning, ReasoningGroupWrapper } from "@/components/assistant-ui/reasoning"
+import { ThinkingProcessProvider } from "@/components/assistant-ui/thinking-process"
 import { ToolCallStatus, ToolGroupWrapper } from "@/components/assistant-ui/tool-call-status"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
 import { Button } from "@/components/ui/button"
@@ -28,8 +28,8 @@ import { useFollowUp } from "@/hooks/use-follow-up"
 import { SUGGESTED_QUESTIONS } from "@/lib/chat-utils"
 
 const ThreadHeader: FC = () => {
-  const threadRuntime = useThreadRuntime()
-  const isEmpty = useThread((state) => state.messages.length === 0)
+  const aui = useAui()
+  const isEmpty = useAuiState(({ thread }) => thread.messages.length === 0)
 
   if (isEmpty) return null
 
@@ -39,8 +39,8 @@ const ThreadHeader: FC = () => {
       <TooltipIconButton
         tooltip="새 대화"
         onClick={() => {
-          threadRuntime.cancelRun()
-          threadRuntime.reset()
+          aui.thread().cancelRun()
+          aui.thread().reset()
         }}
       >
         <SquarePenIcon className="size-4" />
@@ -73,6 +73,8 @@ export const Thread: FC = () => {
           }}
         />
 
+        <div className="h-4 shrink-0" />
+
         <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer sticky bottom-0 mx-auto mt-auto flex w-full max-w-(--thread-max-width) flex-col gap-4 overflow-visible rounded-t-3xl pb-4">
           <ThreadScrollToBottom />
           <Composer />
@@ -88,7 +90,7 @@ const ThreadScrollToBottom: FC = () => {
       <TooltipIconButton
         tooltip="아래로 스크롤"
         variant="outline"
-        className="aui-thread-scroll-to-bottom absolute -top-12 z-10 self-center rounded-full p-4 disabled:invisible dark:bg-background dark:hover:bg-accent"
+        className="aui-thread-scroll-to-bottom absolute -top-12 right-4 z-10 rounded-full p-4 disabled:invisible dark:bg-background dark:hover:bg-accent"
       >
         <ArrowDownIcon />
       </TooltipIconButton>
@@ -119,13 +121,13 @@ const ThreadWelcome: FC = () => {
 }
 
 const SuggestionButton: FC<{ text: string }> = ({ text }) => {
-  const threadRuntime = useThreadRuntime()
+  const aui = useAui()
   return (
     <Button
       variant="ghost"
       className="h-auto w-full items-start justify-start rounded-2xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
       onClick={() => {
-        threadRuntime.append({ role: "user", content: [{ type: "text", text }] })
+        aui.thread().append({ role: "user", content: [{ type: "text", text }] })
       }}
     >
       <span className="text-sm">{text}</span>
@@ -196,22 +198,24 @@ const AssistantMessage: FC = () => {
       data-role="assistant"
     >
       <div className="aui-assistant-message-content wrap-break-word px-2 text-foreground text-sm leading-relaxed">
-        <MessagePrimitive.Parts
-          components={{
-            Text: MarkdownText,
-            Reasoning,
-            ReasoningGroup: ReasoningGroupWrapper,
-            ToolGroup: ToolGroupWrapper,
-            tools: {
-              by_name: {
-                searchNotion: ToolCallStatus,
-                getNotionPage: ToolCallStatus,
-                searchClickUpTasks: ToolCallStatus,
-                searchClickUpDocs: ToolCallStatus,
+        <ThinkingProcessProvider>
+          <MessagePrimitive.Parts
+            components={{
+              Text: MarkdownText,
+              Reasoning,
+              ReasoningGroup: ReasoningGroupWrapper,
+              ToolGroup: ToolGroupWrapper,
+              tools: {
+                by_name: {
+                  searchNotion: ToolCallStatus,
+                  getNotionPage: ToolCallStatus,
+                  searchClickUpTasks: ToolCallStatus,
+                  searchClickUpDocs: ToolCallStatus,
+                },
               },
-            },
-          }}
-        />
+            }}
+          />
+        </ThinkingProcessProvider>
         <MessageError />
       </div>
 
@@ -252,8 +256,8 @@ const AssistantActionBar: FC = () => {
 }
 
 const FollowUpSuggestions: FC = () => {
-  const message = useMessage()
-  const threadRuntime = useThreadRuntime()
+  const message = useAuiState(({ message }) => message)
+  const aui = useAui()
   const { questions, generateFollowUp, clearQuestions } = useFollowUp()
   const generatedRef = useRef(false)
 
@@ -318,7 +322,7 @@ const FollowUpSuggestions: FC = () => {
             className="h-auto py-1.5 px-2.5 text-xs font-normal whitespace-normal text-left cursor-pointer border border-transparent hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
             onClick={() => {
               clearQuestions()
-              threadRuntime.append({
+              aui.thread().append({
                 role: "user",
                 content: [{ type: "text", text: question }],
               })

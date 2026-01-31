@@ -1,9 +1,10 @@
 "use client"
 
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react"
+import { useAuiState } from "@assistant-ui/react"
 import { CheckIcon, FileTextIcon, ListTodoIcon, LoaderIcon, SearchIcon } from "lucide-react"
-import type { ComponentType, PropsWithChildren } from "react"
-import { cn } from "@/lib/utils"
+import { type ComponentType, type PropsWithChildren, useEffect, useMemo } from "react"
+import { useThinkingProcess, type ThinkingStep } from "@/components/assistant-ui/thinking-process"
 
 const TOOL_LABELS: Record<string, { icon: ComponentType<{ className?: string }>; label: string }> =
   {
@@ -38,15 +39,40 @@ export const ToolCallStatus: ToolCallMessagePartComponent = ({ toolName, status 
 
 export const ToolGroupWrapper: ComponentType<
   PropsWithChildren<{ startIndex: number; endIndex: number }>
-> = ({ children }) => {
-  return (
-    <div
-      className={cn(
-        "my-1 rounded-md border border-border/50 bg-muted/30 px-3 py-2",
-        "flex flex-col gap-0.5"
-      )}
-    >
-      {children}
-    </div>
-  )
+> = ({ children, startIndex, endIndex }) => {
+  const message = useAuiState(({ message }) => message)
+  const { registerSteps, unregisterSteps, isOpen } = useThinkingProcess()
+
+  const sourceId = `tools-${startIndex}-${endIndex}`
+
+  const toolSteps: ThinkingStep[] = useMemo(() => {
+    const steps: ThinkingStep[] = []
+    for (let i = startIndex; i < endIndex; i++) {
+      const part = message.content[i]
+      if (part && part.type === "tool-call") {
+        const toolInfo = TOOL_LABELS[part.toolName]
+        if (toolInfo) {
+          const isRunning = !("result" in part) || part.status?.type === "running"
+          steps.push({
+            id: `tool-${part.toolName}-${i}`,
+            type: "tool-call",
+            label: `${toolInfo.label} 중...`,
+            status: isRunning ? "running" : "complete",
+          })
+        }
+      }
+    }
+    return steps
+  }, [message.content, startIndex, endIndex])
+
+  useEffect(() => {
+    if (toolSteps.length > 0) {
+      registerSteps(sourceId, toolSteps)
+    }
+    return () => unregisterSteps(sourceId)
+  }, [registerSteps, unregisterSteps, sourceId, toolSteps])
+
+  if (!isOpen) return null
+
+  return <div className="flex flex-col gap-0.5 py-0.5">{children}</div>
 }
