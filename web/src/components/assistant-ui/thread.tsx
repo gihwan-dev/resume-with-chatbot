@@ -123,7 +123,7 @@ const Composer: FC = () => {
 
 const ComposerAction: FC = () => {
   return (
-    <div className="aui-composer-action-wrapper relative mx-2 mb-2 flex items-center justify-end">
+    <div className="aui-composer-action-wrapper relative mx-2 mb-2 flex items-center justify-end gap-2">
       <ComposerPrimitive.Send asChild>
         <TooltipIconButton
           tooltip="메시지 전송"
