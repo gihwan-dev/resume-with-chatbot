@@ -8,16 +8,6 @@ import { useThinkingProcess } from "@/components/assistant-ui/thinking-process"
 const SOURCE_ID = "reasoning"
 
 export const Reasoning: ReasoningMessagePartComponent = ({ text }) => {
-  const { setReasoningTitle } = useThinkingProcess()
-
-  useEffect(() => {
-    if (!text) return
-    const matches = [...text.matchAll(/\*\*(.+?)\*\*/g)]
-    if (matches.length > 0) {
-      setReasoningTitle(matches[matches.length - 1][1])
-    }
-  }, [text, setReasoningTitle])
-
   if (!text) return null
   return (
     <p className="whitespace-pre-wrap text-xs text-muted-foreground/70 leading-relaxed">{text}</p>
@@ -26,7 +16,7 @@ export const Reasoning: ReasoningMessagePartComponent = ({ text }) => {
 
 export const ReasoningGroupWrapper: ReasoningGroupComponent = ({ children }: PropsWithChildren) => {
   const message = useAuiState(({ message }) => message)
-  const { registerSteps, unregisterSteps, isOpen } = useThinkingProcess()
+  const { registerSteps, unregisterSteps, isOpen, setReasoningTitle } = useThinkingProcess()
 
   const isStreaming =
     message.status?.type === "running" || message.status?.type === "requires-action"
@@ -42,6 +32,20 @@ export const ReasoningGroupWrapper: ReasoningGroupComponent = ({ children }: Pro
     ])
     return () => unregisterSteps(SOURCE_ID)
   }, [registerSteps, unregisterSteps, isStreaming])
+
+  // 제목 추출 — isOpen 체크 전에 실행되므로 아코디언 닫혀도 동작
+  useEffect(() => {
+    const reasoningParts = message.content.filter(
+      (p): p is { type: "reasoning"; text: string } => p.type === "reasoning"
+    )
+    const lastText = reasoningParts[reasoningParts.length - 1]?.text
+    if (!lastText) return
+
+    const matches = [...lastText.matchAll(/\*\*(.+?)\*\*/g)]
+    if (matches.length > 0) {
+      setReasoningTitle(matches[matches.length - 1][1])
+    }
+  }, [message.content, setReasoningTitle])
 
   if (!isOpen) return null
 

@@ -14,8 +14,8 @@ import {
   CopyIcon,
   MessageSquarePlus,
   RefreshCwIcon,
-  SquarePenIcon,
   SquareIcon,
+  SquarePenIcon,
 } from "lucide-react"
 import { type FC, useEffect, useRef } from "react"
 import { MarkdownText } from "@/components/assistant-ui/markdown-text"
@@ -60,8 +60,9 @@ export const Thread: FC = () => {
       <ThreadHeader />
       <ThreadPrimitive.Viewport
         turnAnchor="top"
-        className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth px-4 pt-4"
+        className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth px-4"
       >
+        <ThreadPrimitive.ViewportFooter className="h-4 shrink-0" />
         <ThreadPrimitive.Empty>
           <ThreadWelcome />
         </ThreadPrimitive.Empty>
@@ -72,8 +73,6 @@ export const Thread: FC = () => {
             AssistantMessage,
           }}
         />
-
-        <div className="h-4 shrink-0" />
 
         <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer sticky bottom-0 mx-auto mt-auto flex w-full max-w-(--thread-max-width) flex-col gap-4 overflow-visible rounded-t-3xl pb-4">
           <ThreadScrollToBottom />

@@ -194,17 +194,17 @@ function StepTicker({
   }, [targetLabel, displayLabel, isAnimating])
 
   return (
-    <span className="relative inline-flex h-4 items-center overflow-hidden">
+    <span className="relative flex min-w-0 flex-1 h-4 items-center overflow-hidden">
       {isAnimating && prevLabel && (
         <span
-          className="absolute inset-0 flex items-center"
+          className="absolute inset-0 flex items-center truncate"
           style={{ animation: "ticker-slide-up-out 0.3s ease forwards" }}
         >
           {prevLabel}
         </span>
       )}
       <span
-        className={cn("flex items-center", isAnimating && "absolute inset-0")}
+        className={cn("flex items-center truncate", isAnimating && "absolute inset-0")}
         style={isAnimating ? { animation: "ticker-slide-up-in 0.3s ease forwards" } : undefined}
       >
         {displayLabel}
