@@ -5,6 +5,7 @@ import {
   MessagePrimitive,
   ThreadPrimitive,
   useMessage,
+  useThread,
   useThreadRuntime,
 } from "@assistant-ui/react"
 import {
@@ -14,6 +15,7 @@ import {
   CopyIcon,
   MessageSquarePlus,
   RefreshCwIcon,
+  SquarePenIcon,
   SquareIcon,
 } from "lucide-react"
 import { type FC, useEffect, useRef } from "react"
@@ -25,6 +27,28 @@ import { Button } from "@/components/ui/button"
 import { useFollowUp } from "@/hooks/use-follow-up"
 import { SUGGESTED_QUESTIONS } from "@/lib/chat-utils"
 
+const ThreadHeader: FC = () => {
+  const threadRuntime = useThreadRuntime()
+  const isEmpty = useThread((state) => state.messages.length === 0)
+
+  if (isEmpty) return null
+
+  return (
+    <div className="flex items-center justify-between border-b px-4 py-2">
+      <span className="text-sm font-medium">AI 어시스턴트</span>
+      <TooltipIconButton
+        tooltip="새 대화"
+        onClick={() => {
+          threadRuntime.cancelRun()
+          threadRuntime.reset()
+        }}
+      >
+        <SquarePenIcon className="size-4" />
+      </TooltipIconButton>
+    </div>
+  )
+}
+
 export const Thread: FC = () => {
   return (
     <ThreadPrimitive.Root
@@ -33,6 +57,7 @@ export const Thread: FC = () => {
         ["--thread-max-width" as string]: "44rem",
       }}
     >
+      <ThreadHeader />
       <ThreadPrimitive.Viewport
         turnAnchor="top"
         className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth px-4 pt-4"

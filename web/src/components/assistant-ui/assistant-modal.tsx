@@ -15,8 +15,10 @@ export const AssistantModal: FC = () => {
         </AssistantModalPrimitive.Trigger>
       </AssistantModalPrimitive.Anchor>
       <AssistantModalPrimitive.Content
+        forceMount
+        portalProps={{ forceMount: true }}
         sideOffset={16}
-        className="aui-root aui-modal-content data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-bottom-1/2 data-[state=closed]:slide-out-to-right-1/2 data-[state=closed]:zoom-out data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-1/2 data-[state=open]:slide-in-from-right-1/2 data-[state=open]:zoom-in z-50 h-[min(700px,80vh)] w-[min(500px,calc(100vw-2rem))] overflow-clip overscroll-contain rounded-xl border bg-popover p-0 text-popover-foreground shadow-2xl outline-none data-[state=closed]:animate-out data-[state=open]:animate-in [&>.aui-thread-root]:bg-inherit"
+        className="aui-root aui-modal-content data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-bottom-1/2 data-[state=closed]:slide-out-to-right-1/2 data-[state=closed]:zoom-out data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-1/2 data-[state=open]:slide-in-from-right-1/2 data-[state=open]:zoom-in z-50 h-[min(700px,80vh)] w-[min(500px,calc(100vw-2rem))] overflow-clip overscroll-contain rounded-xl border bg-popover p-0 text-popover-foreground shadow-2xl outline-none data-[state=closed]:invisible data-[state=closed]:animate-out data-[state=open]:animate-in [&>.aui-thread-root]:bg-inherit"
       >
         <Thread />
       </AssistantModalPrimitive.Content>
