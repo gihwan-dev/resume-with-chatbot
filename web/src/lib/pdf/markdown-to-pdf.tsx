@@ -21,6 +21,12 @@ const parStyles: Record<ParLabel, typeof styles.parProblemLabel> = {
   Result: styles.parResultLabel,
 }
 
+const parBadgeStyleMap: Record<ParLabel, typeof styles.parProblemBadge> = {
+  Problem: styles.parProblemBadge,
+  Action: styles.parActionBadge,
+  Result: styles.parResultBadge,
+}
+
 function isParLabel(text: string): ParLabel | null {
   const trimmed = text.trim()
   for (const label of PAR_LABELS) {
@@ -170,7 +176,7 @@ export function markdownToPdf(markdown: string): PdfNode[] {
       const content = trimmed.slice(5)
       const segments = parseInline(content)
       nodes.push(
-        <View key={`h4-${i}`} style={styles.mdH4}>
+        <View key={`h4-${i}`} style={styles.mdH4} minPresenceAhead={50}>
           {renderInline(segments, `h4t-${i}`)}
         </View>
       )
@@ -219,8 +225,20 @@ export function markdownToPdf(markdown: string): PdfNode[] {
       continue
     }
 
-    // Regular paragraph
+    // Standalone PAR label → badge rendering
     const segments = parseInline(trimmed)
+    if (segments.length === 1 && segments[0].parLabel) {
+      const label = segments[0].parLabel
+      nodes.push(
+        <View key={`par-${i}`} style={styles.parBadgeRow} minPresenceAhead={40}>
+          <Text style={parBadgeStyleMap[label]}>{segments[0].text}</Text>
+        </View>
+      )
+      i++
+      continue
+    }
+
+    // Regular paragraph
     nodes.push(
       <View key={`p-${i}`} style={styles.mdParagraph}>
         {renderInline(segments, `pt-${i}`)}
