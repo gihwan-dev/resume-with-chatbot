@@ -220,5 +220,8 @@ const defaultComponents = memoizeMarkdownComponents({
       />
     )
   },
+  strong: ({ className, ...props }) => (
+    <strong className={cn("font-semibold", className)} {...props} />
+  ),
   CodeHeader,
 })
