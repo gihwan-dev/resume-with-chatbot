@@ -143,7 +143,9 @@ ${awardSections.join("\n\n")}`)
 
   // 7. 링크
   if (profile?.profiles && profile.profiles.length > 0) {
-    const linkSection = profile.profiles.map((p: { network: string; url: string }) => `- ${p.network}: ${p.url}`).join("\n")
+    const linkSection = profile.profiles
+      .map((p: { network: string; url: string }) => `- ${p.network}: ${p.url}`)
+      .join("\n")
 
     sections.push(`## 링크
 ${linkSection}`)
