@@ -18,6 +18,8 @@ import {
 } from "lucide-react"
 import { type FC, useEffect, useRef } from "react"
 import { MarkdownText } from "@/components/assistant-ui/markdown-text"
+import { Reasoning, ReasoningGroupWrapper } from "@/components/assistant-ui/reasoning"
+import { ToolCallStatus, ToolGroupWrapper } from "@/components/assistant-ui/tool-call-status"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
 import { Button } from "@/components/ui/button"
 import { useFollowUp } from "@/hooks/use-follow-up"
@@ -162,10 +164,6 @@ const MessageError: FC = () => {
   )
 }
 
-const HiddenToolFilter: FC = () => {
-  return null
-}
-
 const AssistantMessage: FC = () => {
   return (
     <MessagePrimitive.Root
@@ -176,12 +174,15 @@ const AssistantMessage: FC = () => {
         <MessagePrimitive.Parts
           components={{
             Text: MarkdownText,
+            Reasoning,
+            ReasoningGroup: ReasoningGroupWrapper,
+            ToolGroup: ToolGroupWrapper,
             tools: {
               by_name: {
-                searchNotion: HiddenToolFilter,
-                getNotionPage: HiddenToolFilter,
-                searchClickUpTasks: HiddenToolFilter,
-                searchClickUpDocs: HiddenToolFilter,
+                searchNotion: ToolCallStatus,
+                getNotionPage: ToolCallStatus,
+                searchClickUpTasks: ToolCallStatus,
+                searchClickUpDocs: ToolCallStatus,
               },
             },
           }}
@@ -289,7 +290,7 @@ const FollowUpSuggestions: FC = () => {
             key={question}
             variant="secondary"
             size="sm"
-            className="h-auto py-1.5 px-2.5 text-xs font-normal whitespace-normal text-left cursor-pointer"
+            className="h-auto py-1.5 px-2.5 text-xs font-normal whitespace-normal text-left cursor-pointer border border-transparent hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
             onClick={() => {
               clearQuestions()
               threadRuntime.append({
