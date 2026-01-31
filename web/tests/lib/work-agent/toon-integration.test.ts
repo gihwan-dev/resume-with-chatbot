@@ -7,9 +7,9 @@
  * @vitest-environment node
  */
 
+import path from "node:path"
 import * as dotenv from "dotenv"
-import path from "path"
-import { beforeAll, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 // 환경변수 로드
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") })
@@ -32,7 +32,7 @@ const testContext = {
 describe("TOON 포맷 통합 테스트", () => {
   describe("searchNotion TOON 적용", () => {
     it("검색 결과에 format 필드 존재", async () => {
-      const result = (await searchNotion.execute!({ query: "", pageSize: 5 }, testContext)) as {
+      const result = (await searchNotion.execute?.({ query: "", pageSize: 5 }, testContext)) as {
         success: true
         data: { format: string; pages: unknown }
       }
@@ -46,7 +46,7 @@ describe("TOON 포맷 통합 테스트", () => {
     })
 
     it("5개 결과 → JSON 포맷", async () => {
-      const result = (await searchNotion.execute!({ query: "", pageSize: 5 }, testContext)) as {
+      const result = (await searchNotion.execute?.({ query: "", pageSize: 5 }, testContext)) as {
         success: true
         data: { format: string; totalFound: number }
       }
@@ -58,7 +58,7 @@ describe("TOON 포맷 통합 테스트", () => {
     })
 
     it("20개 결과 → TOON 포맷 (충분한 데이터가 있는 경우)", async () => {
-      const result = (await searchNotion.execute!({ query: "", pageSize: 20 }, testContext)) as {
+      const result = (await searchNotion.execute?.({ query: "", pageSize: 20 }, testContext)) as {
         success: true
         data: { format: string; formatHint?: string; totalFound: number }
       }
@@ -80,7 +80,7 @@ describe("TOON 포맷 통합 테스트", () => {
   describe("getNotionPage createdTime 제거", () => {
     it("응답에 createdTime 없음", async () => {
       // 먼저 페이지 ID 가져오기
-      const searchResult = (await searchNotion.execute!(
+      const searchResult = (await searchNotion.execute?.(
         { query: "", pageSize: 1 },
         testContext
       )) as { success: true; data: { pages: Array<{ id: string }> } }
@@ -89,7 +89,7 @@ describe("TOON 포맷 통합 테스트", () => {
         const pageId = Array.isArray(searchResult.data.pages) ? searchResult.data.pages[0].id : null
 
         if (pageId) {
-          const result = (await getNotionPage.execute!({ pageId }, testContext)) as {
+          const result = (await getNotionPage.execute?.({ pageId }, testContext)) as {
             success: true
             data: { page: Record<string, unknown> }
           }
@@ -107,7 +107,7 @@ describe("TOON 포맷 통합 테스트", () => {
 
   describe("searchClickUpTasks TOON 적용", () => {
     it("검색 결과에 format 필드 존재", async () => {
-      const result = (await searchClickUpTasks.execute!(
+      const result = (await searchClickUpTasks.execute?.(
         { includeCompleted: true },
         testContext
       )) as { success: true; data: { format: string; totalFound: number } }
@@ -135,7 +135,7 @@ describe("TOON 포맷 통합 테스트", () => {
 
   describe("searchClickUpDocs 필드 최적화", () => {
     it("dateCreated/dateUpdated 제거됨", async () => {
-      const result = (await searchClickUpDocs.execute!({}, testContext)) as {
+      const result = (await searchClickUpDocs.execute?.({}, testContext)) as {
         success: true
         data: {
           format: string

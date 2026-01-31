@@ -363,7 +363,7 @@ export function analyzeToolCallPattern(
   const lastQueries: string[] = []
   for (let i = history.length - 1; i >= 0 && history[i].toolName === lastToolName; i--) {
     if (history[i].query) {
-      lastQueries.unshift(history[i].query!)
+      lastQueries.unshift(history[i].query as string)
     }
   }
 

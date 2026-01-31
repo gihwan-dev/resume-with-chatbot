@@ -14,8 +14,8 @@
  * @vitest-environment node
  */
 
+import path from "node:path"
 import * as dotenv from "dotenv"
-import path from "path"
 import { beforeAll, describe, expect, it } from "vitest"
 
 // 환경변수 로드 (테스트 전용)

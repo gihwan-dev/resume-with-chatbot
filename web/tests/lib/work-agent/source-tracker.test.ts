@@ -4,7 +4,7 @@
  */
 
 import { encode } from "@toon-format/toon"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
   buildSearchContextFromSteps,
   createSearchContext,
@@ -294,7 +294,7 @@ describe("source-tracker", () => {
 
     it("toolResults 없는 step 처리", () => {
       const steps = [{ text: "some text" }]
-      const context = buildSearchContextFromSteps(steps as any)
+      const context = buildSearchContextFromSteps(steps as unknown[])
       expect(context.notionPageIds.size).toBe(0)
     })
 

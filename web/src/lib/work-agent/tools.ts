@@ -89,7 +89,7 @@ export function inferProjectContext(spaceName?: string, folderName?: string): Pr
 // 시간 맥락 추론 유틸리티
 export function calculateTimeContext(dateString?: string): TimeContext | undefined {
   if (!dateString) return undefined
-  const date = new Date(parseInt(dateString))
+  const date = new Date(parseInt(dateString, 10))
   const diffMonths = (Date.now() - date.getTime()) / (1000 * 60 * 60 * 24 * 30)
   if (diffMonths < 3) return "recent"
   if (diffMonths < 12) return "older"
@@ -98,7 +98,7 @@ export function calculateTimeContext(dateString?: string): TimeContext | undefin
 
 export function calculateRelativeTime(dateString?: string): string | undefined {
   if (!dateString) return undefined
-  const diffDays = Math.floor((Date.now() - parseInt(dateString)) / (1000 * 60 * 60 * 24))
+  const diffDays = Math.floor((Date.now() - parseInt(dateString, 10)) / (1000 * 60 * 60 * 24))
   if (diffDays === 0) return "오늘 수정"
   if (diffDays < 7) return `${diffDays}일 전 수정`
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}주 전 수정`

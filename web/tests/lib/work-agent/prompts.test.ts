@@ -160,7 +160,7 @@ describe("prompts", () => {
       const steps = [
         { text: "some text" },
         { toolCalls: [{ toolName: "searchNotion", args: { query: "test" } }] },
-      ] as any
+      ] as unknown[]
       const result = analyzeToolCallPattern(steps)
       expect(result.consecutiveSameToolCount).toBe(1)
       expect(result.lastToolName).toBe("searchNotion")
