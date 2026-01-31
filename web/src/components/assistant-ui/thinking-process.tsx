@@ -13,6 +13,7 @@ import {
   useState,
 } from "react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { TOOL_LABELS } from "@/lib/tool-labels"
 import { cn } from "@/lib/utils"
 
 // --- Types ---
@@ -27,14 +28,71 @@ export interface ThinkingStep {
 }
 
 interface ThinkingProcessContextValue {
-  registerSteps: (sourceId: string, steps: ThinkingStep[]) => void
-  unregisterSteps: (sourceId: string) => void
   steps: ThinkingStep[]
   currentStep: ThinkingStep | null
   isOpen: boolean
   setIsOpen: (open: boolean) => void
   reasoningTitle: string
-  setReasoningTitle: (title: string) => void
+}
+
+// --- Pure helpers ---
+
+export function extractReasoningTitle(
+  content: ReadonlyArray<{ type: string; text?: string }>
+): string {
+  const reasoningParts = content.filter((p) => p.type === "reasoning" && p.text)
+  const lastText = reasoningParts[reasoningParts.length - 1]?.text
+  if (!lastText) return ""
+  const matches = [...lastText.matchAll(/\*\*(.+?)\*\*/g)]
+  return matches.length > 0 ? matches[matches.length - 1][1] : ""
+}
+
+export function computeToolSteps(
+  content: ReadonlyArray<{ type: string; toolName?: string }>,
+  isComplete: boolean
+): ThinkingStep[] {
+  const toolSteps: ThinkingStep[] = []
+  for (let i = 0; i < content.length; i++) {
+    const part = content[i]
+    if (part.type === "tool-call") {
+      const toolName = part.toolName
+      if (toolName) {
+        const toolInfo = TOOL_LABELS[toolName]
+        if (toolInfo) {
+          toolSteps.push({
+            id: `tool-${toolName}-${i}`,
+            type: "tool-call",
+            label: `${toolInfo.label} 중...`,
+            status: isComplete ? "complete" : "running",
+          })
+        }
+      }
+    }
+  }
+  return toolSteps
+}
+
+export function computeCurrentStep(
+  content: ReadonlyArray<{ type: string; toolName?: string }>,
+  steps: ThinkingStep[],
+  isComplete: boolean
+): ThinkingStep | null {
+  if (isComplete) return null
+
+  for (let i = content.length - 1; i >= 0; i--) {
+    const part = content[i]
+
+    if (part.type === "tool-call") {
+      const toolName = part.toolName
+      return steps.find((s) => s.type === "tool-call" && s.id === `tool-${toolName}-${i}`) ?? null
+    }
+
+    if (part.type === "reasoning") {
+      return steps.find((s) => s.type === "reasoning") ?? null
+    }
+  }
+
+  return null
 }
 
 // --- Context ---
@@ -54,39 +112,36 @@ export function useThinkingProcess() {
 export function ThinkingProcessProvider({ children }: PropsWithChildren) {
   const message = useAuiState(({ message }) => message)
   const isComplete = message.status?.type === "complete"
+  const isStreaming =
+    message.status?.type === "running" || message.status?.type === "requires-action"
   const [isOpen, setIsOpen] = useState(false)
-  const [reasoningTitle, setReasoningTitle] = useState("")
-  const stepsMapRef = useRef<Map<string, ThinkingStep[]>>(new Map())
-  const [stepsVersion, setStepsVersion] = useState(0)
 
-  const registerSteps = useCallback((sourceId: string, steps: ThinkingStep[]) => {
-    stepsMapRef.current.set(sourceId, steps)
-    setStepsVersion((v) => v + 1)
-  }, [])
+  const hasReasoning = message.content.some((p) => p.type === "reasoning")
 
-  const unregisterSteps = useCallback((sourceId: string) => {
-    stepsMapRef.current.delete(sourceId)
-    setStepsVersion((v) => v + 1)
-  }, [])
+  const reasoningTitle = useMemo(() => extractReasoningTitle(message.content), [message.content])
 
   const steps = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    stepsVersion // subscribe to changes
     const all: ThinkingStep[] = []
-    for (const s of stepsMapRef.current.values()) {
-      all.push(...s)
+    if (hasReasoning) {
+      all.push({
+        id: "reasoning",
+        type: "reasoning",
+        label: "생각 중...",
+        status: isStreaming ? "running" : "complete",
+      })
     }
+    all.push(...computeToolSteps(message.content, isComplete))
     return all
-  }, [stepsVersion])
+  }, [message.content, hasReasoning, isStreaming, isComplete])
 
-  const currentStep = useMemo(() => {
-    const running = steps.filter((s) => s.status === "running")
-    return running.length > 0 ? running[running.length - 1] : null
-  }, [steps])
+  const currentStep = useMemo(
+    () => computeCurrentStep(message.content, steps, isComplete),
+    [steps, message.content, isComplete]
+  )
 
   const contextValue = useMemo(
-    () => ({ registerSteps, unregisterSteps, steps, currentStep, isOpen, setIsOpen, reasoningTitle, setReasoningTitle }),
-    [registerSteps, unregisterSteps, steps, currentStep, isOpen, setIsOpen, reasoningTitle]
+    () => ({ steps, currentStep, isOpen, setIsOpen, reasoningTitle }),
+    [steps, currentStep, isOpen, reasoningTitle]
   )
 
   const hasSteps = steps.length > 0
@@ -94,7 +149,13 @@ export function ThinkingProcessProvider({ children }: PropsWithChildren) {
   return (
     <ThinkingProcessContext.Provider value={contextValue}>
       {hasSteps && (
-        <ThinkingProcessHeader isComplete={isComplete} currentStep={currentStep} isOpen={isOpen} setIsOpen={setIsOpen} reasoningTitle={reasoningTitle} />
+        <ThinkingProcessHeader
+          isComplete={isComplete}
+          currentStep={currentStep}
+          isOpen={isOpen}
+          setIsOpen={setIsOpen}
+          reasoningTitle={reasoningTitle}
+        />
       )}
       {children}
     </ThinkingProcessContext.Provider>
@@ -126,7 +187,11 @@ function ThinkingProcessHeader({
         ) : (
           <CheckIcon className="size-3.5 shrink-0 text-green-500" />
         )}
-        <StepTicker currentStep={currentStep} isComplete={isComplete} reasoningTitle={reasoningTitle} />
+        <StepTicker
+          currentStep={currentStep}
+          isComplete={isComplete}
+          reasoningTitle={reasoningTitle}
+        />
         <ChevronRightIcon
           className={cn(
             "ml-auto size-3.5 shrink-0 transition-transform duration-200",
@@ -156,56 +221,93 @@ function StepTicker({
   isComplete: boolean
   reasoningTitle: string
 }) {
-  const [displayLabel, setDisplayLabel] = useState<string>("")
+  const [displayLabel, setDisplayLabel] = useState("")
   const [prevLabel, setPrevLabel] = useState<string | null>(null)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const displayLabelRef = useRef("")
+  const pendingRef = useRef<string | null>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const targetLabel = isComplete
     ? "사고 과정"
     : currentStep?.type === "reasoning"
       ? reasoningTitle || "생각 중..."
-      : currentStep?.label ?? "생각 중..."
+      : (currentStep?.label ?? "생각 중...")
+
+  const transitionTo = useCallback((label: string) => {
+    setPrevLabel(displayLabelRef.current)
+    displayLabelRef.current = label
+    setDisplayLabel(label)
+
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null
+      setPrevLabel(null)
+
+      const pending = pendingRef.current
+      if (pending && pending !== displayLabelRef.current) {
+        pendingRef.current = null
+        transitionTo(pending)
+      }
+    }, 100)
+  }, [])
 
   useEffect(() => {
-    if (targetLabel === displayLabel && !isAnimating) return
+    if (targetLabel === displayLabelRef.current) {
+      pendingRef.current = null
+      return
+    }
 
-    if (displayLabel === "") {
-      // First render, no animation
+    // First label: show immediately without animation
+    if (displayLabelRef.current === "") {
+      displayLabelRef.current = targetLabel
       setDisplayLabel(targetLabel)
       return
     }
 
-    if (targetLabel !== displayLabel && !isAnimating) {
-      setPrevLabel(displayLabel)
+    // On complete: skip pending queue, transition immediately
+    if (isComplete) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+      pendingRef.current = null
+      displayLabelRef.current = targetLabel
+      setPrevLabel(null)
       setDisplayLabel(targetLabel)
-      setIsAnimating(true)
-
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      timeoutRef.current = setTimeout(() => {
-        setIsAnimating(false)
-        setPrevLabel(null)
-      }, 300)
+      return
     }
 
+    // Timer running: save to pending (overwrite with latest)
+    if (timerRef.current) {
+      pendingRef.current = targetLabel
+      return
+    }
+
+    // Immediate transition
+    transitionTo(targetLabel)
+  }, [targetLabel, isComplete, transitionTo])
+
+  // Unmount cleanup
+  useEffect(() => {
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+      if (timerRef.current) clearTimeout(timerRef.current)
     }
-  }, [targetLabel, displayLabel, isAnimating])
+  }, [])
+
+  const isAnimating = prevLabel !== null
 
   return (
     <span className="relative flex min-w-0 flex-1 h-4 items-center overflow-hidden">
-      {isAnimating && prevLabel && (
+      {isAnimating && (
         <span
           className="absolute inset-0 flex items-center truncate"
-          style={{ animation: "ticker-slide-up-out 0.3s ease forwards" }}
+          style={{ animation: "ticker-slide-up-out 0.1s ease forwards" }}
         >
           {prevLabel}
         </span>
       )}
       <span
         className={cn("flex items-center truncate", isAnimating && "absolute inset-0")}
-        style={isAnimating ? { animation: "ticker-slide-up-in 0.3s ease forwards" } : undefined}
+        style={isAnimating ? { animation: "ticker-slide-up-in 0.1s ease forwards" } : undefined}
       >
         {displayLabel}
       </span>
