@@ -1,6 +1,6 @@
 import { AssistantModal } from "@/components/assistant-ui/assistant-modal"
-import { AnswerToolUI } from "./AnswerToolUI"
-import { ChatRuntimeProvider } from "./ChatRuntimeProvider"
+import { AnswerToolUI } from "./answer-tool-ui"
+import { ChatRuntimeProvider } from "./chat-runtime-provider"
 
 export function ChatWidget() {
   return (

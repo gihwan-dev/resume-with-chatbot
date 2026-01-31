@@ -1,5 +1,5 @@
 import { makeAssistantToolUI } from "@assistant-ui/react"
-import { SourceCarousel } from "./SourceCarousel"
+import { SourceCarousel } from "./source-carousel"
 import type { Source } from "./types"
 
 interface AnswerToolArgs {
