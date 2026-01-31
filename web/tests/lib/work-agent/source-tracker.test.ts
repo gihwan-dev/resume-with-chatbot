@@ -294,7 +294,7 @@ describe("source-tracker", () => {
 
     it("toolResults 없는 step 처리", () => {
       const steps = [{ text: "some text" }]
-      const context = buildSearchContextFromSteps(steps as unknown[])
+      const context = buildSearchContextFromSteps(steps as Parameters<typeof buildSearchContextFromSteps>[0])
       expect(context.notionPageIds.size).toBe(0)
     })
 
