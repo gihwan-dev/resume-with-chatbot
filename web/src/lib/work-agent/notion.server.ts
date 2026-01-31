@@ -4,11 +4,11 @@
  */
 
 import {
-  WorkAgentError,
   type NotionBlockSlim,
   type NotionPage,
   type NotionSearchOptions,
   type NotionSearchResult,
+  WorkAgentError,
 } from "./types"
 
 const NOTION_API_VERSION = "2022-06-28"
@@ -18,10 +18,7 @@ const MAX_BLOCK_DEPTH = 2
 function getNotionToken(): string {
   const token = import.meta.env.NOTION_API_TOKEN
   if (!token) {
-    throw new WorkAgentError(
-      "NOTION_API_TOKEN is not configured",
-      "INVALID_CONFIG"
-    )
+    throw new WorkAgentError("NOTION_API_TOKEN is not configured", "INVALID_CONFIG")
   }
   return token
 }
@@ -34,10 +31,7 @@ function getHeaders(): Record<string, string> {
   }
 }
 
-async function notionFetch<T>(
-  endpoint: string,
-  options?: RequestInit
-): Promise<T> {
+async function notionFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${NOTION_BASE_URL}${endpoint}`
 
   try {
@@ -70,11 +64,7 @@ async function notionFetch<T>(
         throw new WorkAgentError(errorMessage, "NOT_FOUND", response.status)
       }
 
-      throw new WorkAgentError(
-        errorMessage,
-        "NOTION_API_ERROR",
-        response.status
-      )
+      throw new WorkAgentError(errorMessage, "NOTION_API_ERROR", response.status)
     }
 
     return response.json()
@@ -136,9 +126,7 @@ function extractBlockContent(block: NotionApiBlock): string | null {
 
   // rich_text 기반 블록 처리
   if (blockData.rich_text) {
-    const text = blockData.rich_text
-      .map((t: { plain_text: string }) => t.plain_text)
-      .join("")
+    const text = blockData.rich_text.map((t: { plain_text: string }) => t.plain_text).join("")
     return text || null
   }
 
@@ -167,10 +155,7 @@ function extractBlockContent(block: NotionApiBlock): string | null {
  * 모든 블록을 재귀적으로 가져오기 (Slim 버전)
  * 토큰 최적화: id, hasChildren 제거, 빈 content 스킵
  */
-async function fetchAllBlocksSlim(
-  blockId: string,
-  depth: number = 0
-): Promise<NotionBlockSlim[]> {
+async function fetchAllBlocksSlim(blockId: string, depth: number = 0): Promise<NotionBlockSlim[]> {
   if (depth >= MAX_BLOCK_DEPTH) {
     return []
   }
@@ -214,9 +199,7 @@ async function fetchAllBlocksSlim(
 /**
  * Notion 페이지 검색
  */
-export async function searchNotionPages(
-  options: NotionSearchOptions
-): Promise<NotionSearchResult> {
+export async function searchNotionPages(options: NotionSearchOptions): Promise<NotionSearchResult> {
   const { query, pageSize = 10, startCursor } = options
 
   const body: Record<string, unknown> = {
@@ -244,8 +227,7 @@ export async function searchNotionPages(
     createdTime: page.created_time,
     lastEditedTime: page.last_edited_time,
     parentType: page.parent.type as NotionPage["parentType"],
-    parentId:
-      page.parent.database_id || page.parent.page_id || page.parent.workspace,
+    parentId: page.parent.database_id || page.parent.page_id || page.parent.workspace,
   }))
 
   return {
@@ -259,9 +241,7 @@ export async function searchNotionPages(
  * Notion 페이지 콘텐츠 조회 (Slim 버전)
  * 토큰 최적화: 블록에서 id, hasChildren 제거
  */
-export async function getNotionPageContent(
-  pageId: string
-): Promise<NotionPageContentSlim> {
+export async function getNotionPageContent(pageId: string): Promise<NotionPageContentSlim> {
   // 페이지 정보 가져오기
   const page = await notionFetch<NotionApiPage>(`/pages/${pageId}`)
 

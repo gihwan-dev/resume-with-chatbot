@@ -1,0 +1,12 @@
+# Node & Package Managers
+node_modules/
+
+# Build Output
+dist/
+.astro/
+.vercel/
+
+# Environment Variables
+.env
+.env.*
+!.env.example

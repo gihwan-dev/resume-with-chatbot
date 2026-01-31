@@ -1,6 +1,6 @@
-import { defineConfig } from "vitest/config"
-import { loadEnv } from "vite"
 import path from "path"
+import { loadEnv } from "vite"
+import { defineConfig } from "vitest/config"
 
 export default defineConfig(({ mode }) => {
   // .env 파일 로드 (모든 환경 변수, VITE_ 접두사 없이도 로드)

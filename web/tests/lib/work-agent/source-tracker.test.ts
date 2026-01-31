@@ -3,18 +3,18 @@
  * ID 추출 및 출처 검증 유틸리티 테스트
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest"
 import { encode } from "@toon-format/toon"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
-  createSearchContext,
-  extractNotionPageIds,
-  extractNotionPageId,
-  extractClickUpTaskIds,
-  extractClickUpDocIds,
   buildSearchContextFromSteps,
+  createSearchContext,
+  extractClickUpDocIds,
+  extractClickUpTaskIds,
+  extractNotionPageId,
+  extractNotionPageIds,
   validateSources,
 } from "../../../src/lib/work-agent/source-tracker"
-import type { SearchContext, AnswerSource } from "../../../src/lib/work-agent/types"
+import type { AnswerSource, SearchContext } from "../../../src/lib/work-agent/types"
 
 describe("source-tracker", () => {
   // ============================================
@@ -122,7 +122,13 @@ describe("source-tracker", () => {
         data: {
           format: "json" as const,
           tasks: [
-            { id: "task-1", name: "Task 1", status: "in progress", context: "unknown" as const, tags: [] },
+            {
+              id: "task-1",
+              name: "Task 1",
+              status: "in progress",
+              context: "unknown" as const,
+              tags: [],
+            },
             { id: "task-2", name: "Task 2", status: "done", context: "unknown" as const, tags: [] },
           ],
         },
@@ -134,7 +140,13 @@ describe("source-tracker", () => {
 
     it("TOON 포맷에서 ID 추출", () => {
       const tasks = [
-        { id: "task-1", name: "Task 1", status: "in progress", context: "unknown" as const, tags: [] },
+        {
+          id: "task-1",
+          name: "Task 1",
+          status: "in progress",
+          context: "unknown" as const,
+          tags: [],
+        },
         { id: "task-2", name: "Task 2", status: "done", context: "unknown" as const, tags: [] },
       ]
       const result = {
@@ -235,7 +247,15 @@ describe("source-tracker", () => {
                 success: true,
                 data: {
                   format: "json" as const,
-                  tasks: [{ id: "task-1", name: "T1", status: "done", context: "unknown" as const, tags: [] }],
+                  tasks: [
+                    {
+                      id: "task-1",
+                      name: "T1",
+                      status: "done",
+                      context: "unknown" as const,
+                      tags: [],
+                    },
+                  ],
                 },
               },
             },
@@ -343,9 +363,7 @@ describe("source-tracker", () => {
     })
 
     it("resume 타입은 ID 없이도 유효", () => {
-      const sources: AnswerSource[] = [
-        { type: "resume", title: "이력서 기본 정보" },
-      ]
+      const sources: AnswerSource[] = [{ type: "resume", title: "이력서 기본 정보" }]
 
       const result = validateSources(sources, baseContext)
 
@@ -355,9 +373,7 @@ describe("source-tracker", () => {
     })
 
     it("ID 없는 notion/clickup 출처 → 경고 추가, 유효로 처리", () => {
-      const sources: AnswerSource[] = [
-        { type: "notion", title: "ID 없는 페이지" },
-      ]
+      const sources: AnswerSource[] = [{ type: "notion", title: "ID 없는 페이지" }]
 
       const result = validateSources(sources, baseContext)
 
@@ -409,9 +425,7 @@ describe("source-tracker", () => {
 
     it("빈 context에서 ID 있는 출처 → 무효", () => {
       const emptyContext = createSearchContext()
-      const sources: AnswerSource[] = [
-        { type: "notion", title: "페이지", id: "some-id" },
-      ]
+      const sources: AnswerSource[] = [{ type: "notion", title: "페이지", id: "some-id" }]
 
       const result = validateSources(sources, emptyContext)
 
