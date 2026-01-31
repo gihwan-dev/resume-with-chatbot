@@ -1,6 +1,8 @@
 ---
 import { getCollection, render } from "astro:content"
+import { PdfDownloadButton } from "@/components/pdf/pdf-download-button"
 import { Separator } from "@/components/ui/separator"
+import { serializeResumeData } from "@/lib/pdf/serialize-resume"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
 import CertificateSection from "./_sections/certificate-section.astro"
@@ -10,6 +12,7 @@ import ProjectSection from "./_sections/project-section.astro"
 
 const basics = await getCollection("basics")
 const profile = basics[0]?.data
+const resumeData = await serializeResumeData()
 
 const work = await getCollection("work")
 const projects = await getCollection("projects")
@@ -50,6 +53,10 @@ const projectsWithContent = await Promise.all(
     class="container max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 min-h-screen"
   >
     <HeroSection profile={profile} />
+
+    <div class="mt-4">
+      <PdfDownloadButton data={resumeData} client:only="react" />
+    </div>
 
     <Separator className="my-12" />
 
