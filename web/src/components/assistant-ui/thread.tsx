@@ -40,7 +40,7 @@ const ThreadHeader: FC = () => {
         tooltip="새 대화"
         onClick={() => {
           aui.thread().cancelRun()
-          aui.thread().reset()
+          aui.threads().switchToNewThread()
         }}
       >
         <SquarePenIcon className="size-4" />
