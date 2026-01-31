@@ -237,10 +237,29 @@ const FollowUpSuggestions: FC = () => {
   useEffect(() => {
     if (!isLast || !isComplete || generatedRef.current) return
 
-    const textContent = message.content
-      .filter((part): part is { type: "text"; text: string } => part.type === "text")
-      .map((part) => part.text)
-      .join("")
+    // 1차: answer tool call의 args.answer에서 추출
+    const answerPart = message.content.find(
+      (part) => part.type === "tool-call" && part.toolName === "answer"
+    )
+
+    let answerText = ""
+    if (
+      answerPart &&
+      answerPart.type === "tool-call" &&
+      answerPart.args &&
+      typeof answerPart.args === "object" &&
+      "answer" in answerPart.args
+    ) {
+      answerText = String((answerPart.args as Record<string, unknown>).answer)
+    }
+
+    // 2차 fallback: text 파트 (tool call 없는 경우 대비)
+    const textContent =
+      answerText ||
+      message.content
+        .filter((part): part is { type: "text"; text: string } => part.type === "text")
+        .map((part) => part.text)
+        .join("")
 
     if (textContent) {
       generatedRef.current = true
@@ -270,7 +289,7 @@ const FollowUpSuggestions: FC = () => {
             key={question}
             variant="secondary"
             size="sm"
-            className="h-auto py-1.5 px-2.5 text-xs font-normal whitespace-normal text-left"
+            className="h-auto py-1.5 px-2.5 text-xs font-normal whitespace-normal text-left cursor-pointer"
             onClick={() => {
               clearQuestions()
               threadRuntime.append({

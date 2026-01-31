@@ -12,6 +12,7 @@ export function useFollowUp(options: UseFollowUpOptions = {}) {
 
   const { complete, completion, isLoading, error } = useCompletion({
     api: "/api/followup",
+    streamProtocol: "text",
   })
 
   // Parse questions when completion changes
