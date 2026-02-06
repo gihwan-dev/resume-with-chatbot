@@ -9,7 +9,7 @@ priority: 3
 
 #### API 레이어 아키텍처 재설계 및 타입 안정성 강화
 
-**[API 어댑터 레이어의 실용적 추상화](https://publish.obsidian.md/gihwan-dev/Exem/%ED%98%84+API+%EB%AC%B8%EC%A0%9C%EC%A0%90)**
+**[API 어댑터 레이어의 실용적 추상화](https://publish.obsidian.md/gihwan-dev/Exem/03-Knowledge/API/%ED%98%84+API+%EB%AC%B8%EC%A0%9C%EC%A0%90)**
 
 **Problem**
 
