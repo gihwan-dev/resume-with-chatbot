@@ -1,21 +1,15 @@
 /**
  * Work Agent 모듈
- * Notion 및 ClickUp API 클라이언트 제공
+ * Obsidian 볼트 기반 문서 검색 및 에이전트 도구 제공
  */
 
-// ClickUp Client
+// Obsidian Vault Client
 export {
-  getClickUpTask,
-  searchClickUpDocs,
-  searchClickUpTasks,
-} from "./clickup.server"
-
-// Notion Client
-export {
-  getNotionPageContent,
-  type NotionPageContentSlim,
-  searchNotionPages,
-} from "./notion.server"
+  buildCatalogSummary,
+  getDocumentCatalog,
+  readDocumentContent,
+  searchDocuments,
+} from "./obsidian.server"
 // Prompts (의도 분류, 반복 분석, 동적 프롬프트, 검색 충분성)
 export {
   analyzeToolCallPattern,
@@ -37,46 +31,23 @@ export {
 export {
   buildSearchContextFromSteps,
   createSearchContext,
+  extractDocumentId,
+  extractDocumentIds,
   validateSources,
 } from "./source-tracker"
 // AI Tools
 export {
   answer,
   createAnswerTool,
-  getNotionPage,
-  searchClickUpDocs as searchClickUpDocsTool,
-  searchClickUpTasks as searchClickUpTasksTool,
-  searchNotion,
+  readDocument,
+  searchDocuments as searchDocumentsTool,
   workAgentTools,
 } from "./tools"
-
-// TOON Encoder
-export {
-  createFormatHint,
-  type EncodedResult,
-  encodeArrayResult,
-  type FormatType,
-} from "./toon-encoder"
 // Types
 export {
   type AnswerSource,
-  type ClickUpDoc,
-  type ClickUpDocSearchOptions,
-  type ClickUpDocSlim,
-  type ClickUpDocsResult,
-  type ClickUpTask,
-  type ClickUpTaskSearchOptions,
-  // Slim types (토큰 최적화)
-  type ClickUpTaskSlim,
-  type ClickUpTasksResult,
-  type NotionBlock,
-  type NotionBlockSlim,
-  type NotionPage,
-  type NotionPageContent,
-  type NotionPageSlim,
-  type NotionSearchOptions,
-  type NotionSearchResult,
-  // Source tracking types (출처 검증)
+  type ObsidianDocument,
+  type ObsidianDocumentContent,
   type SearchContext,
   type SourceValidationResult,
   WorkAgentError,

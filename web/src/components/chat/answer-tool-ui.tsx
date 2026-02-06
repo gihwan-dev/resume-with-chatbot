@@ -5,7 +5,7 @@ import type { Source } from "./types"
 interface AnswerToolArgs {
   answer: string
   sources: {
-    type: "notion" | "clickup_task" | "clickup_doc" | "resume"
+    type: "obsidian" | "resume"
     title: string
     id?: string
   }[]
@@ -13,9 +13,7 @@ interface AnswerToolArgs {
 }
 
 const SOURCE_TYPE_LABELS: Record<string, string> = {
-  notion: "Notion",
-  clickup_task: "ClickUp Task",
-  clickup_doc: "ClickUp Doc",
+  obsidian: "Obsidian 문서",
   resume: "이력서",
 }
 

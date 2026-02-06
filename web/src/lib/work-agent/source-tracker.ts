@@ -1,49 +1,10 @@
 /**
  * Source Tracker
  * 검색 결과 ID 추적 및 출처 검증 유틸리티
+ * Obsidian 볼트 기반 아키텍처
  */
 
-import { decode } from "@toon-format/toon"
-import type {
-  AnswerSource,
-  ClickUpDocSlim,
-  ClickUpTaskSlim,
-  NotionPageSlim,
-  SearchContext,
-  SourceValidationResult,
-} from "./types"
-
-// Tool result 타입 정의
-interface SearchNotionResult {
-  success: true
-  data: {
-    format: "json" | "toon"
-    pages: string | NotionPageSlim[]
-  }
-}
-
-interface GetNotionPageResult {
-  success: true
-  data: {
-    page: { id: string }
-  }
-}
-
-interface SearchClickUpTasksResult {
-  success: true
-  data: {
-    format: "json" | "toon"
-    tasks: string | ClickUpTaskSlim[]
-  }
-}
-
-interface SearchClickUpDocsResult {
-  success: true
-  data: {
-    format: "json" | "toon"
-    docs: string | ClickUpDocSlim[]
-  }
-}
+import type { AnswerSource, ObsidianDocument, SearchContext, SourceValidationResult } from "./types"
 
 // Step 타입 (Vercel AI SDK 호환 - 유연한 타입)
 interface ToolResultLike {
@@ -55,81 +16,50 @@ interface StepLike {
   toolResults?: ToolResultLike[]
 }
 
+// searchDocuments 결과 타입
+interface SearchDocumentsResult {
+  success: true
+  data: {
+    documents: ObsidianDocument[]
+  }
+}
+
+// readDocument 결과 타입
+interface ReadDocumentResult {
+  success: true
+  data: {
+    document: { id: string }
+  }
+}
+
 /**
  * 빈 SearchContext 생성
  */
 export function createSearchContext(): SearchContext {
   return {
-    notionPageIds: new Set(),
-    clickupTaskIds: new Set(),
-    clickupDocIds: new Set(),
+    obsidianDocIds: new Set(),
   }
 }
 
 /**
- * TOON 또는 JSON 데이터에서 ID 추출
+ * searchDocuments 결과에서 ID 추출
  */
-function extractIdsFromData<T extends { id: string }>(
-  data: string | T[],
-  format: "json" | "toon"
-): string[] {
-  try {
-    if (format === "json") {
-      return (data as T[]).map((item) => item.id)
-    }
-    // TOON 디코딩
-    const decoded = decode(data as string) as T[]
-    return decoded.map((item) => item.id)
-  } catch (error) {
-    console.warn("[source-tracker] Failed to extract IDs:", error)
-    return []
-  }
-}
-
-/**
- * searchNotion 결과에서 ID 추출
- */
-export function extractNotionPageIds(result: unknown): string[] {
+export function extractDocumentIds(result: unknown): string[] {
   if (!result || typeof result !== "object") return []
-  const typedResult = result as { success?: boolean; data?: SearchNotionResult["data"] }
-  if (!typedResult.success || !typedResult.data) return []
+  const typedResult = result as { success?: boolean; data?: SearchDocumentsResult["data"] }
+  if (!typedResult.success || !typedResult.data?.documents) return []
 
-  const { format, pages } = typedResult.data
-  return extractIdsFromData(pages, format)
+  return typedResult.data.documents.map((doc) => doc.id)
 }
 
 /**
- * getNotionPage 결과에서 ID 추출
+ * readDocument 결과에서 ID 추출
  */
-export function extractNotionPageId(result: unknown): string | null {
+export function extractDocumentId(result: unknown): string | null {
   if (!result || typeof result !== "object") return null
-  const typedResult = result as { success?: boolean; data?: GetNotionPageResult["data"] }
-  if (!typedResult.success || !typedResult.data?.page?.id) return null
-  return typedResult.data.page.id
-}
-
-/**
- * searchClickUpTasks 결과에서 ID 추출
- */
-export function extractClickUpTaskIds(result: unknown): string[] {
-  if (!result || typeof result !== "object") return []
-  const typedResult = result as { success?: boolean; data?: SearchClickUpTasksResult["data"] }
-  if (!typedResult.success || !typedResult.data) return []
-
-  const { format, tasks } = typedResult.data
-  return extractIdsFromData(tasks, format)
-}
-
-/**
- * searchClickUpDocs 결과에서 ID 추출
- */
-export function extractClickUpDocIds(result: unknown): string[] {
-  if (!result || typeof result !== "object") return []
-  const typedResult = result as { success?: boolean; data?: SearchClickUpDocsResult["data"] }
-  if (!typedResult.success || !typedResult.data) return []
-
-  const { format, docs } = typedResult.data
-  return extractIdsFromData(docs, format)
+  const typedResult = result as { success?: boolean; data?: ReadDocumentResult["data"] }
+  if (!typedResult.success || !typedResult.data?.document?.id) return null
+  return typedResult.data.document.id
 }
 
 /**
@@ -143,24 +73,14 @@ export function buildSearchContextFromSteps(steps: StepLike[]): SearchContext {
 
     for (const toolResult of step.toolResults) {
       switch (toolResult.toolName) {
-        case "searchNotion": {
-          const ids = extractNotionPageIds(toolResult.result)
-          for (const id of ids) context.notionPageIds.add(id)
+        case "searchDocuments": {
+          const ids = extractDocumentIds(toolResult.result)
+          for (const id of ids) context.obsidianDocIds.add(id)
           break
         }
-        case "getNotionPage": {
-          const id = extractNotionPageId(toolResult.result)
-          if (id) context.notionPageIds.add(id)
-          break
-        }
-        case "searchClickUpTasks": {
-          const ids = extractClickUpTaskIds(toolResult.result)
-          for (const id of ids) context.clickupTaskIds.add(id)
-          break
-        }
-        case "searchClickUpDocs": {
-          const ids = extractClickUpDocIds(toolResult.result)
-          for (const id of ids) context.clickupDocIds.add(id)
+        case "readDocument": {
+          const id = extractDocumentId(toolResult.result)
+          if (id) context.obsidianDocIds.add(id)
           break
         }
       }
@@ -202,18 +122,7 @@ export function validateSources(
     }
 
     // ID 검증
-    let isValidId = false
-    switch (source.type) {
-      case "notion":
-        isValidId = context.notionPageIds.has(source.id)
-        break
-      case "clickup_task":
-        isValidId = context.clickupTaskIds.has(source.id)
-        break
-      case "clickup_doc":
-        isValidId = context.clickupDocIds.has(source.id)
-        break
-    }
+    const isValidId = context.obsidianDocIds.has(source.id)
 
     if (isValidId) {
       validSources.push(source)

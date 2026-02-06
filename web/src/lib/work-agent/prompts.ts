@@ -1,6 +1,7 @@
 /**
  * Work Agent 프롬프트 모듈
  * 의도 분류, 반복 호출 분석, 동적 프롬프트 생성
+ * Obsidian 볼트 기반 아키텍처
  */
 
 // ============================================
@@ -48,13 +49,14 @@ export interface SearchSufficiencyCheck {
 /**
  * 의도별 최소 검색 횟수
  * - contact_inquiry: 연락처는 이력서에 있으므로 최소 1회
- * - 나머지: 철저한 정보 수집을 위해 최소 3회
+ * - career_inquiry/technical_inquiry: searchDocuments + readDocument
+ * - general_chat: 최소한의 확인
  */
 export const MIN_SEARCH_COUNT: Record<UserIntent, number> = {
-  career_inquiry: 3, // 경력: Notion + ClickUp Tasks + ClickUp Docs
-  technical_inquiry: 3, // 기술: Notion 검색 + 상세 조회 + ClickUp
-  contact_inquiry: 1, // 연락처: 이력서 정보로 충분
-  general_chat: 2, // 일반: 최소한의 확인
+  career_inquiry: 2, // searchDocuments + readDocument
+  technical_inquiry: 2, // searchDocuments + readDocument
+  contact_inquiry: 1, // 이력서 정보로 충분
+  general_chat: 1, // 최소한의 확인
 }
 
 /**
@@ -198,19 +200,18 @@ export const PERSONA_PROMPTS: Record<UserIntent, string> = {
 
 사용자가 경력/프로젝트 관련 질문을 했습니다. 다음 지침을 따르세요:
 
-1. **검색 전략**: ClickUp 태스크를 우선 검색하여 실제 업무 내용 파악
+1. **검색 전략**: Exem 업무 기록을 우선 검색하여 실제 업무 내용 파악
 2. **답변 스타일**: 구체적인 업무 경험과 성과 중심으로 답변
-3. **맥락 구분**: 레거시(FE1팀) vs 차세대 프로젝트 명확히 구분
-4. **시간 정보 활용**: 최신 정보(recent) 우선, 오래된 정보는 명시`,
+3. **상세 조회 필수**: searchDocuments로 관련 문서 찾은 후 반드시 readDocument로 내용 확인`,
 
   technical_inquiry: `## 현재 모드: 기술 전문가
 
 사용자가 기술적 질문을 했습니다. 다음 지침을 따르세요:
 
-1. **검색 전략**: Notion 기술 문서와 ClickUp Docs를 함께 검색
+1. **검색 전략**: 기술 카테고리와 업무 기록을 함께 검색
 2. **답변 스타일**: 기술적으로 정확하고 구체적인 설명 제공
 3. **코드/구현 언급**: 가능하면 사용된 기술과 구현 방식 설명
-4. **아키텍처 설명**: 필요시 시스템 구조나 설계 결정 이유 포함`,
+4. **상세 조회 필수**: searchDocuments 결과에서 유망한 문서는 반드시 readDocument로 확인`,
 
   contact_inquiry: `## 현재 모드: 연결 담당자
 
@@ -245,7 +246,7 @@ export const REFLEXION_PROTOCOL = `## ⚠️ 반복 호출 감지
 
 ### 대안 전략
 - 다른 키워드로 검색 시도
-- 다른 데이터 소스(Notion ↔ ClickUp) 활용
+- searchDocuments와 readDocument를 번갈아 활용
 - 검색 결과가 없다면 이력서 기본 정보로 답변
 
 ### 주의
@@ -368,7 +369,7 @@ export function analyzeToolCallPattern(
   }
 
   // 검색 도구 총 호출 횟수
-  const searchTools = ["searchNotion", "getNotionPage", "searchClickUpTasks", "searchClickUpDocs"]
+  const searchTools = ["searchDocuments", "readDocument"]
   const totalSearchCount = history.filter((h) => searchTools.includes(h.toolName)).length
 
   return {

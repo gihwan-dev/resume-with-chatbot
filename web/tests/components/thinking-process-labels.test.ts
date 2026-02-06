@@ -50,19 +50,19 @@ describe("extractReasoningTitle", () => {
 
 describe("computeToolSteps", () => {
   it("creates steps for known tool names", () => {
-    const content = [{ type: "reasoning" }, { type: "tool-call", toolName: "searchNotion" }]
+    const content = [{ type: "reasoning" }, { type: "tool-call", toolName: "searchDocuments" }]
     const steps = computeToolSteps(content, false)
     expect(steps).toHaveLength(1)
     expect(steps[0]).toMatchObject({
-      id: "tool-searchNotion-1",
+      id: "tool-searchDocuments-1",
       type: "tool-call",
-      label: "Notion 검색 중...",
+      label: "문서 검색 중...",
       status: "running",
     })
   })
 
   it("marks steps as complete when isComplete is true", () => {
-    const content = [{ type: "tool-call", toolName: "getNotionPage" }]
+    const content = [{ type: "tool-call", toolName: "readDocument" }]
     const steps = computeToolSteps(content, true)
     expect(steps[0].status).toBe("complete")
   })
@@ -75,16 +75,16 @@ describe("computeToolSteps", () => {
 
   it("handles multiple tool calls", () => {
     const content = [
-      { type: "tool-call", toolName: "searchNotion" },
+      { type: "tool-call", toolName: "searchDocuments" },
       { type: "reasoning" },
-      { type: "tool-call", toolName: "getNotionPage" },
-      { type: "tool-call", toolName: "searchClickUpTasks" },
+      { type: "tool-call", toolName: "readDocument" },
+      { type: "tool-call", toolName: "searchDocuments" },
     ]
     const steps = computeToolSteps(content, false)
     expect(steps).toHaveLength(3)
-    expect(steps[0].label).toBe("Notion 검색 중...")
-    expect(steps[1].label).toBe("Notion 페이지 조회 중...")
-    expect(steps[2].label).toBe("ClickUp 작업 검색 중...")
+    expect(steps[0].label).toBe("문서 검색 중...")
+    expect(steps[1].label).toBe("문서 상세 조회 중...")
+    expect(steps[2].label).toBe("문서 검색 중...")
   })
 
   it("skips tool-call parts without toolName", () => {
@@ -118,26 +118,26 @@ describe("computeCurrentStep", () => {
 
   it("returns tool step when last content is tool-call", () => {
     const toolStep: ThinkingStep = {
-      id: "tool-searchNotion-1",
+      id: "tool-searchDocuments-1",
       type: "tool-call",
-      label: "Notion 검색 중...",
+      label: "문서 검색 중...",
       status: "running",
     }
-    const content = [{ type: "reasoning" }, { type: "tool-call", toolName: "searchNotion" }]
+    const content = [{ type: "reasoning" }, { type: "tool-call", toolName: "searchDocuments" }]
     const steps = [reasoningStep, toolStep]
     expect(computeCurrentStep(content, steps, false)).toBe(toolStep)
   })
 
   it("returns reasoning step when last content is reasoning after tool-call", () => {
     const toolStep: ThinkingStep = {
-      id: "tool-searchNotion-1",
+      id: "tool-searchDocuments-1",
       type: "tool-call",
-      label: "Notion 검색 중...",
+      label: "문서 검색 중...",
       status: "running",
     }
     const content = [
       { type: "reasoning" },
-      { type: "tool-call", toolName: "searchNotion" },
+      { type: "tool-call", toolName: "searchDocuments" },
       { type: "reasoning" },
     ]
     const steps = [reasoningStep, toolStep]
@@ -158,9 +158,6 @@ describe("computeCurrentStep", () => {
 // --- SSE Stream Simulation ---
 
 describe("SSE stream simulation - label sequence", () => {
-  // Simulates progressive content snapshots as they arrive from SSE streaming.
-  // Each snapshot represents the accumulated message.content at a point in time.
-
   function deriveTargetLabel(
     content: ReadonlyArray<{ type: string; text?: string; toolName?: string }>,
     isComplete: boolean
@@ -198,85 +195,44 @@ describe("SSE stream simulation - label sequence", () => {
     expect(deriveTargetLabel(content, false)).toBe("Synthesizing Skill Sets")
   })
 
-  // S2: [reasoning₁, tc:searchNotion] → tool-call
+  // S2: [reasoning₁, tc:searchDocuments] → tool-call
   it("S2: tool-call after reasoning", () => {
     const content = [
       { type: "reasoning", text: "Let me think about this... **Synthesizing Skill Sets**" },
-      { type: "tool-call", toolName: "searchNotion" },
+      { type: "tool-call", toolName: "searchDocuments" },
     ]
-    expect(deriveTargetLabel(content, false)).toBe("Notion 검색 중...")
+    expect(deriveTargetLabel(content, false)).toBe("문서 검색 중...")
   })
 
   // S3: [reasoning₁, tc₁, reasoning₂] → reasoning with new title
   it("S3: second reasoning phase", () => {
     const content = [
       { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-      { type: "tool-call", toolName: "searchNotion" },
+      { type: "tool-call", toolName: "searchDocuments" },
       { type: "reasoning", text: "Looking at results... **Pinpointing Relevant Content**" },
     ]
     expect(deriveTargetLabel(content, false)).toBe("Pinpointing Relevant Content")
   })
 
-  // S4: [r₁, tc₁, r₂, tc:getNotionPage] → tool-call
+  // S4: [r₁, tc₁, r₂, tc:readDocument] → tool-call
   it("S4: second tool-call", () => {
     const content = [
       { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-      { type: "tool-call", toolName: "searchNotion" },
+      { type: "tool-call", toolName: "searchDocuments" },
       { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-      { type: "tool-call", toolName: "getNotionPage" },
+      { type: "tool-call", toolName: "readDocument" },
     ]
-    expect(deriveTargetLabel(content, false)).toBe("Notion 페이지 조회 중...")
+    expect(deriveTargetLabel(content, false)).toBe("문서 상세 조회 중...")
   })
 
-  // S5: [r₁, tc₁, r₂, tc₂, reasoning₃] → reasoning with new title
-  it("S5: third reasoning phase", () => {
+  // S5: complete → "사고 과정"
+  it("S5: complete state", () => {
     const content = [
       { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-      { type: "tool-call", toolName: "searchNotion" },
+      { type: "tool-call", toolName: "searchDocuments" },
       { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-      { type: "tool-call", toolName: "getNotionPage" },
-      { type: "reasoning", text: "Analyzing data... **Reviewing and Refining Data**" },
-    ]
-    expect(deriveTargetLabel(content, false)).toBe("Reviewing and Refining Data")
-  })
-
-  // S6: [r₁,tc₁,r₂,tc₂,r₃,tc:searchClickUpTasks] → tool-call
-  it("S6: third tool-call", () => {
-    const content = [
-      { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-      { type: "tool-call", toolName: "searchNotion" },
-      { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-      { type: "tool-call", toolName: "getNotionPage" },
+      { type: "tool-call", toolName: "readDocument" },
       { type: "reasoning", text: "**Reviewing and Refining Data**" },
-      { type: "tool-call", toolName: "searchClickUpTasks" },
-    ]
-    expect(deriveTargetLabel(content, false)).toBe("ClickUp 작업 검색 중...")
-  })
-
-  // S7: [r₁,tc₁,r₂,tc₂,r₃,tc₃,reasoning₄] → reasoning
-  it("S7: fourth reasoning phase", () => {
-    const content = [
-      { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-      { type: "tool-call", toolName: "searchNotion" },
-      { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-      { type: "tool-call", toolName: "getNotionPage" },
-      { type: "reasoning", text: "**Reviewing and Refining Data**" },
-      { type: "tool-call", toolName: "searchClickUpTasks" },
-      { type: "reasoning", text: "Now let me finalize... **Refining the Strategy**" },
-    ]
-    expect(deriveTargetLabel(content, false)).toBe("Refining the Strategy")
-  })
-
-  // S8: complete → "사고 과정"
-  it("S8: complete state", () => {
-    const content = [
-      { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-      { type: "tool-call", toolName: "searchNotion" },
-      { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-      { type: "tool-call", toolName: "getNotionPage" },
-      { type: "reasoning", text: "**Reviewing and Refining Data**" },
-      { type: "tool-call", toolName: "searchClickUpTasks" },
-      { type: "reasoning", text: "**Refining the Strategy**" },
       { type: "text", text: "Here is the final answer..." },
     ]
     expect(deriveTargetLabel(content, true)).toBe("사고 과정")
@@ -297,15 +253,15 @@ describe("SSE stream simulation - label sequence", () => {
       {
         content: [
           { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-          { type: "tool-call", toolName: "searchNotion" },
+          { type: "tool-call", toolName: "searchDocuments" },
         ],
         isComplete: false,
-        expectedLabel: "Notion 검색 중...",
+        expectedLabel: "문서 검색 중...",
       },
       {
         content: [
           { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-          { type: "tool-call", toolName: "searchNotion" },
+          { type: "tool-call", toolName: "searchDocuments" },
           { type: "reasoning", text: "**Pinpointing Relevant Content**" },
         ],
         isComplete: false,
@@ -314,19 +270,19 @@ describe("SSE stream simulation - label sequence", () => {
       {
         content: [
           { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-          { type: "tool-call", toolName: "searchNotion" },
+          { type: "tool-call", toolName: "searchDocuments" },
           { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-          { type: "tool-call", toolName: "getNotionPage" },
+          { type: "tool-call", toolName: "readDocument" },
         ],
         isComplete: false,
-        expectedLabel: "Notion 페이지 조회 중...",
+        expectedLabel: "문서 상세 조회 중...",
       },
       {
         content: [
           { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-          { type: "tool-call", toolName: "searchNotion" },
+          { type: "tool-call", toolName: "searchDocuments" },
           { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-          { type: "tool-call", toolName: "getNotionPage" },
+          { type: "tool-call", toolName: "readDocument" },
           { type: "reasoning", text: "**Reviewing and Refining Data**" },
         ],
         isComplete: false,
@@ -335,23 +291,23 @@ describe("SSE stream simulation - label sequence", () => {
       {
         content: [
           { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-          { type: "tool-call", toolName: "searchNotion" },
+          { type: "tool-call", toolName: "searchDocuments" },
           { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-          { type: "tool-call", toolName: "getNotionPage" },
+          { type: "tool-call", toolName: "readDocument" },
           { type: "reasoning", text: "**Reviewing and Refining Data**" },
-          { type: "tool-call", toolName: "searchClickUpTasks" },
+          { type: "tool-call", toolName: "searchDocuments" },
         ],
         isComplete: false,
-        expectedLabel: "ClickUp 작업 검색 중...",
+        expectedLabel: "문서 검색 중...",
       },
       {
         content: [
           { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-          { type: "tool-call", toolName: "searchNotion" },
+          { type: "tool-call", toolName: "searchDocuments" },
           { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-          { type: "tool-call", toolName: "getNotionPage" },
+          { type: "tool-call", toolName: "readDocument" },
           { type: "reasoning", text: "**Reviewing and Refining Data**" },
-          { type: "tool-call", toolName: "searchClickUpTasks" },
+          { type: "tool-call", toolName: "searchDocuments" },
           { type: "reasoning", text: "**Refining the Strategy**" },
         ],
         isComplete: false,
@@ -360,11 +316,11 @@ describe("SSE stream simulation - label sequence", () => {
       {
         content: [
           { type: "reasoning", text: "**Synthesizing Skill Sets**" },
-          { type: "tool-call", toolName: "searchNotion" },
+          { type: "tool-call", toolName: "searchDocuments" },
           { type: "reasoning", text: "**Pinpointing Relevant Content**" },
-          { type: "tool-call", toolName: "getNotionPage" },
+          { type: "tool-call", toolName: "readDocument" },
           { type: "reasoning", text: "**Reviewing and Refining Data**" },
-          { type: "tool-call", toolName: "searchClickUpTasks" },
+          { type: "tool-call", toolName: "searchDocuments" },
           { type: "reasoning", text: "**Refining the Strategy**" },
           { type: "text", text: "Here is the final answer..." },
         ],

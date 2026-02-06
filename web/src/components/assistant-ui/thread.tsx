@@ -206,10 +206,8 @@ const AssistantMessage: FC = () => {
               ToolGroup: ToolGroupWrapper,
               tools: {
                 by_name: {
-                  searchNotion: ToolCallStatus,
-                  getNotionPage: ToolCallStatus,
-                  searchClickUpTasks: ToolCallStatus,
-                  searchClickUpDocs: ToolCallStatus,
+                  searchDocuments: ToolCallStatus,
+                  readDocument: ToolCallStatus,
                 },
               },
             }}
