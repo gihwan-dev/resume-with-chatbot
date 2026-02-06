@@ -10,6 +10,7 @@ import {
   searchClickUpTasks as searchClickUpTasksApi,
 } from "./clickup.server"
 import { getNotionPageContent, searchNotionPages } from "./notion.server"
+import type { RequestCache } from "./request-cache"
 import { validateSources } from "./source-tracker"
 import { createFormatHint, encodeArrayResult } from "./toon-encoder"
 import {
@@ -388,4 +389,171 @@ export const workAgentTools = {
   searchClickUpTasks,
   searchClickUpDocs,
   answer,
+}
+
+/**
+ * 요청 수준 캐시가 적용된 Work Agent 도구 팩토리
+ * 에이전트 루프 내에서 동일한 파라미터로 반복 호출 시 캐시된 결과 반환
+ */
+export function createCachedWorkAgentTools(cache: RequestCache) {
+  return {
+    searchNotion: tool({
+      description:
+        "Notion에서 페이지를 검색합니다. 업무 노트, 프로젝트 기록, 회의록 등을 찾을 때 사용합니다.",
+      inputSchema: searchNotionSchema,
+      execute: async (params: SearchNotionInput) => {
+        return cache.getOrFetch("searchNotion", params, async () => {
+          try {
+            const result = await searchNotionPages({
+              query: params.query,
+              pageSize: params.pageSize ?? 10,
+            })
+            const slimPages: NotionPageSlim[] = result.pages.map((page) => ({
+              id: page.id,
+              title: page.title,
+              url: page.url,
+              lastEditedTime: page.lastEditedTime,
+            }))
+            const encoded = encodeArrayResult(slimPages)
+            return {
+              success: true as const,
+              data: {
+                format: encoded.format,
+                formatHint: createFormatHint(encoded.format),
+                pages: encoded.data,
+                hasMore: result.hasMore,
+                totalFound: encoded.count,
+              },
+            }
+          } catch (error) {
+            return createErrorResponse(error)
+          }
+        })
+      },
+    }),
+
+    getNotionPage: tool({
+      description:
+        "Notion 페이지의 상세 내용을 조회합니다. 페이지 ID를 사용하여 전체 콘텐츠를 가져옵니다.",
+      inputSchema: getNotionPageSchema,
+      execute: async (params: GetNotionPageInput) => {
+        return cache.getOrFetch("getNotionPage", params, async () => {
+          try {
+            const result = await getNotionPageContent(params.pageId)
+            const flattenBlocks = (blocks: typeof result.blocks, depth = 0): string[] => {
+              const lines: string[] = []
+              const indent = "  ".repeat(depth)
+              for (const block of blocks) {
+                if (block.content) lines.push(`${indent}${block.content}`)
+                if (block.children && block.children.length > 0)
+                  lines.push(...flattenBlocks(block.children, depth + 1))
+              }
+              return lines
+            }
+            return {
+              success: true as const,
+              data: {
+                page: {
+                  id: result.page.id,
+                  title: result.page.title,
+                  url: result.page.url,
+                  lastEditedTime: result.page.lastEditedTime,
+                },
+                content: flattenBlocks(result.blocks).join("\n"),
+                blockCount: result.blocks.length,
+              },
+            }
+          } catch (error) {
+            return createErrorResponse(error)
+          }
+        })
+      },
+    }),
+
+    searchClickUpTasks: tool({
+      description:
+        "ClickUp에서 본인에게 할당된 태스크를 검색합니다. 진행 중인 업무, 완료된 업무 등을 확인할 때 사용합니다.",
+      inputSchema: searchClickUpTasksSchema,
+      execute: async (params: SearchClickUpTasksInput) => {
+        return cache.getOrFetch("searchClickUpTasks", params, async () => {
+          try {
+            const statusArray = params.statuses
+              ? params.statuses.split(",").map((s) => s.trim())
+              : undefined
+            const result = await searchClickUpTasksApi({
+              query: params.query,
+              statuses: statusArray,
+              includeCompleted: params.includeCompleted ?? false,
+            })
+            const slimTasks: ClickUpTaskSlim[] = result.tasks.map((task) => ({
+              id: task.id,
+              name: task.name,
+              description: task.description,
+              status: task.status.status,
+              priority: task.priority?.priority,
+              dueDate: task.dueDate,
+              url: task.url,
+              listName: task.listName,
+              folderName: task.folderName,
+              spaceName: task.spaceName,
+              tags: task.tags.map((t) => t.name),
+              context: inferProjectContext(task.spaceName, task.folderName),
+              dateUpdated: task.dateUpdated,
+              timeContext: calculateTimeContext(task.dateUpdated),
+              relativeTime: calculateRelativeTime(task.dateUpdated),
+            }))
+            const encoded = encodeArrayResult(slimTasks)
+            return {
+              success: true as const,
+              data: {
+                format: encoded.format,
+                formatHint: createFormatHint(encoded.format),
+                tasks: encoded.data,
+                totalFound: encoded.count,
+                lastPage: result.lastPage,
+              },
+            }
+          } catch (error) {
+            return createErrorResponse(error)
+          }
+        })
+      },
+    }),
+
+    searchClickUpDocs: tool({
+      description:
+        "ClickUp에서 본인이 작성한 문서를 검색합니다. 기술 문서, 회의록, 프로젝트 문서 등을 찾을 때 사용합니다.",
+      inputSchema: searchClickUpDocsSchema,
+      execute: async (params: SearchClickUpDocsInput) => {
+        return cache.getOrFetch("searchClickUpDocs", params, async () => {
+          try {
+            const result = await searchClickUpDocsApi({ query: params.query })
+            const slimDocs: ClickUpDocSlim[] = result.docs.map((doc) => ({
+              id: doc.id,
+              name: doc.name,
+              content: doc.content,
+              dateUpdated: doc.dateUpdated,
+              timeContext: calculateTimeContext(doc.dateUpdated),
+              relativeTime: calculateRelativeTime(doc.dateUpdated),
+            }))
+            const encoded = encodeArrayResult(slimDocs)
+            return {
+              success: true as const,
+              data: {
+                format: encoded.format,
+                formatHint: createFormatHint(encoded.format),
+                docs: encoded.data,
+                totalFound: encoded.count,
+                hasMore: result.hasMore,
+              },
+            }
+          } catch (error) {
+            return createErrorResponse(error)
+          }
+        })
+      },
+    }),
+
+    answer,
+  }
 }

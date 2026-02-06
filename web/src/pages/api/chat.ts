@@ -10,13 +10,19 @@ import {
   buildSearchContextFromSteps,
   classifyIntent,
   createAnswerTool,
+  createCachedWorkAgentTools,
   createSearchContext,
+  RequestCache,
   type SearchContext,
   shouldAllowAnswer,
-  workAgentTools,
 } from "@/lib/work-agent"
 
-type ToolName = keyof typeof workAgentTools
+type ToolName =
+  | "searchNotion"
+  | "getNotionPage"
+  | "searchClickUpTasks"
+  | "searchClickUpDocs"
+  | "answer"
 const SEARCH_TOOLS: ToolName[] = [
   "searchNotion",
   "getNotionPage",
@@ -248,15 +254,19 @@ export const POST = async ({ request }: { request: Request }) => {
     // SearchContext 추적: 검색된 모든 ID를 누적
     let currentSearchContext: SearchContext = createSearchContext()
 
-    // 동적 answer 도구 생성 (출처 검증 포함)
+    // 요청 수준 캐시 생성 (에이전트 루프 내 동일 API 호출 방지)
+    const requestCache = new RequestCache()
+
+    // 캐시 적용된 검색 도구 + 동적 answer 도구 생성 (출처 검증 포함)
+    const cachedTools = createCachedWorkAgentTools(requestCache)
     const dynamicAnswerTool = createAnswerTool(() => currentSearchContext)
 
-    // 도구 객체 구성 (answer만 동적으로 교체)
+    // 도구 객체 구성 (캐시된 검색 도구 + 동적 answer)
     const tools = {
-      searchNotion: workAgentTools.searchNotion,
-      getNotionPage: workAgentTools.getNotionPage,
-      searchClickUpTasks: workAgentTools.searchClickUpTasks,
-      searchClickUpDocs: workAgentTools.searchClickUpDocs,
+      searchNotion: cachedTools.searchNotion,
+      getNotionPage: cachedTools.getNotionPage,
+      searchClickUpTasks: cachedTools.searchClickUpTasks,
+      searchClickUpDocs: cachedTools.searchClickUpDocs,
       answer: dynamicAnswerTool,
     }
 

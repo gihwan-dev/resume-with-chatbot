@@ -167,27 +167,48 @@ async function fetchAllBlocksSlim(blockId: string, depth: number = 0): Promise<N
     const endpoint = `/blocks/${blockId}/children${cursor ? `?start_cursor=${cursor}` : ""}`
     const response = await notionFetch<NotionApiBlocksResponse>(endpoint)
 
+    // 자식 블록이 있는 블록들을 모아서 병렬 fetch (성능 최적화)
+    const blocksWithChildren: Array<{ index: number; blockId: string }> = []
+    const pageBlocks: Array<{ block: NotionBlockSlim; hasChildren: boolean; originalId: string }> =
+      []
+
     for (const block of response.results) {
       const content = extractBlockContent(block)
+      if (content === null) continue
 
-      // 빈 content 블록 스킵
-      if (content === null) {
-        continue
+      const notionBlock: NotionBlockSlim = { type: block.type, content }
+      const needsChildren = block.has_children && depth < MAX_BLOCK_DEPTH - 1
+
+      pageBlocks.push({
+        block: notionBlock,
+        hasChildren: needsChildren,
+        originalId: block.id,
+      })
+
+      if (needsChildren) {
+        blocksWithChildren.push({
+          index: pageBlocks.length - 1,
+          blockId: block.id,
+        })
       }
+    }
 
-      const notionBlock: NotionBlockSlim = {
-        type: block.type,
-        content,
-      }
+    // 자식 블록들을 병렬로 fetch
+    if (blocksWithChildren.length > 0) {
+      const childResults = await Promise.all(
+        blocksWithChildren.map((item) => fetchAllBlocksSlim(item.blockId, depth + 1))
+      )
 
-      if (block.has_children && depth < MAX_BLOCK_DEPTH - 1) {
-        const children = await fetchAllBlocksSlim(block.id, depth + 1)
+      for (let i = 0; i < blocksWithChildren.length; i++) {
+        const children = childResults[i]
         if (children.length > 0) {
-          notionBlock.children = children
+          pageBlocks[blocksWithChildren[i].index].block.children = children
         }
       }
+    }
 
-      blocks.push(notionBlock)
+    for (const { block } of pageBlocks) {
+      blocks.push(block)
     }
 
     cursor = response.has_more ? response.next_cursor : undefined
@@ -242,11 +263,11 @@ export async function searchNotionPages(options: NotionSearchOptions): Promise<N
  * 토큰 최적화: 블록에서 id, hasChildren 제거
  */
 export async function getNotionPageContent(pageId: string): Promise<NotionPageContentSlim> {
-  // 페이지 정보 가져오기
-  const page = await notionFetch<NotionApiPage>(`/pages/${pageId}`)
-
-  // 블록 콘텐츠 가져오기 (Slim)
-  const blocks = await fetchAllBlocksSlim(pageId)
+  // 페이지 정보와 블록 콘텐츠를 병렬로 가져오기 (성능 최적화)
+  const [page, blocks] = await Promise.all([
+    notionFetch<NotionApiPage>(`/pages/${pageId}`),
+    fetchAllBlocksSlim(pageId),
+  ])
 
   return {
     page: {

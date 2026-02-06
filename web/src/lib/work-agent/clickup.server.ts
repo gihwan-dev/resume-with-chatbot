@@ -170,33 +170,48 @@ function mapApiTaskToClickUpTask(task: ClickUpApiTask): ClickUpTask {
   }
 }
 
+// 다중 페이지 집계 최대 페이지 수
+const MAX_TASK_PAGES = 5
+
 /**
  * 본인에게 할당된 태스크 검색
+ * 다중 페이지 집계: 모든 페이지를 순회하여 결과를 누적 (최대 MAX_TASK_PAGES)
  */
 export async function searchClickUpTasks(
   options: ClickUpTaskSearchOptions = {}
 ): Promise<ClickUpTasksResult> {
   const config = getClickUpConfig()
-  const { query, statuses, includeCompleted = false, page = 0 } = options
+  const { query, statuses, includeCompleted = false } = options
 
-  const params = new URLSearchParams()
-  params.append("page", page.toString())
-  params.append("assignees[]", config.userId)
-  params.append("include_closed", includeCompleted.toString())
+  const allTasks: ClickUpTask[] = []
+  let currentPage = 0
+  let isLastPage = false
 
-  if (statuses && statuses.length > 0) {
-    for (const status of statuses) {
-      params.append("statuses[]", status)
+  // 여러 페이지를 순회하며 태스크 집계
+  while (!isLastPage && currentPage < MAX_TASK_PAGES) {
+    const params = new URLSearchParams()
+    params.append("page", currentPage.toString())
+    params.append("assignees[]", config.userId)
+    params.append("include_closed", includeCompleted.toString())
+
+    if (statuses && statuses.length > 0) {
+      for (const status of statuses) {
+        params.append("statuses[]", status)
+      }
     }
+
+    const response = await clickUpFetch<ClickUpApiTasksResponse>(
+      `/team/${config.teamId}/task?${params.toString()}`
+    )
+
+    const pageTasks = response.tasks.map(mapApiTaskToClickUpTask)
+    allTasks.push(...pageTasks)
+
+    isLastPage = response.last_page ?? pageTasks.length === 0
+    currentPage++
   }
 
-  // ClickUp API의 경우 query는 서버 사이드 필터링이 제한적이므로
-  // 클라이언트 사이드에서 필터링 필요
-  const response = await clickUpFetch<ClickUpApiTasksResponse>(
-    `/team/${config.teamId}/task?${params.toString()}`
-  )
-
-  let tasks = response.tasks.map(mapApiTaskToClickUpTask)
+  let tasks = allTasks
 
   // 쿼리가 있으면 클라이언트 사이드 필터링
   if (query) {
@@ -212,51 +227,59 @@ export async function searchClickUpTasks(
 
   return {
     tasks,
-    lastPage: response.last_page ?? tasks.length === 0,
+    lastPage: isLastPage || currentPage >= MAX_TASK_PAGES,
   }
 }
 
+// 다중 페이지 집계 최대 페이지 수
+const MAX_DOC_PAGES = 5
+
 /**
  * 본인이 작성한 문서 검색
+ * 다중 페이지 집계: 모든 페이지를 순회하여 결과를 누적 (최대 MAX_DOC_PAGES)
  */
 export async function searchClickUpDocs(
   options: ClickUpDocSearchOptions = {}
 ): Promise<ClickUpDocsResult> {
   const config = getClickUpConfig()
-  const { query, page = 0 } = options
+  const { query } = options
 
-  // ClickUp Docs API 엔드포인트 (v3 API 사용)
-  // 워크스페이스의 모든 문서 조회
-  const response = await clickUpFetch<ClickUpApiDocsResponse>(
-    `/workspaces/${config.workspaceId}/docs?page=${page}`,
-    undefined,
-    true // Use v3 API for Docs
-  )
+  const allDocs: ClickUpDoc[] = []
+  let currentPage = 0
+  let hasMore = false
 
-  // 디버깅: 워크스페이스의 모든 creator ID 확인
-  const allCreatorIds = [...new Set((response.docs || []).map((doc) => doc.creator))]
-  console.log("[ClickUp Docs] Creator ID 목록:", {
-    configUserId: config.userId,
-    uniqueCreatorIds: allCreatorIds,
-    matchCount: (response.docs || []).filter((doc) => String(doc.creator) === config.userId).length,
-    totalDocs: (response.docs || []).length,
-  })
+  // 여러 페이지를 순회하며 문서 집계
+  while (currentPage < MAX_DOC_PAGES) {
+    const response = await clickUpFetch<ClickUpApiDocsResponse>(
+      `/workspaces/${config.workspaceId}/docs?page=${currentPage}`,
+      undefined,
+      true // Use v3 API for Docs
+    )
 
-  // 본인이 작성한 문서만 필터링 (V3 API에서 creator는 숫자 ID)
-  let docs: ClickUpDoc[] = (response.docs || [])
-    .filter((doc) => String(doc.creator) === config.userId)
-    .map((doc) => ({
-      id: doc.id,
-      name: doc.name,
-      content: doc.content,
-      dateCreated: doc.date_created,
-      dateUpdated: doc.date_updated,
-      creator: {
-        id: doc.creator,
-      },
-      workspaceId: config.workspaceId,
-      parentId: doc.parent?.id,
-    }))
+    // 본인이 작성한 문서만 필터링 (V3 API에서 creator는 숫자 ID)
+    const pageDocs: ClickUpDoc[] = (response.docs || [])
+      .filter((doc) => String(doc.creator) === config.userId)
+      .map((doc) => ({
+        id: doc.id,
+        name: doc.name,
+        content: doc.content,
+        dateCreated: doc.date_created,
+        dateUpdated: doc.date_updated,
+        creator: {
+          id: doc.creator,
+        },
+        workspaceId: config.workspaceId,
+        parentId: doc.parent?.id,
+      }))
+
+    allDocs.push(...pageDocs)
+    hasMore = response.has_more ?? false
+
+    if (!hasMore) break
+    currentPage++
+  }
+
+  let docs = allDocs
 
   // 쿼리가 있으면 클라이언트 사이드 필터링
   if (query) {
@@ -272,7 +295,7 @@ export async function searchClickUpDocs(
 
   return {
     docs,
-    hasMore: response.has_more ?? false,
+    hasMore,
   }
 }
 

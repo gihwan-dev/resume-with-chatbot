@@ -33,6 +33,8 @@ export {
   type ToolCallHistory,
   type UserIntent,
 } from "./prompts"
+// Request Cache
+export { RequestCache } from "./request-cache"
 // Source Tracker (출처 검증)
 export {
   buildSearchContextFromSteps,
@@ -43,6 +45,7 @@ export {
 export {
   answer,
   createAnswerTool,
+  createCachedWorkAgentTools,
   getNotionPage,
   searchClickUpDocs as searchClickUpDocsTool,
   searchClickUpTasks as searchClickUpTasksTool,
