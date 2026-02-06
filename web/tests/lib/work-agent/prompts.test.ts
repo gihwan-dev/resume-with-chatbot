@@ -1,6 +1,7 @@
 /**
  * Prompts Module Tests
  * 의도 분류, 반복 호출 분석, 동적 프롬프트 생성 테스트
+ * Obsidian 볼트 기반 아키텍처
  */
 
 import { describe, expect, it } from "vitest"
@@ -82,7 +83,6 @@ describe("prompts", () => {
 
     describe("우선순위 처리", () => {
       it("contact_inquiry는 단일 키워드로도 우선", () => {
-        // contact와 다른 키워드가 섞여 있어도 contact 우선
         const result = classifyIntent("이메일로 연락드려도 될까요?")
         expect(result.intent).toBe("contact_inquiry")
       })
@@ -110,60 +110,59 @@ describe("prompts", () => {
     it("단일 도구 호출 분석", () => {
       const steps = [
         {
-          toolCalls: [{ toolName: "searchNotion", args: { query: "test" } }],
+          toolCalls: [{ toolName: "searchDocuments", args: { query: "test" } }],
         },
       ]
       const result = analyzeToolCallPattern(steps)
       expect(result.consecutiveSameToolCount).toBe(1)
-      expect(result.lastToolName).toBe("searchNotion")
+      expect(result.lastToolName).toBe("searchDocuments")
       expect(result.lastQueries).toEqual(["test"])
       expect(result.totalSearchCount).toBe(1)
     })
 
     it("연속 동일 도구 3회 호출 감지", () => {
       const steps = [
-        { toolCalls: [{ toolName: "searchNotion", args: { query: "query1" } }] },
-        { toolCalls: [{ toolName: "searchNotion", args: { query: "query2" } }] },
-        { toolCalls: [{ toolName: "searchNotion", args: { query: "query3" } }] },
+        { toolCalls: [{ toolName: "searchDocuments", args: { query: "query1" } }] },
+        { toolCalls: [{ toolName: "searchDocuments", args: { query: "query2" } }] },
+        { toolCalls: [{ toolName: "searchDocuments", args: { query: "query3" } }] },
       ]
       const result = analyzeToolCallPattern(steps)
       expect(result.consecutiveSameToolCount).toBe(3)
-      expect(result.lastToolName).toBe("searchNotion")
+      expect(result.lastToolName).toBe("searchDocuments")
       expect(result.lastQueries).toEqual(["query1", "query2", "query3"])
     })
 
     it("중간에 다른 도구 호출 시 연속 카운트 리셋", () => {
       const steps = [
-        { toolCalls: [{ toolName: "searchNotion", args: { query: "q1" } }] },
-        { toolCalls: [{ toolName: "searchClickUpTasks", args: { query: "q2" } }] },
-        { toolCalls: [{ toolName: "searchNotion", args: { query: "q3" } }] },
+        { toolCalls: [{ toolName: "searchDocuments", args: { query: "q1" } }] },
+        { toolCalls: [{ toolName: "readDocument", args: { documentId: "doc-1" } }] },
+        { toolCalls: [{ toolName: "searchDocuments", args: { query: "q3" } }] },
       ]
       const result = analyzeToolCallPattern(steps)
       expect(result.consecutiveSameToolCount).toBe(1)
-      expect(result.lastToolName).toBe("searchNotion")
+      expect(result.lastToolName).toBe("searchDocuments")
       expect(result.lastQueries).toEqual(["q3"])
     })
 
     it("검색 도구 총 호출 횟수 계산", () => {
       const steps = [
-        { toolCalls: [{ toolName: "searchNotion", args: { query: "q1" } }] },
-        { toolCalls: [{ toolName: "getNotionPage", args: { pageId: "id1" } }] },
-        { toolCalls: [{ toolName: "searchClickUpTasks", args: { query: "q2" } }] },
-        { toolCalls: [{ toolName: "searchClickUpDocs", args: { query: "q3" } }] },
+        { toolCalls: [{ toolName: "searchDocuments", args: { query: "q1" } }] },
+        { toolCalls: [{ toolName: "readDocument", args: { documentId: "doc-1" } }] },
+        { toolCalls: [{ toolName: "searchDocuments", args: { query: "q2" } }] },
         { toolCalls: [{ toolName: "answer", args: { text: "response" } }] },
       ]
       const result = analyzeToolCallPattern(steps)
-      expect(result.totalSearchCount).toBe(4) // answer 제외
+      expect(result.totalSearchCount).toBe(3) // answer 제외
     })
 
     it("toolCalls 없는 step 처리", () => {
       const steps = [
         { text: "some text" },
-        { toolCalls: [{ toolName: "searchNotion", args: { query: "test" } }] },
+        { toolCalls: [{ toolName: "searchDocuments", args: { query: "test" } }] },
       ] as Parameters<typeof analyzeToolCallPattern>[0]
       const result = analyzeToolCallPattern(steps)
       expect(result.consecutiveSameToolCount).toBe(1)
-      expect(result.lastToolName).toBe("searchNotion")
+      expect(result.lastToolName).toBe("searchDocuments")
     })
   })
 
@@ -174,13 +173,13 @@ describe("prompts", () => {
     it("career_inquiry 의도에 맞는 프롬프트 생성", () => {
       const result = buildDynamicSystemPrompt({ intent: "career_inquiry" })
       expect(result).toContain("커리어 상담가")
-      expect(result).toContain("ClickUp 태스크를 우선 검색")
+      expect(result).toContain("Exem 업무 기록을 우선 검색")
     })
 
     it("technical_inquiry 의도에 맞는 프롬프트 생성", () => {
       const result = buildDynamicSystemPrompt({ intent: "technical_inquiry" })
       expect(result).toContain("기술 전문가")
-      expect(result).toContain("Notion 기술 문서")
+      expect(result).toContain("기술 카테고리")
     })
 
     it("contact_inquiry 의도에 맞는 프롬프트 생성", () => {
@@ -197,7 +196,7 @@ describe("prompts", () => {
     it("반복 호출 감지 시 Reflexion 프로토콜 추가", () => {
       const analysis = {
         consecutiveSameToolCount: 3,
-        lastToolName: "searchNotion",
+        lastToolName: "searchDocuments",
         lastQueries: ["query1", "query2", "query3"],
         totalSearchCount: 3,
       }
@@ -217,7 +216,7 @@ describe("prompts", () => {
     it("연속 호출 3회 미만이면 Reflexion 미포함", () => {
       const analysis = {
         consecutiveSameToolCount: 2,
-        lastToolName: "searchNotion",
+        lastToolName: "searchDocuments",
         lastQueries: ["query1", "query2"],
         totalSearchCount: 2,
       }
@@ -232,7 +231,7 @@ describe("prompts", () => {
     it("includeReflexion false면 Reflexion 미포함", () => {
       const analysis = {
         consecutiveSameToolCount: 5,
-        lastToolName: "searchNotion",
+        lastToolName: "searchDocuments",
         lastQueries: ["q1", "q2", "q3", "q4", "q5"],
         totalSearchCount: 5,
       }
@@ -256,26 +255,26 @@ describe("prompts", () => {
       totalSearchCount,
     })
 
-    describe("career_inquiry (최소 3회)", () => {
+    describe("career_inquiry (최소 2회)", () => {
       it("검색 0회: 미달", () => {
         const result = shouldAllowAnswer("career_inquiry", createAnalysis(0))
         expect(result.isReady).toBe(false)
         expect(result.currentCount).toBe(0)
-        expect(result.minRequired).toBe(3)
+        expect(result.minRequired).toBe(2)
         expect(result.reason).toContain("최소 검색 미달")
       })
 
-      it("검색 2회: 미달", () => {
-        const result = shouldAllowAnswer("career_inquiry", createAnalysis(2))
+      it("검색 1회: 미달", () => {
+        const result = shouldAllowAnswer("career_inquiry", createAnalysis(1))
         expect(result.isReady).toBe(false)
-        expect(result.currentCount).toBe(2)
-        expect(result.minRequired).toBe(3)
+        expect(result.currentCount).toBe(1)
+        expect(result.minRequired).toBe(2)
       })
 
-      it("검색 3회: 충족", () => {
-        const result = shouldAllowAnswer("career_inquiry", createAnalysis(3))
+      it("검색 2회: 충족", () => {
+        const result = shouldAllowAnswer("career_inquiry", createAnalysis(2))
         expect(result.isReady).toBe(true)
-        expect(result.currentCount).toBe(3)
+        expect(result.currentCount).toBe(2)
         expect(result.reason).toContain("검색 충족")
       })
 
@@ -301,28 +300,28 @@ describe("prompts", () => {
       })
     })
 
-    describe("general_chat (최소 2회)", () => {
-      it("검색 1회: 미달", () => {
+    describe("general_chat (최소 1회)", () => {
+      it("검색 0회: 미달", () => {
+        const result = shouldAllowAnswer("general_chat", createAnalysis(0))
+        expect(result.isReady).toBe(false)
+        expect(result.minRequired).toBe(1)
+      })
+
+      it("검색 1회: 충족", () => {
         const result = shouldAllowAnswer("general_chat", createAnalysis(1))
+        expect(result.isReady).toBe(true)
+      })
+    })
+
+    describe("technical_inquiry (최소 2회)", () => {
+      it("검색 1회: 미달", () => {
+        const result = shouldAllowAnswer("technical_inquiry", createAnalysis(1))
         expect(result.isReady).toBe(false)
         expect(result.minRequired).toBe(2)
       })
 
       it("검색 2회: 충족", () => {
-        const result = shouldAllowAnswer("general_chat", createAnalysis(2))
-        expect(result.isReady).toBe(true)
-      })
-    })
-
-    describe("technical_inquiry (최소 3회)", () => {
-      it("검색 2회: 미달", () => {
         const result = shouldAllowAnswer("technical_inquiry", createAnalysis(2))
-        expect(result.isReady).toBe(false)
-        expect(result.minRequired).toBe(3)
-      })
-
-      it("검색 3회: 충족", () => {
-        const result = shouldAllowAnswer("technical_inquiry", createAnalysis(3))
         expect(result.isReady).toBe(true)
       })
     })
@@ -378,9 +377,9 @@ describe("prompts", () => {
 
     it("MIN_SEARCH_COUNT 값이 의도에 맞게 설정됨", () => {
       expect(MIN_SEARCH_COUNT.contact_inquiry).toBe(1) // 연락처: 최소
-      expect(MIN_SEARCH_COUNT.general_chat).toBe(2) // 일반: 중간
-      expect(MIN_SEARCH_COUNT.career_inquiry).toBe(3) // 경력: 높음
-      expect(MIN_SEARCH_COUNT.technical_inquiry).toBe(3) // 기술: 높음
+      expect(MIN_SEARCH_COUNT.general_chat).toBe(1) // 일반: 최소
+      expect(MIN_SEARCH_COUNT.career_inquiry).toBe(2) // 경력: searchDocuments + readDocument
+      expect(MIN_SEARCH_COUNT.technical_inquiry).toBe(2) // 기술: searchDocuments + readDocument
     })
   })
 })

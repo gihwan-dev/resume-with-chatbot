@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "node scripts/build-vault.mjs && astro build",
+    "build:vault": "node scripts/build-vault.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "lint": "biome check .",

@@ -1,0 +1,3 @@
+[submodule "web/vault"]
+	path = web/vault
+	url = https://github.com/gihwan-dev/Obsidian-frontend-journey.git

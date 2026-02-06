@@ -1,11 +1,11 @@
 /**
  * Work Agent 공통 타입 정의
+ * Obsidian 볼트 기반 아키텍처
  */
 
 // Error Types
 export type WorkAgentErrorCode =
-  | "NOTION_API_ERROR"
-  | "CLICKUP_API_ERROR"
+  | "VAULT_ERROR"
   | "INVALID_CONFIG"
   | "RATE_LIMIT"
   | "NOT_FOUND"
@@ -23,172 +23,29 @@ export class WorkAgentError extends Error {
   }
 }
 
-// Notion Types
-export interface NotionPage {
+// Obsidian Document Types
+export interface ObsidianDocument {
   id: string
   title: string
-  url: string
-  createdTime: string
-  lastEditedTime: string
-  parentType: "database" | "page" | "workspace"
-  parentId?: string
-}
-
-export interface NotionBlock {
-  id: string
-  type: string
-  content: string
-  hasChildren: boolean
-  children?: NotionBlock[]
-}
-
-export interface NotionSearchResult {
-  pages: NotionPage[]
-  hasMore: boolean
-  nextCursor?: string
-}
-
-export interface NotionPageContent {
-  page: NotionPage
-  blocks: NotionBlock[]
-}
-
-export interface NotionSearchOptions {
-  query: string
-  pageSize?: number
-  startCursor?: string
-}
-
-// ClickUp Types
-export interface ClickUpTask {
-  id: string
-  name: string
-  description?: string
-  status: {
-    status: string
-    color: string
-  }
-  priority?: {
-    priority: string
-    color: string
-  }
-  dueDate?: string
-  startDate?: string
-  url: string
-  dateCreated: string
-  dateUpdated: string
-  listId: string
-  listName?: string
-  folderId?: string
-  folderName?: string
-  spaceId: string
-  spaceName?: string
-  assignees: Array<{
-    id: number
-    username: string
-    email: string
-  }>
-  tags: Array<{
-    name: string
-    tagFg: string
-    tagBg: string
-  }>
-}
-
-export interface ClickUpDoc {
-  id: string
-  name: string
-  content?: string
-  dateCreated: string
-  dateUpdated: string
-  creator: {
-    id: number
-  }
-  workspaceId: string
-  parentId?: string
-}
-
-export interface ClickUpTasksResult {
-  tasks: ClickUpTask[]
-  lastPage: boolean
-}
-
-export interface ClickUpDocsResult {
-  docs: ClickUpDoc[]
-  hasMore: boolean
-}
-
-export interface ClickUpTaskSearchOptions {
-  query?: string
-  statuses?: string[]
-  includeCompleted?: boolean
-  page?: number
-}
-
-export interface ClickUpDocSearchOptions {
-  query?: string
-  page?: number
-}
-
-// LLM 전달용 경량 타입 (토큰 최적화)
-export interface ClickUpTaskSlim {
-  id: string
-  name: string
-  description?: string
-  status: string
-  priority?: string
-  dueDate?: string
-  url: string
-  listName?: string
-  folderName?: string
-  spaceName?: string
+  category: string
+  path: string
+  summary: string
   tags: string[]
-  // 환각 방지용 맥락 필드
-  context: ProjectContext
-  dateUpdated?: string
-  timeContext?: TimeContext
-  relativeTime?: string
 }
 
-export interface ClickUpDocSlim {
-  id: string
-  name: string
-  content?: string
-  // 환각 방지용 시간 맥락 필드
-  dateUpdated?: string
-  timeContext?: TimeContext
-  relativeTime?: string
-}
-
-export interface NotionPageSlim {
-  id: string
-  title: string
-  url: string
-  lastEditedTime: string
-}
-
-export interface NotionBlockSlim {
-  type: string
+export interface ObsidianDocumentContent {
+  document: ObsidianDocument
   content: string
-  children?: NotionBlockSlim[]
 }
-
-// 프로젝트 맥락 타입
-export type ProjectContext = "legacy" | "next-gen" | "unknown"
-
-// 시간 맥락 타입
-export type TimeContext = "recent" | "older" | "archive"
 
 // 검색 결과 추적 컨텍스트
 export interface SearchContext {
-  notionPageIds: Set<string>
-  clickupTaskIds: Set<string>
-  clickupDocIds: Set<string>
+  obsidianDocIds: Set<string>
 }
 
 // answer 도구 출처 타입
 export interface AnswerSource {
-  type: "notion" | "clickup_task" | "clickup_doc" | "resume"
+  type: "obsidian" | "resume"
   title: string
   id?: string
 }
