@@ -9,6 +9,9 @@ interface ImportMetaEnv {
   readonly FIREBASE_CLIENT_EMAIL: string
   readonly PUBLIC_FIREBASE_PROJECT_ID: string
   readonly PUBLIC_FIREBASE_DATABASE_ID?: string
+
+  // Google Analytics
+  readonly PUBLIC_GA_MEASUREMENT_ID?: string
 }
 
 interface ImportMeta {

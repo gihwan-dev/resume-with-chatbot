@@ -25,6 +25,7 @@ import { ToolCallStatus, ToolGroupWrapper } from "@/components/assistant-ui/tool
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
 import { Button } from "@/components/ui/button"
 import { useFollowUp } from "@/hooks/use-follow-up"
+import { trackEvent } from "@/lib/analytics"
 import { SUGGESTED_QUESTIONS } from "@/lib/chat-utils"
 
 const ThreadHeader: FC = () => {
@@ -126,6 +127,7 @@ const SuggestionButton: FC<{ text: string }> = ({ text }) => {
       variant="ghost"
       className="h-auto w-full items-start justify-start rounded-2xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
       onClick={() => {
+        trackEvent("chat_message", { method: "suggestion" })
         aui.thread().append({ role: "user", content: [{ type: "text", text }] })
       }}
     >
@@ -136,7 +138,10 @@ const SuggestionButton: FC<{ text: string }> = ({ text }) => {
 
 const Composer: FC = () => {
   return (
-    <ComposerPrimitive.Root className="aui-composer-root relative flex w-full flex-col rounded-2xl border border-input bg-background px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-ring/20">
+    <ComposerPrimitive.Root
+      onSubmit={() => trackEvent("chat_message", { method: "input" })}
+      className="aui-composer-root relative flex w-full flex-col rounded-2xl border border-input bg-background px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-ring/20"
+    >
       <ComposerPrimitive.Input
         placeholder="메시지를 입력하세요..."
         className="aui-composer-input mb-1 max-h-32 min-h-10 w-full resize-none bg-transparent px-4 pt-1 pb-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-0"
@@ -318,6 +323,7 @@ const FollowUpSuggestions: FC = () => {
             size="sm"
             className="h-auto py-1.5 px-2.5 text-xs font-normal whitespace-normal text-left cursor-pointer border border-transparent hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
             onClick={() => {
+              trackEvent("chat_message", { method: "follow_up" })
               clearQuestions()
               aui.thread().append({
                 role: "user",

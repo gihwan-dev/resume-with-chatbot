@@ -5,6 +5,7 @@ import { BotIcon, ChevronDownIcon } from "lucide-react"
 import { type FC, forwardRef } from "react"
 import { Thread } from "@/components/assistant-ui/thread"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
+import { trackEvent } from "@/lib/analytics"
 
 export const AssistantModal: FC = () => {
   return (
@@ -32,12 +33,22 @@ const AssistantModalButton = forwardRef<HTMLButtonElement, AssistantModalButtonP
   ({ "data-state": state, ...rest }, ref) => {
     const tooltip = state === "open" ? "닫기" : "AI 어시스턴트"
 
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (state === "closed") {
+        trackEvent("chat_open")
+      }
+      if (rest.onClick) {
+        ;(rest.onClick as React.MouseEventHandler<HTMLButtonElement>)(e)
+      }
+    }
+
     return (
       <TooltipIconButton
         variant="default"
         tooltip={tooltip}
         side="left"
         {...rest}
+        onClick={handleClick}
         className="aui-modal-button size-full rounded-full shadow-xl transition-transform hover:scale-110 active:scale-90"
         ref={ref}
       >

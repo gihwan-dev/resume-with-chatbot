@@ -13,6 +13,8 @@ const {
   title = "Gihwan-dev | AI와 함께하는 이력서",
   description = "최기환의 AI 기반 개발자 포트폴리오입니다. RAG 기술이 적용된 AI 페르소나와 직접 대화하며 경력과 기술을 확인해보세요.",
 } = Astro.props
+
+const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
 ---
 
 <!doctype html>
@@ -21,6 +23,17 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    {gaId && (
+      <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+      <script is:inline define:vars={{ gaId }}>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', gaId);
+        window.gtag = gtag;
+      </script>
+    )}
     
     <SEO
       title={title}
