@@ -78,9 +78,9 @@ const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
   <body
     class="bg-resume-bg text-resume-text-main min-h-screen font-sans antialiased selection:bg-resume-primary selection:text-white"
   >
-    <Navigation client:load />
+    <Navigation client:idle />
     <slot />
-    <ChatWidget client:load />
+    <ChatWidget client:idle />
   </body>
 </html>
 
