@@ -37,9 +37,8 @@ const AssistantModalButton = forwardRef<HTMLButtonElement, AssistantModalButtonP
       if (state === "closed") {
         trackEvent("chat_open")
       }
-      if (rest.onClick) {
-        ;(rest.onClick as React.MouseEventHandler<HTMLButtonElement>)(e)
-      }
+      const originalOnClick = rest.onClick as React.MouseEventHandler<HTMLButtonElement> | undefined
+      originalOnClick?.(e)
     }
 
     return (
