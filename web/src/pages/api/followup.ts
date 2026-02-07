@@ -1,5 +1,6 @@
 export const prerender = false
 
+import * as Sentry from "@sentry/astro"
 import { createVertex } from "@ai-sdk/google-vertex"
 import { streamText } from "ai"
 
@@ -67,6 +68,7 @@ export const POST = async ({ request }: { request: Request }) => {
 
     return result.toTextStreamResponse()
   } catch (error) {
+    Sentry.captureException(error, { tags: { "api.route": "/api/followup" } })
     console.error("Error in followup API:", error)
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,

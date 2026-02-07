@@ -12,6 +12,10 @@ interface ImportMetaEnv {
 
   // Google Analytics
   readonly PUBLIC_GA_MEASUREMENT_ID?: string
+
+  // Sentry
+  readonly PUBLIC_SENTRY_DSN: string
+  readonly SENTRY_AUTH_TOKEN: string
 }
 
 interface ImportMeta {
