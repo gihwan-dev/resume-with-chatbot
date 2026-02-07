@@ -27,7 +27,7 @@ export function MobileNav() {
             <span className="sr-only">Open menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-64 bg-resume-card-bg">
+        <SheetContent side="right" className="w-64 bg-resume-card-bg transition-colors duration-100">
           <SheetHeader>
             <SheetTitle className="text-resume-text-heading">Menu</SheetTitle>
           </SheetHeader>
@@ -36,7 +36,7 @@ export function MobileNav() {
               <span className="text-sm text-resume-text-muted">Theme</span>
               <ThemeToggle />
             </div>
-            <div className="border-t border-resume-border pt-4">
+            <div className="border-t border-resume-border pt-4 transition-colors duration-100">
               <span className="text-xs font-medium uppercase text-resume-text-muted tracking-wider mb-2 block">
                 Sections
               </span>
