@@ -75,3 +75,54 @@ const projectsWithContent = await Promise.all(
     <AwardSection awards={awardsWithContent} />
   </main>
 </Layout>
+
+<script>
+  function setupAnalytics() {
+    if (typeof window.gtag !== "function") return
+
+    // 클릭 이벤트 위임: data-ga-event 속성이 있는 요소
+    document.addEventListener("click", (e) => {
+      const target = (e.target as HTMLElement).closest<HTMLElement>("[data-ga-event]")
+      if (!target) return
+
+      const eventName = target.dataset.gaEvent!
+      const params: Record<string, string> = {}
+
+      for (const [key, value] of Object.entries(target.dataset)) {
+        if (key.startsWith("ga") && key !== "gaEvent" && value) {
+          const paramKey = key.slice(2).toLowerCase()
+          params[paramKey] = value
+        }
+      }
+
+      window.gtag("event", eventName, params)
+    })
+
+    // 섹션 뷰 추적: Intersection Observer
+    const sections = document.querySelectorAll<HTMLElement>(
+      "#profile, #experience, #projects, #certificates, #awards"
+    )
+    const viewed = new Set<string>()
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting && !viewed.has(entry.target.id)) {
+            viewed.add(entry.target.id)
+            window.gtag("event", "section_view", {
+              section_name: entry.target.id,
+            })
+          }
+        }
+      },
+      { threshold: 0.3 }
+    )
+
+    for (const section of sections) {
+      observer.observe(section)
+    }
+  }
+
+  setupAnalytics()
+  document.addEventListener("astro:after-swap", setupAnalytics)
+</script>

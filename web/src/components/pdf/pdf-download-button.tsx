@@ -1,6 +1,7 @@
 import { Download, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { trackEvent } from "@/lib/analytics"
 import type { SerializedResumeData } from "@/lib/pdf/types"
 
 export function PdfDownloadButton({ data }: { data: SerializedResumeData }) {
@@ -9,6 +10,7 @@ export function PdfDownloadButton({ data }: { data: SerializedResumeData }) {
   async function handleDownload() {
     if (loading) return
     setLoading(true)
+    trackEvent("pdf_download", { file_name: `${data.profile.name}_이력서` })
 
     try {
       const [{ pdf }, { registerFonts }, { ResumeDocument }] = await Promise.all([

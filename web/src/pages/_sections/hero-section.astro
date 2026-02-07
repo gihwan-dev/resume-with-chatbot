@@ -23,6 +23,8 @@ const { profile } = Astro.props
         <a
           href={`mailto:${profile.email}`}
           class="hover:text-resume-primary transition-colors w-fit"
+          data-ga-event="contact_click"
+          data-ga-method="email"
         >
           {profile.email}
         </a>
@@ -36,6 +38,8 @@ const { profile } = Astro.props
             target="_blank"
             rel="noopener noreferrer"
             class="hover:text-resume-primary transition-colors"
+            data-ga-event="contact_click"
+            data-ga-method="website"
           >
             Website
           </a>
@@ -50,6 +54,8 @@ const { profile } = Astro.props
               target="_blank"
               rel="noopener noreferrer"
               class="hover:text-resume-primary transition-colors"
+              data-ga-event="contact_click"
+              data-ga-method={p.network.toLowerCase()}
             >
               {p.network}
             </a>

@@ -70,6 +70,9 @@ const { projects } = Astro.props
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-resume-primary hover:text-resume-secondary font-medium flex items-center gap-1 transition-colors group-hover:underline decoration-2 underline-offset-4"
+                  data-ga-event="project_link_click"
+                  data-ga-project={project.data.title}
+                  data-ga-method="visit"
                 >
                   Visit Project
                 </a>
@@ -80,6 +83,9 @@ const { projects } = Astro.props
                   target="_blank"
                   rel="noopener noreferrer"
                   class="text-resume-text-muted hover:text-resume-text-main font-medium flex items-center gap-1 transition-colors"
+                  data-ga-event="project_link_click"
+                  data-ga-project={project.data.title}
+                  data-ga-method="github"
                 >
                   View Code
                 </a>
