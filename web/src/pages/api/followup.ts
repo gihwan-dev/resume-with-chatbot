@@ -1,7 +1,7 @@
 export const prerender = false
 
-import * as Sentry from "@sentry/astro"
 import { createVertex } from "@ai-sdk/google-vertex"
+import * as Sentry from "@sentry/astro"
 import { streamText } from "ai"
 
 // Lazy initialization: Vertex AI 인스턴스를 요청 시점에 생성
@@ -69,6 +69,7 @@ export const POST = async ({ request }: { request: Request }) => {
     return result.toTextStreamResponse()
   } catch (error) {
     Sentry.captureException(error, { tags: { "api.route": "/api/followup" } })
+    await Sentry.flush(2000)
     console.error("Error in followup API:", error)
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,

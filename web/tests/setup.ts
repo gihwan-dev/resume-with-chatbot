@@ -11,6 +11,7 @@ vi.mock("@sentry/astro", () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
   init: vi.fn(),
+  flush: vi.fn(() => Promise.resolve(true)),
 }))
 vi.mock("@sentry/react", () => ({
   captureReactException: vi.fn(),
