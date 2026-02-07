@@ -96,28 +96,31 @@ test.describe("Chat FAB visibility", () => {
   })
 
   test("도구 호출 포함 응답 → FAB 유지", async ({ page }) => {
-    // tool call 포함 mock으로 재설정
-    await page.unrouteAll()
-    await mockApiRoutes(page, mockChatStreamWithToolCall)
-
     const fab = page.locator(FAB_SELECTOR)
 
-    // 다이얼로그 열기
+    // 첫 번째 메시지는 beforeEach의 기본 mock으로 전송 후,
+    // 두 번째 메시지에 tool call mock 적용
     await openModal(page)
 
-    // 메시지 입력 및 전송
     const input = page.locator(".aui-composer-input")
-    await input.fill("기술 스택이 뭐예요?")
+    await input.fill("안녕하세요")
     await page.locator(".aui-composer-send").click()
 
-    // 응답이 렌더링될 때까지 대기
-    await expect(page.getByText("React, TypeScript, Astro를 사용합니다.")).toBeVisible({
+    await expect(page.getByText("최기환의 포트폴리오입니다.")).toBeVisible({
       timeout: 10_000,
     })
 
+    // 이제 tool call 포함 mock으로 교체
+    await page.unrouteAll()
+    await mockApiRoutes(page, mockChatStreamWithToolCall)
+
+    await input.fill("기술 스택이 뭐예요?")
+    await page.locator(".aui-composer-send").click()
+
+    // tool call 응답 후 네트워크 완료 대기
     await page.waitForLoadState("networkidle")
 
-    // FAB가 여전히 존재하는지 확인
+    // FAB가 여전히 존재하는지 확인 (핵심 검증)
     await expect(fab).toBeVisible()
   })
 })
