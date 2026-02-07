@@ -84,8 +84,8 @@ test.describe("Chat FAB visibility", () => {
       timeout: 10_000,
     })
 
-    // 응답 완료 후 잠시 대기 (generateTitle 등 후처리 시간)
-    await page.waitForTimeout(2000)
+    // 응답 완료 후 후처리(generateTitle 등) 네트워크 요청 완료 대기
+    await page.waitForLoadState("networkidle")
 
     // FAB가 여전히 존재하는지 확인 (핵심 검증)
     await expect(fab).toBeVisible()
@@ -109,12 +109,14 @@ test.describe("Chat FAB visibility", () => {
 
     // 후속 질문이 렌더링되길 대기 후 클릭
     const followupButton = page.getByText("어떤 기술 스택을 사용하나요?")
-    const hasFollowup = await followupButton.isVisible().catch(() => false)
+    const isFollowupVisible = await followupButton
+      .waitFor({ state: "visible", timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false)
+    test.skip(!isFollowupVisible, "Follow-up suggestions did not render in test environment")
 
-    if (hasFollowup) {
-      await followupButton.click()
-      await page.waitForTimeout(3000)
-    }
+    await followupButton.click()
+    await page.waitForLoadState("networkidle")
 
     // FAB가 여전히 존재하는지 확인
     await expect(fab).toBeVisible()

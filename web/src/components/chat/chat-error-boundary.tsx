@@ -6,22 +6,33 @@ interface Props {
 
 interface State {
   hasError: boolean
+  retryCount: number
 }
+
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 1000
 
 export class ChatErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { hasError: false }
+    this.state = { hasError: false, retryCount: 0 }
   }
 
-  static getDerivedStateFromError(): State {
+  static getDerivedStateFromError(_error: Error): Partial<State> {
     return { hasError: true }
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[ChatErrorBoundary]", error, errorInfo)
-    // 자동 복구: 에러 발생 시 re-mount하여 FAB 다시 표시
-    this.setState({ hasError: false })
+
+    if (this.state.retryCount < MAX_RETRIES) {
+      setTimeout(() => {
+        this.setState((prev) => ({
+          hasError: false,
+          retryCount: prev.retryCount + 1,
+        }))
+      }, RETRY_DELAY_MS)
+    }
   }
 
   render() {
