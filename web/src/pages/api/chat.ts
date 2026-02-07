@@ -3,8 +3,15 @@ export const prerender = false
 import { createVertex } from "@ai-sdk/google-vertex"
 import * as Sentry from "@sentry/astro"
 import type { UIMessage } from "ai"
-import { convertToModelMessages, hasToolCall, stepCountIs, streamText } from "ai"
+import {
+  convertToModelMessages,
+  createUIMessageStreamResponse,
+  hasToolCall,
+  stepCountIs,
+  streamText,
+} from "ai"
 import { buildResumePrompt } from "@/lib/resume-prompt"
+import { createToolInputDeltaFilter } from "@/lib/stream/filter-tool-input-delta"
 import {
   analyzeToolCallPattern,
   buildDynamicSystemPrompt,
@@ -349,7 +356,9 @@ export const POST = async ({ request }: { request: Request }) => {
       },
     })
 
-    return result.toUIMessageStreamResponse()
+    const stream = result.toUIMessageStream()
+    const filtered = stream.pipeThrough(createToolInputDeltaFilter())
+    return createUIMessageStreamResponse({ stream: filtered })
   } catch (error) {
     if (error instanceof WorkAgentError) {
       Sentry.captureException(error, {
