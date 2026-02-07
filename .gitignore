@@ -38,6 +38,10 @@ coverage/
 !biome.json
 !components.json
 
+# Playwright
+test-results/
+playwright-report/
+
 # Generated Data
 collected-histories/
 .claude

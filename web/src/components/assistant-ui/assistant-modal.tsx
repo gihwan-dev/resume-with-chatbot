@@ -2,13 +2,15 @@
 
 import { AssistantModalPrimitive } from "@assistant-ui/react"
 import { BotIcon, ChevronDownIcon } from "lucide-react"
-import { type FC, forwardRef } from "react"
+import { type FC, forwardRef, useState } from "react"
 import { Thread } from "@/components/assistant-ui/thread"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
 
 export const AssistantModal: FC = () => {
+  const [open, setOpen] = useState(false)
+
   return (
-    <AssistantModalPrimitive.Root>
+    <AssistantModalPrimitive.Root open={open} onOpenChange={setOpen}>
       <AssistantModalPrimitive.Anchor className="aui-root aui-modal-anchor fixed right-4 bottom-4 size-14">
         <AssistantModalPrimitive.Trigger asChild>
           <AssistantModalButton />
