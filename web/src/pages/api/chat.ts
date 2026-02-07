@@ -1,6 +1,7 @@
 export const prerender = false
 
 import { createVertex } from "@ai-sdk/google-vertex"
+import * as Sentry from "@sentry/astro"
 import type { UIMessage } from "ai"
 import {
   convertToModelMessages,
@@ -23,6 +24,7 @@ import {
   workAgentTools,
 } from "@/lib/work-agent"
 import { buildCatalogSummary } from "@/lib/work-agent/obsidian.server"
+import { WorkAgentError } from "@/lib/work-agent/types"
 
 type ToolName = keyof typeof workAgentTools
 const SEARCH_TOOLS: ToolName[] = ["searchDocuments", "readDocument"]
@@ -358,6 +360,15 @@ export const POST = async ({ request }: { request: Request }) => {
     const filtered = stream.pipeThrough(createToolInputDeltaFilter())
     return createUIMessageStreamResponse({ stream: filtered })
   } catch (error) {
+    if (error instanceof WorkAgentError) {
+      Sentry.captureException(error, {
+        tags: { "api.route": "/api/chat", "work_agent.error_code": error.code },
+        fingerprint: ["work-agent", error.code],
+      })
+    } else {
+      Sentry.captureException(error, { tags: { "api.route": "/api/chat" } })
+    }
+    await Sentry.flush(2000)
     console.error("Error in chat API:", error)
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
