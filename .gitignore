@@ -43,3 +43,7 @@ collected-histories/
 .claude
 
 *.pdf
+
+# Playwright
+playwright-report/
+test-results/
