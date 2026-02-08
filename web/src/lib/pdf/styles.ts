@@ -102,6 +102,23 @@ export const styles = StyleSheet.create({
     paddingLeft: 10,
   },
 
+  // Skills section
+  skillsCategoryLabel: {
+    fontSize: 8,
+    fontWeight: 600,
+    color: "#64748b",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 3,
+    marginTop: 4,
+  },
+  skillsBadgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 4,
+    marginBottom: 4,
+  },
+
   // Tech stack badges
   techStackRow: {
     flexDirection: "row",

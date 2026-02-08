@@ -78,6 +78,18 @@ const projects = defineCollection({
   }),
 })
 
+const skills = defineCollection({
+  loader: glob({ pattern: "skills.json", base: "./src/content/skills" }),
+  schema: z.object({
+    categories: z.array(
+      z.object({
+        name: z.string(),
+        items: z.array(z.string()),
+      })
+    ),
+  }),
+})
+
 export const collections = {
   basics,
   work,
@@ -85,4 +97,5 @@ export const collections = {
   certificates,
   awards,
   projects,
+  skills,
 }

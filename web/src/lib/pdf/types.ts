@@ -53,6 +53,11 @@ export interface SerializedAward {
   body?: string
 }
 
+export interface SerializedSkillCategory {
+  name: string
+  items: string[]
+}
+
 export interface SerializedResumeData {
   profile: SerializedProfile
   work: SerializedWork[]
@@ -60,4 +65,5 @@ export interface SerializedResumeData {
   education: SerializedEducation[]
   certificates: SerializedCertificate[]
   awards: SerializedAward[]
+  skills?: SerializedSkillCategory[]
 }

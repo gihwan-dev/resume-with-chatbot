@@ -9,10 +9,13 @@ import CertificateSection from "./_sections/certificate-section.astro"
 import ExperienceSection from "./_sections/experience-section.astro"
 import HeroSection from "./_sections/hero-section.astro"
 import ProjectSection from "./_sections/project-section.astro"
+import SkillsSection from "./_sections/skills-section.astro"
 
 const basics = await getCollection("basics")
 const profile = basics[0]?.data
 const resumeData = await serializeResumeData()
+const skills = await getCollection("skills")
+const skillsData = skills[0]?.data
 
 const work = await getCollection("work")
 const projects = await getCollection("projects")
@@ -60,6 +63,10 @@ const projectsWithContent = await Promise.all(
 
     <Separator className="my-12" />
 
+    {skillsData && <SkillsSection skills={skillsData} />}
+
+    <Separator className="my-12" />
+
     <ExperienceSection experiences={workWithContent} />
 
     <Separator className="my-12" />
@@ -100,7 +107,7 @@ const projectsWithContent = await Promise.all(
 
     // 섹션 뷰 추적: Intersection Observer
     const sections = document.querySelectorAll<HTMLElement>(
-      "#profile, #experience, #projects, #certificates, #awards"
+      "#profile, #skills, #experience, #projects, #certificates, #awards"
     )
     const viewed = new Set<string>()
 

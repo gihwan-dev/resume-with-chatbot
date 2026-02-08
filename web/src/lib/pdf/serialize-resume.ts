@@ -2,13 +2,14 @@ import { getCollection } from "astro:content"
 import type { SerializedResumeData } from "./types"
 
 export async function serializeResumeData(): Promise<SerializedResumeData> {
-  const [basics, work, projects, education, certificates, awards] = await Promise.all([
+  const [basics, work, projects, education, certificates, awards, skills] = await Promise.all([
     getCollection("basics"),
     getCollection("work"),
     getCollection("projects"),
     getCollection("education"),
     getCollection("certificates"),
     getCollection("awards"),
+    getCollection("skills"),
   ])
 
   const profile = basics[0]?.data
@@ -71,5 +72,6 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       summary: a.data.summary,
       body: a.body?.trim() || undefined,
     })),
+    skills: skills[0]?.data.categories,
   }
 }

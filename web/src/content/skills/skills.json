@@ -1,0 +1,20 @@
+{
+  "categories": [
+    {
+      "name": "Languages",
+      "items": ["TypeScript", "JavaScript", "HTML/CSS"]
+    },
+    {
+      "name": "Frameworks & Libraries",
+      "items": ["React", "Astro", "Zustand", "TanStack Table", "TanStack Query", "TanStack Virtual"]
+    },
+    {
+      "name": "Testing",
+      "items": ["Vitest", "Playwright"]
+    },
+    {
+      "name": "Tools",
+      "items": ["Vite", "Git"]
+    }
+  ]
+}
