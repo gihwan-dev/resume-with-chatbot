@@ -27,7 +27,10 @@ export function MobileNav() {
             <span className="sr-only">Open menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="w-64 bg-resume-card-bg transition-colors duration-100">
+        <SheetContent
+          side="right"
+          className="w-64 bg-resume-card-bg transition-colors duration-100"
+        >
           <SheetHeader>
             <SheetTitle className="text-resume-text-heading">Menu</SheetTitle>
           </SheetHeader>
