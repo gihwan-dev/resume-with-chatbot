@@ -46,6 +46,27 @@ function ProfileSection({ profile }: { profile: SerializedResumeData["profile"] 
   )
 }
 
+function SkillsSection({ skills }: { skills: SerializedResumeData["skills"] }) {
+  if (!skills || skills.length === 0) return null
+  return (
+    <View>
+      <Text style={styles.sectionTitle}>Skills</Text>
+      {skills.map((category) => (
+        <View key={category.name}>
+          <Text style={styles.skillsCategoryLabel}>{category.name}</Text>
+          <View style={styles.skillsBadgeRow}>
+            {category.items.map((item) => (
+              <Text key={item} style={styles.techBadge}>
+                {item}
+              </Text>
+            ))}
+          </View>
+        </View>
+      ))}
+    </View>
+  )
+}
+
 function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
   if (work.length === 0) return null
   return (
@@ -171,6 +192,7 @@ export function ResumeDocument({ data }: { data: SerializedResumeData }) {
     >
       <Page size="A4" style={styles.page} wrap>
         <ProfileSection profile={data.profile} />
+        <SkillsSection skills={data.skills} />
         <ExperienceSection work={data.work} />
         <ProjectSection projects={data.projects} />
         <EducationSection education={data.education} />
