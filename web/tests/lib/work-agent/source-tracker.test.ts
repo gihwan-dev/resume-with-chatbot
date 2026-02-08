@@ -34,8 +34,22 @@ describe("source-tracker", () => {
         success: true,
         data: {
           documents: [
-            { id: "doc-1", title: "문서 1", category: "React", path: "React/doc1.md", summary: "", tags: [] },
-            { id: "doc-2", title: "문서 2", category: "React", path: "React/doc2.md", summary: "", tags: [] },
+            {
+              id: "doc-1",
+              title: "문서 1",
+              category: "React",
+              path: "React/doc1.md",
+              summary: "",
+              tags: [],
+            },
+            {
+              id: "doc-2",
+              title: "문서 2",
+              category: "React",
+              path: "React/doc2.md",
+              summary: "",
+              tags: [],
+            },
           ],
         },
       }
@@ -104,7 +118,14 @@ describe("source-tracker", () => {
                 success: true,
                 data: {
                   documents: [
-                    { id: "doc-1", title: "D1", category: "R", path: "R/d1.md", summary: "", tags: [] },
+                    {
+                      id: "doc-1",
+                      title: "D1",
+                      category: "R",
+                      path: "R/d1.md",
+                      summary: "",
+                      tags: [],
+                    },
                   ],
                 },
               },
@@ -130,7 +151,14 @@ describe("source-tracker", () => {
                 success: true,
                 data: {
                   documents: [
-                    { id: "doc-3", title: "D3", category: "R", path: "R/d3.md", summary: "", tags: [] },
+                    {
+                      id: "doc-3",
+                      title: "D3",
+                      category: "R",
+                      path: "R/d3.md",
+                      summary: "",
+                      tags: [],
+                    },
                   ],
                 },
               },
@@ -170,8 +198,22 @@ describe("source-tracker", () => {
                 success: true,
                 data: {
                   documents: [
-                    { id: "doc-1", title: "D1", category: "R", path: "R/d1.md", summary: "", tags: [] },
-                    { id: "doc-1", title: "D1 Dup", category: "R", path: "R/d1.md", summary: "", tags: [] },
+                    {
+                      id: "doc-1",
+                      title: "D1",
+                      category: "R",
+                      path: "R/d1.md",
+                      summary: "",
+                      tags: [],
+                    },
+                    {
+                      id: "doc-1",
+                      title: "D1 Dup",
+                      category: "R",
+                      path: "R/d1.md",
+                      summary: "",
+                      tags: [],
+                    },
                   ],
                 },
               },
@@ -184,7 +226,9 @@ describe("source-tracker", () => {
               toolName: "readDocument",
               result: {
                 success: true,
-                data: { document: { id: "doc-1", title: "D1 Detail", category: "R", path: "R/d1.md" } },
+                data: {
+                  document: { id: "doc-1", title: "D1 Detail", category: "R", path: "R/d1.md" },
+                },
               },
             },
           ],
@@ -258,9 +302,7 @@ describe("source-tracker", () => {
     })
 
     it("검색되지 않은 ID → 무효, 경고 생성", () => {
-      const sources: AnswerSource[] = [
-        { type: "obsidian", title: "가짜 문서", id: "fake-doc-id" },
-      ]
+      const sources: AnswerSource[] = [{ type: "obsidian", title: "가짜 문서", id: "fake-doc-id" }]
 
       const result = validateSources(sources, baseContext)
 

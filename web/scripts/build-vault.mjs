@@ -6,9 +6,11 @@
 
 import fs from "node:fs"
 import path from "node:path"
+import MiniSearch from "minisearch"
 
 const VAULT_PATH = path.join(process.cwd(), "vault")
 const OUTPUT_PATH = path.join(process.cwd(), "src", "generated", "vault-data.json")
+const SEARCH_INDEX_PATH = path.join(process.cwd(), "src", "generated", "search-index.json")
 
 const EXCLUDED_DIRS = new Set([".obsidian", ".vscode", "Excalidraw", "이미지저장소", ".git"])
 const EXCLUDED_FILES = new Set(["콜아웃 리스트.md", "프롬프트.md"])
@@ -108,3 +110,27 @@ fs.writeFileSync(OUTPUT_PATH, JSON.stringify({ documents }, null, 0))
 
 const sizeKB = (fs.statSync(OUTPUT_PATH).size / 1024).toFixed(1)
 console.log(`[build-vault] Built vault data: ${documents.length} documents (${sizeKB} KB)`)
+
+// MiniSearch 인덱스 빌드
+const miniSearch = new MiniSearch({
+  fields: ["title", "category", "tagsText", "summary", "content"],
+  storeFields: ["title", "category", "path", "summary", "tags"],
+  searchOptions: {
+    boost: { title: 3, category: 2, tagsText: 2, summary: 1.5, content: 1 },
+    prefix: true,
+    fuzzy: 0.2,
+    combineWith: "OR",
+  },
+})
+
+const indexDocs = documents.map((doc) => ({
+  ...doc,
+  tagsText: doc.tags.join(" "),
+}))
+
+miniSearch.addAll(indexDocs)
+
+fs.writeFileSync(SEARCH_INDEX_PATH, JSON.stringify(miniSearch))
+
+const indexSizeKB = (fs.statSync(SEARCH_INDEX_PATH).size / 1024).toFixed(1)
+console.log(`[build-vault] Built search index: ${documents.length} documents (${indexSizeKB} KB)`)

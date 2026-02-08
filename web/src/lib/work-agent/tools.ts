@@ -88,7 +88,7 @@ type ReadDocumentInput = z.infer<typeof readDocumentSchema>
  */
 export const searchDocuments = tool({
   description:
-    "Obsidian 볼트에서 문서를 검색합니다. 기술 노트, 업무 기록, 프로젝트 문서 등을 키워드로 찾을 때 사용합니다.",
+    "Obsidian 볼트에서 문서를 검색합니다. 제목, 카테고리, 태그, 요약, 본문에서 풀텍스트 검색합니다.",
   inputSchema: searchDocumentsSchema,
   execute: async (params: SearchDocumentsInput) => {
     try {

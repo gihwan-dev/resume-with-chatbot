@@ -181,10 +181,7 @@ describe("Work Agent Tools", () => {
         content: "# useRef\n\nuseRef는 React 훅입니다.",
       })
 
-      const result = await readDocument.execute?.(
-        { documentId: "React.js--useRef" },
-        testContext
-      )
+      const result = await readDocument.execute?.({ documentId: "React.js--useRef" }, testContext)
 
       expect(result).toEqual({
         success: true,
@@ -203,10 +200,7 @@ describe("Work Agent Tools", () => {
     it("에러: 존재하지 않는 문서", async () => {
       mockReadDocumentContent.mockReturnValue(null)
 
-      const result = await readDocument.execute?.(
-        { documentId: "non-existent" },
-        testContext
-      )
+      const result = await readDocument.execute?.({ documentId: "non-existent" }, testContext)
 
       expect(result).toEqual({
         success: false,
@@ -223,10 +217,7 @@ describe("Work Agent Tools", () => {
         throw new WorkAgentError("File system error", "VAULT_ERROR")
       })
 
-      const result = await readDocument.execute?.(
-        { documentId: "broken-doc" },
-        testContext
-      )
+      const result = await readDocument.execute?.({ documentId: "broken-doc" }, testContext)
 
       expect(result).toEqual({
         success: false,

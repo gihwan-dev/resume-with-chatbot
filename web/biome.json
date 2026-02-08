@@ -7,7 +7,15 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": ["**", "!dist", "!.astro", "!.vercel", "!playwright-report", "!test-results"]
+    "includes": [
+      "**",
+      "!dist",
+      "!.astro",
+      "!.vercel",
+      "!playwright-report",
+      "!test-results",
+      "!vault"
+    ]
   },
   "formatter": {
     "enabled": true,
