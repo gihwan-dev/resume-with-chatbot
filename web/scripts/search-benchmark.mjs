@@ -99,7 +99,7 @@ function baselineSearch(docs, query, limit = 10) {
 function buildMiniSearchIndex(docs) {
   const miniSearch = new MiniSearch({
     fields: ["title", "category", "tagsText", "summary", "content"],
-    storeFields: ["title", "category", "path", "summary", "tags"],
+    storeFields: ["title", "category", "path", "summary", "tags", "content"],
     searchOptions: {
       boost: { title: 3, category: 2, tagsText: 2, summary: 1.5, content: 1 },
       prefix: true,
@@ -136,6 +136,7 @@ function miniSearchSearch(index, query, limit = 10) {
       path: r.path,
       summary: r.summary ?? "",
       tags: r.tags ?? [],
+      content: r.content ?? "",
     }))
 }
 
@@ -189,7 +190,7 @@ const serialized = JSON.stringify(miniSearchIndex)
 const loadStart = performance.now()
 const _loaded = MiniSearch.loadJSON(serialized, {
   fields: ["title", "category", "tagsText", "summary", "content"],
-  storeFields: ["title", "category", "path", "summary", "tags"],
+  storeFields: ["title", "category", "path", "summary", "tags", "content"],
 })
 const indexLoadTime = performance.now() - loadStart
 console.log(`Index load (loadJSON) in ${indexLoadTime.toFixed(1)}ms\n`)

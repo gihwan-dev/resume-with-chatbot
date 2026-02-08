@@ -7,8 +7,8 @@
  */
 
 import MiniSearch from "minisearch"
-import searchIndexData from "../../generated/search-index.json"
-import vaultData from "../../generated/vault-data.json"
+import searchIndexData from "@/generated/search-index.json"
+import vaultData from "@/generated/vault-data.json"
 import type { ObsidianDocument } from "./types"
 
 interface VaultDocument {
@@ -87,6 +87,7 @@ export function resetSearchIndex(): void {
 export function searchDocuments(query: string, limit = 20): ObsidianDocument[] {
   const trimmed = query.trim()
   if (trimmed.length === 0) return []
+  const safeLimit = Math.max(0, limit)
 
   const index = getSearchIndex()
   const results = index.search(trimmed, {
@@ -96,7 +97,7 @@ export function searchDocuments(query: string, limit = 20): ObsidianDocument[] {
     combineWith: "OR",
   })
 
-  return results.slice(0, limit).map((result) => ({
+  return results.slice(0, safeLimit).map((result) => ({
     id: result.id as string,
     title: result.title as string,
     category: result.category as string,
