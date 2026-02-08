@@ -6,7 +6,9 @@
  * JSON 데이터는 scripts/build-vault.mjs에 의해 빌드 타임에 생성됨
  */
 
-import vaultData from "../../generated/vault-data.json"
+import MiniSearch from "minisearch"
+import searchIndexData from "@/generated/search-index.json"
+import vaultData from "@/generated/vault-data.json"
 import type { ObsidianDocument } from "./types"
 
 interface VaultDocument {
@@ -30,6 +32,21 @@ let _catalog: ObsidianDocument[] | null = null
 
 // content 맵 (ID → 전체 내용)
 let _contentMap: Map<string, VaultDocument> | null = null
+
+// MiniSearch 인덱스 (레이지 초기화)
+let _searchIndex: MiniSearch | null = null
+
+const MINISEARCH_OPTIONS = {
+  fields: ["title", "category", "tagsText", "summary", "content"],
+  storeFields: ["title", "category", "path", "summary", "tags"],
+}
+
+function getSearchIndex(): MiniSearch {
+  if (!_searchIndex) {
+    _searchIndex = MiniSearch.loadJSON(JSON.stringify(searchIndexData), MINISEARCH_OPTIONS)
+  }
+  return _searchIndex
+}
 
 function ensureLoaded(): void {
   if (_catalog && _contentMap) return
@@ -57,40 +74,37 @@ export function resetCatalogCache(): void {
 }
 
 /**
- * 문서 키워드 검색
- * 제목, 카테고리, 태그, 요약에서 키워드 매칭 (점수 기반 랭킹)
+ * 검색 인덱스 초기화 (테스트용)
+ */
+export function resetSearchIndex(): void {
+  _searchIndex = null
+}
+
+/**
+ * 문서 풀텍스트 검색
+ * MiniSearch 기반 BM25 스코어링, 퍼지매칭, 접두어 검색 지원
  */
 export function searchDocuments(query: string, limit = 20): ObsidianDocument[] {
-  const catalog = getDocumentCatalog()
-  const tokens = query
-    .toLowerCase()
-    .split(/\s+/)
-    .filter((t) => t.length > 0)
+  const trimmed = query.trim()
+  if (trimmed.length === 0) return []
+  const safeLimit = Math.max(0, limit)
 
-  if (tokens.length === 0) return []
-
-  const scored = catalog.map((doc) => {
-    let score = 0
-    const titleLower = doc.title.toLowerCase()
-    const categoryLower = doc.category.toLowerCase()
-    const summaryLower = doc.summary.toLowerCase()
-    const tagsLower = doc.tags.map((t) => t.toLowerCase())
-
-    for (const token of tokens) {
-      if (titleLower.includes(token)) score += 3
-      if (categoryLower.includes(token)) score += 2
-      if (tagsLower.some((t) => t.includes(token))) score += 2
-      if (summaryLower.includes(token)) score += 1
-    }
-
-    return { doc, score }
+  const index = getSearchIndex()
+  const results = index.search(trimmed, {
+    boost: { title: 3, category: 2, tagsText: 2, summary: 1.5, content: 1 },
+    prefix: true,
+    fuzzy: 0.2,
+    combineWith: "OR",
   })
 
-  return scored
-    .filter((s) => s.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit)
-    .map((s) => s.doc)
+  return results.slice(0, safeLimit).map((result) => ({
+    id: result.id as string,
+    title: result.title as string,
+    category: result.category as string,
+    path: result.path as string,
+    summary: (result.summary as string) ?? "",
+    tags: (result.tags as string[]) ?? [],
+  }))
 }
 
 /**
