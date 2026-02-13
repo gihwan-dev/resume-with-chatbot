@@ -88,6 +88,9 @@
   --sidebar-accent-foreground: var(--color-slate-900);
   --sidebar-border: var(--color-slate-200);
   --sidebar-ring: var(--color-indigo-700);
+  --layer-sheet: 50;
+  --layer-chat: 60;
+  --layer-nav: 100;
 
   /* Resume Theme - Light */
   --resume-bg: var(--color-slate-50);
@@ -136,6 +139,9 @@
   --sidebar-accent-foreground: var(--color-slate-100);
   --sidebar-border: var(--color-slate-800);
   --sidebar-ring: var(--color-indigo-400);
+  --layer-sheet: 50;
+  --layer-chat: 60;
+  --layer-nav: 100;
 
   /* Resume Theme - Dark */
   --resume-bg: var(--color-slate-950);

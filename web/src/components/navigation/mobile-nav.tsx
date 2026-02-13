@@ -12,8 +12,8 @@ export function MobileNav() {
   const [open, setOpen] = React.useState(false)
 
   return (
-    <div className="fixed top-4 right-4 z-100">
-      <Sheet open={open} onOpenChange={setOpen}>
+    <div className="fixed top-4 right-4 z-[var(--layer-nav)]">
+      <Sheet open={open} onOpenChange={setOpen} modal={false}>
         <SheetTrigger asChild>
           <Button
             variant="outline"
