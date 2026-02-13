@@ -2,14 +2,40 @@
 
 import { AssistantModalPrimitive } from "@assistant-ui/react"
 import { BotIcon, ChevronDownIcon } from "lucide-react"
-import { type FC, forwardRef } from "react"
+import { type FC, forwardRef, useEffect } from "react"
 import { Thread } from "@/components/assistant-ui/thread"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
 import { trackEvent } from "@/lib/analytics"
+import { CHAT_MODAL_OPENED_EVENT, MOBILE_NAV_OPENED_EVENT } from "@/lib/layer-events"
 
 export const AssistantModal: FC = () => {
+  useEffect(() => {
+    const closeChatWhenMobileNavOpens = () => {
+      const modal = document.querySelector<HTMLElement>(".aui-modal-content[data-state='open']")
+      if (!modal) {
+        return
+      }
+
+      const triggerButton = document.querySelector<HTMLButtonElement>(".aui-modal-button")
+      triggerButton?.click()
+    }
+
+    window.addEventListener(MOBILE_NAV_OPENED_EVENT, closeChatWhenMobileNavOpens)
+    return () => {
+      window.removeEventListener(MOBILE_NAV_OPENED_EVENT, closeChatWhenMobileNavOpens)
+    }
+  }, [])
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      return
+    }
+
+    window.dispatchEvent(new Event(CHAT_MODAL_OPENED_EVENT))
+  }
+
   return (
-    <AssistantModalPrimitive.Root>
+    <AssistantModalPrimitive.Root onOpenChange={handleOpenChange}>
       <AssistantModalPrimitive.Anchor className="aui-root aui-modal-anchor fixed right-4 bottom-4 z-[var(--layer-chat)] size-14">
         <AssistantModalPrimitive.Trigger asChild>
           <AssistantModalButton />

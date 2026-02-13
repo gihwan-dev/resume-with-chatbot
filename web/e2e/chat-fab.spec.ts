@@ -39,7 +39,7 @@ const MOBILE_VIEWPORT = { width: 390, height: 844 }
 async function openModal(page: import("@playwright/test").Page) {
   // 하이드레이션 + 런타임 초기화 완료 대기를 위해 클릭 후 상태 변경을 재시도
   await expect(async () => {
-    await page.locator(FAB_SELECTOR).click({ force: true })
+    await page.locator(FAB_SELECTOR).click()
     await expect(page.locator(MODAL_CONTENT_SELECTOR)).toHaveAttribute("data-state", "open", {
       timeout: 1000,
     })
@@ -136,7 +136,7 @@ test.describe("Chat FAB visibility", () => {
   })
 })
 
-test.describe("Chat layer with mobile sheet", () => {
+test.describe("Chat and mobile sheet exclusivity", () => {
   test.use({ viewport: MOBILE_VIEWPORT })
 
   test.beforeEach(async ({ page }) => {
@@ -145,45 +145,37 @@ test.describe("Chat layer with mobile sheet", () => {
     await page.waitForSelector(FAB_SELECTOR)
   })
 
-  test("사이드바 오픈 상태에서도 FAB 클릭으로 모달이 열린다", async ({ page }) => {
+  test("챗봇이 열린 상태에서 사이드바를 열면 챗봇이 닫힌다", async ({ page }) => {
+    await openModal(page)
     await openMobileSheet(page)
 
-    const fab = page.locator(FAB_SELECTOR)
-    await expect(fab).toBeVisible()
-    await fab.click()
+    await expect(page.locator(MODAL_CONTENT_SELECTOR)).toHaveAttribute("data-state", "closed", {
+      timeout: 5000,
+    })
+    await expect(page.locator(SHEET_CONTENT_SELECTOR)).toBeVisible()
+  })
+
+  test("사이드바가 열린 상태에서 챗봇을 열면 사이드바가 닫힌다", async ({ page }) => {
+    await openMobileSheet(page)
+
+    await page.locator(FAB_SELECTOR).click({ force: true })
 
     await expect(page.locator(MODAL_CONTENT_SELECTOR)).toHaveAttribute("data-state", "open", {
       timeout: 5000,
     })
+    await expect(page.locator(SHEET_CONTENT_SELECTOR)).toHaveCount(0)
+  })
+})
+
+test.describe("Desktop layer priority", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockApiRoutes(page)
+    await page.goto("/")
+    await page.waitForSelector(FAB_SELECTOR)
   })
 
-  test("챗봇 오픈 후 사이드바 오픈 시 챗봇이 최상단 레이어를 유지한다", async ({ page }) => {
+  test("데스크톱에서 챗봇 레이어가 사이드바보다 높다", async ({ page }) => {
     await openModal(page)
-    await openMobileSheet(page)
-
-    const composerInput = page.locator(".aui-composer-input")
-    await expect(composerInput).toBeVisible()
-
-    const inputBox = await composerInput.boundingBox()
-    if (!inputBox) {
-      throw new Error("composer input bounding box is not available")
-    }
-
-    const hit = await page.evaluate(
-      ({ x, y }) => {
-        const element = document.elementFromPoint(x, y)
-        return {
-          inChat: Boolean(element?.closest(".aui-modal-content")),
-        }
-      },
-      { x: inputBox.x + inputBox.width * 0.5, y: inputBox.y + inputBox.height * 0.5 }
-    )
-
-    expect(hit.inChat).toBe(true)
-  })
-
-  test("모바일 레이어 z-index 우선순위가 chat > sheet를 만족한다", async ({ page }) => {
-    await openMobileSheet(page)
 
     const zIndex = await page.evaluate(() => {
       const readZIndex = (selector: string) => {
@@ -199,21 +191,15 @@ test.describe("Chat layer with mobile sheet", () => {
       return {
         chatAnchor: readZIndex(".aui-modal-anchor"),
         chatContent: readZIndex(".aui-modal-content"),
-        sheetOverlay: readZIndex('[data-slot="sheet-overlay"]'),
-        sheetContent: readZIndex('[data-slot="sheet-content"]'),
+        desktopNav: readZIndex('[data-slot="desktop-nav-root"]'),
       }
     })
 
-    if (zIndex.chatAnchor === null || zIndex.chatContent === null || zIndex.sheetContent === null) {
+    if (zIndex.chatAnchor === null || zIndex.chatContent === null || zIndex.desktopNav === null) {
       throw new Error(`z-index lookup failed: ${JSON.stringify(zIndex)}`)
     }
 
-    expect(zIndex.chatAnchor).toBeGreaterThan(zIndex.sheetContent)
-    expect(zIndex.chatContent).toBeGreaterThan(zIndex.sheetContent)
-
-    if (zIndex.sheetOverlay !== null) {
-      expect(zIndex.chatAnchor).toBeGreaterThan(zIndex.sheetOverlay)
-      expect(zIndex.chatContent).toBeGreaterThan(zIndex.sheetOverlay)
-    }
+    expect(zIndex.chatAnchor).toBeGreaterThan(zIndex.desktopNav)
+    expect(zIndex.chatContent).toBeGreaterThan(zIndex.desktopNav)
   })
 })
