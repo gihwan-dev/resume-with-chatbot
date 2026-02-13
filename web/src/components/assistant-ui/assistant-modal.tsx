@@ -53,7 +53,9 @@ export const AssistantModal: FC = () => {
   )
 }
 
-type AssistantModalButtonProps = { "data-state"?: "open" | "closed" }
+type AssistantModalButtonProps = React.ComponentPropsWithoutRef<"button"> & {
+  "data-state"?: "open" | "closed"
+}
 
 const AssistantModalButton = forwardRef<HTMLButtonElement, AssistantModalButtonProps>(
   ({ "data-state": state, ...rest }, ref) => {

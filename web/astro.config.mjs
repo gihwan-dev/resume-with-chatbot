@@ -7,6 +7,8 @@ import sentry from "@sentry/astro"
 import tailwindcss from "@tailwindcss/vite"
 import { defineConfig } from "astro/config"
 
+const tailwindPlugin = /** @type {any} */ (tailwindcss())
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://resume-with-ai.gihwan-dev.com",
@@ -26,7 +28,7 @@ export default defineConfig({
   ],
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [tailwindPlugin],
     define: {
       __SENTRY_DEBUG__: false,
       __SENTRY_TRACING__: false,
