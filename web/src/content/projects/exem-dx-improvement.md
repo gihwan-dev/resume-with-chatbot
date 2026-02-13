@@ -3,6 +3,7 @@ title: "개발 생산성 향상 및 자동화 인프라 구축"
 company: "Exem"
 description: "폐쇄망 환경과 10년 이상 된 레거시 시스템으로 인해 저하된 개발팀의 워크플로우를 혁신하기 위한 데브옵스 및 AI 파이프라인 구축"
 dateStart: 2025-02-01
+updatedAt: 2026-02-13
 techStack: ["Nest.js", "TypeScript", "TanStack Query", "MinIO", "Docker"]
 priority: 4
 ---
