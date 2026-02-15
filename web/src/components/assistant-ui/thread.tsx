@@ -106,7 +106,7 @@ const ThreadWelcome: FC = () => {
           <h1 className="fade-in slide-in-from-bottom-1 animate-in font-semibold text-2xl duration-200">
             안녕하세요!
           </h1>
-          <p className="fade-in slide-in-from-bottom-1 animate-in text-muted-foreground text-base delay-75 duration-200">
+          <p className="fade-in slide-in-from-bottom-1 animate-in text-foreground/80 text-base delay-75 duration-200">
             최기환의 이력서에 대해 궁금한 점을 물어보세요.
           </p>
         </div>
