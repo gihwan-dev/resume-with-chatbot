@@ -10,9 +10,12 @@ export function DesktopNav() {
       data-slot="desktop-nav-root"
     >
       <div className="bg-resume-card-bg border border-resume-border rounded-xl shadow-resume-shadow p-4 flex flex-col gap-4 transition-colors duration-100">
-        <ThemeToggle />
+        <fieldset>
+          <legend className="sr-only">테마 설정</legend>
+          <ThemeToggle />
+        </fieldset>
         <div className="border-t border-resume-border pt-4 transition-colors duration-100">
-          <SectionNav />
+          <SectionNav ariaLabel="데스크톱 이력서 섹션 이동" />
         </div>
       </div>
     </div>

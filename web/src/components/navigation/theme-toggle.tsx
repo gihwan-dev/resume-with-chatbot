@@ -14,18 +14,18 @@ export function ThemeToggle() {
   }, [])
 
   if (!mounted) {
-    return <Switch disabled />
+    return <Switch disabled aria-label="테마 전환" />
   }
 
   return (
     <div className="flex items-center w-full justify-center space-x-2">
-      <Sun className="h-[1.2rem] w-[1.2rem]" />
+      <Sun className="h-[1.2rem] w-[1.2rem]" aria-hidden />
       <Switch
-        id="theme-mode"
+        aria-label="다크 모드 전환"
         checked={theme === "dark"}
         onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
       />
-      <Moon className="h-[1.2rem] w-[1.2rem]" />
+      <Moon className="h-[1.2rem] w-[1.2rem]" aria-hidden />
       <span className="sr-only">Toggle theme</span>
     </div>
   )

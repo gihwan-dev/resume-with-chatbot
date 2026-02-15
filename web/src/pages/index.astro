@@ -53,6 +53,8 @@ const projectsWithContent = await Promise.all(
 
 <Layout title={`${profile?.name} | AI와 함께하는 개발자 이력서`}>
   <main
+    id="main-content"
+    tabindex="-1"
     class="container max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 min-h-screen"
   >
     <HeroSection profile={profile} />

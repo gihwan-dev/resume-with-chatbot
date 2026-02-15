@@ -2,13 +2,35 @@
 
 import { AssistantModalPrimitive } from "@assistant-ui/react"
 import { BotIcon, ChevronDownIcon } from "lucide-react"
-import { type FC, forwardRef, useEffect } from "react"
+import { type FC, forwardRef, useEffect, useRef, useState } from "react"
 import { Thread } from "@/components/assistant-ui/thread"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
 import { trackEvent } from "@/lib/analytics"
 import { CHAT_MODAL_OPENED_EVENT, MOBILE_NAV_OPENED_EVENT } from "@/lib/layer-events"
 
+const CHAT_MODAL_CONTENT_ID = "assistant-chat-modal"
+const CHAT_MODAL_TITLE_ID = "assistant-chat-modal-title"
+const CHAT_MODAL_DESCRIPTION_ID = "assistant-chat-modal-description"
+
 export const AssistantModal: FC = () => {
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    const handleEscapeToClose = (event: KeyboardEvent) => {
+      if (!open || event.key !== "Escape") {
+        return
+      }
+
+      triggerRef.current?.click()
+    }
+
+    window.addEventListener("keydown", handleEscapeToClose)
+    return () => {
+      window.removeEventListener("keydown", handleEscapeToClose)
+    }
+  }, [open])
+
   useEffect(() => {
     const closeChatWhenMobileNavOpens = () => {
       const modal = document.querySelector<HTMLElement>(".aui-modal-content[data-state='open']")
@@ -16,8 +38,7 @@ export const AssistantModal: FC = () => {
         return
       }
 
-      const triggerButton = document.querySelector<HTMLButtonElement>(".aui-modal-button")
-      triggerButton?.click()
+      triggerRef.current?.click()
     }
 
     window.addEventListener(MOBILE_NAV_OPENED_EVENT, closeChatWhenMobileNavOpens)
@@ -27,26 +48,42 @@ export const AssistantModal: FC = () => {
   }, [])
 
   const handleOpenChange = (open: boolean) => {
-    if (!open) {
+    setOpen(open)
+
+    if (open) {
+      window.dispatchEvent(new Event(CHAT_MODAL_OPENED_EVENT))
+      requestAnimationFrame(() => {
+        const input = document.querySelector<HTMLTextAreaElement>(".aui-composer-input")
+        input?.focus()
+      })
       return
     }
 
-    window.dispatchEvent(new Event(CHAT_MODAL_OPENED_EVENT))
+    requestAnimationFrame(() => {
+      triggerRef.current?.focus()
+    })
   }
 
   return (
     <AssistantModalPrimitive.Root onOpenChange={handleOpenChange}>
       <AssistantModalPrimitive.Anchor className="aui-root aui-modal-anchor fixed right-4 bottom-4 z-[var(--layer-chat)] size-14">
         <AssistantModalPrimitive.Trigger asChild>
-          <AssistantModalButton />
+          <AssistantModalButton ref={triggerRef} />
         </AssistantModalPrimitive.Trigger>
       </AssistantModalPrimitive.Anchor>
       <AssistantModalPrimitive.Content
-        forceMount
-        portalProps={{ forceMount: true }}
+        id={CHAT_MODAL_CONTENT_ID}
         sideOffset={16}
+        aria-labelledby={CHAT_MODAL_TITLE_ID}
+        aria-describedby={CHAT_MODAL_DESCRIPTION_ID}
         className="aui-root aui-modal-content data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-bottom-1/2 data-[state=closed]:slide-out-to-right-1/2 data-[state=closed]:zoom-out data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-1/2 data-[state=open]:slide-in-from-right-1/2 data-[state=open]:zoom-in z-[var(--layer-chat)] h-[min(700px,80vh)] w-[min(500px,calc(100vw-2rem))] overflow-clip overscroll-contain rounded-xl border bg-popover p-0 text-popover-foreground shadow-2xl outline-none data-[state=closed]:invisible data-[state=closed]:animate-out data-[state=open]:animate-in [&>.aui-thread-root]:bg-inherit"
       >
+        <h2 id={CHAT_MODAL_TITLE_ID} className="sr-only">
+          AI 어시스턴트 채팅
+        </h2>
+        <p id={CHAT_MODAL_DESCRIPTION_ID} className="sr-only">
+          이력서에 대한 질문을 입력하고 답변을 받을 수 있습니다.
+        </p>
         <Thread />
       </AssistantModalPrimitive.Content>
     </AssistantModalPrimitive.Root>
@@ -74,6 +111,10 @@ const AssistantModalButton = forwardRef<HTMLButtonElement, AssistantModalButtonP
         variant="default"
         tooltip={tooltip}
         side="left"
+        aria-controls={CHAT_MODAL_CONTENT_ID}
+        aria-expanded={state === "open"}
+        aria-haspopup="dialog"
+        aria-label={tooltip}
         {...rest}
         onClick={handleClick}
         className="aui-modal-button size-full rounded-full shadow-xl transition-transform hover:scale-110 active:scale-90"

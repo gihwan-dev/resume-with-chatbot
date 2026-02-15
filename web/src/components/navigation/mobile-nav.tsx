@@ -23,6 +23,67 @@ export function MobileNav() {
     }
   }, [])
 
+  React.useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    const getSheetContent = () => document.querySelector<HTMLElement>('[data-slot="sheet-content"]')
+
+    const getFocusableElements = (container: HTMLElement) =>
+      Array.from(
+        container.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => !element.hasAttribute("disabled"))
+
+    requestAnimationFrame(() => {
+      const content = getSheetContent()
+      if (!content) return
+
+      const focusableElements = getFocusableElements(content)
+      focusableElements[0]?.focus()
+    })
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false)
+        return
+      }
+
+      if (event.key !== "Tab") {
+        return
+      }
+
+      const content = getSheetContent()
+      if (!content) {
+        return
+      }
+
+      const focusableElements = getFocusableElements(content)
+      if (focusableElements.length === 0) {
+        return
+      }
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+      const currentElement = document.activeElement as HTMLElement | null
+
+      if (event.shiftKey && currentElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      } else if (!event.shiftKey && currentElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [open])
+
   const handleOpenChange = (nextOpen: boolean) => {
     setOpen(nextOpen)
 
@@ -38,6 +99,7 @@ export function MobileNav() {
           <Button
             variant="outline"
             size="icon"
+            aria-label="Open menu"
             className={cn(
               "bg-resume-card-bg border-resume-border shadow-resume-shadow",
               open && "hidden"
@@ -49,6 +111,7 @@ export function MobileNav() {
         </SheetTrigger>
         <SheetContent
           side="right"
+          overlayClassName="pointer-events-none"
           className="w-64 bg-resume-card-bg transition-colors duration-100"
         >
           <SheetHeader>
@@ -63,7 +126,7 @@ export function MobileNav() {
               <span className="text-xs font-medium uppercase text-resume-text-muted tracking-wider mb-2 block">
                 Sections
               </span>
-              <SectionNav onNavigate={() => setOpen(false)} />
+              <SectionNav onNavigate={() => setOpen(false)} ariaLabel="모바일 이력서 섹션 이동" />
             </div>
           </div>
         </SheetContent>

@@ -78,6 +78,9 @@ const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
   <body
     class="bg-resume-bg text-resume-text-main min-h-screen font-sans antialiased selection:bg-resume-primary selection:text-white transition-colors duration-100"
   >
+    <a href="#main-content" class="skip-link">
+      본문으로 건너뛰기
+    </a>
     <Navigation client:idle />
     <slot />
     <ChatWidget client:idle />
