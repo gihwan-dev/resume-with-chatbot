@@ -3,6 +3,7 @@ title: "고객 특화 DB 모니터링 대시보드 개발"
 company: "Exem"
 description: "오라클 라이센스 사용량 모니터링, 통합연결 대시보드 등 다양한 고객 특화 대시보드 개발"
 dateStart: 2025-01-01
+updatedAt: 2026-02-13
 techStack: ["React", "TypeScript", "TanStack Table", "React Grid Layout", "Zustand", "Vite", "Playwright"]
 priority: 1
 ---
@@ -21,6 +22,10 @@ priority: 1
 * **전역 객체 결합도 해소**를 위해 React 기반 신규 프로젝트로 분리 결정. 기존 Vue2 환경의 핵심 기능(알림 시스템 등)에 **Playwright E2E 테스트**를 선행 구축하여 기능의 동일성을 보장하며 안정적으로 이관.
 * **동적 레이아웃 구성 시스템**을 도입하여 고객사별 관제 우선순위에 따라 대시보드를 드래그 앤 드롭으로 재구성할 수 있도록 지원하고, 레이아웃 상태를 로컬 스토리지에 영속화.
 * 복잡한 Feature Flag 구조를 프로젝트 분리 및 컴포넌트화를 통해 정리하여 잠재적인 사이드 이펙트 제거.
+* Alert Log 데이터 흐름을 전용 상태 슬라이스로 분리해 필터/선택/상세 패널 상태 간 간섭을 제거했습니다.
+  <!-- evidence: Daily Notes/2026-02-11.md | Daily Notes/2026-02-12.md | Exem/01-Projects/DPM 대시보드/TODO.md -->
+* Split View 모달과 3단 레이아웃(목록-요약-상세)을 도입해 장애 탐색 단계 수를 축소했습니다.
+  <!-- evidence: Daily Notes/2026-02-11.md | Daily Notes/2026-02-12.md | Exem/01-Projects/DPM 대시보드/TODO.md -->
 
 
 **Result**
@@ -28,6 +33,8 @@ priority: 1
 * 레거시 API 의존성 완전 제거 및 테스트 자동화를 통한 마이그레이션 성공.
 * 사내 디자인 시스템 표준 준수로 공통 컴포넌트 재사용률 향상.
 * 고객사별 요구사항 대응 속도 개선 및 대규모 인스턴스 환경에서도 **60fps** 이상의 안정적인 렌더링 성능 유지.
+* 브레이크포인트 및 UI 결함을 커밋 단위로 분리 대응해 롤백 범위와 검증 경계를 명확히 운영했습니다.
+  <!-- evidence: Daily Notes/2026-02-11.md | Daily Notes/2026-02-12.md | Exem/01-Projects/DPM 대시보드/TODO.md -->
 
 ---
 

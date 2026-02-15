@@ -30,18 +30,10 @@ describe("createToolInputDeltaFilter", () => {
       { type: "start", messageId: "msg-1" },
       { type: "text-start", id: "text-1" },
       { type: "text-delta", id: "text-1", delta: "hello" },
-      { type: "text-finish", id: "text-1" },
-      {
-        type: "step-finish",
-        finishReason: "stop",
-        usage: { promptTokens: 10, completionTokens: 5 },
-        isContinued: false,
-      },
-      {
-        type: "finish",
-        finishReason: "stop",
-        usage: { promptTokens: 10, completionTokens: 5 },
-      },
+      { type: "text-end", id: "text-1" },
+      { type: "start-step" },
+      { type: "finish-step" },
+      { type: "finish", finishReason: "stop" },
     ]
 
     const stream = createStream(input).pipeThrough(createToolInputDeltaFilter())
@@ -53,15 +45,16 @@ describe("createToolInputDeltaFilter", () => {
   it("tool-input-delta 타입 청크를 필터링한다", async () => {
     const input: UIMessageChunk[] = [
       { type: "start", messageId: "msg-1" },
-      { type: "tool-call-start", id: "tc-1", toolName: "answer" },
-      { type: "tool-input-delta", id: "tc-1", delta: '{"answer":' },
-      { type: "tool-input-delta", id: "tc-1", delta: '"hello"}' },
-      { type: "tool-call-finish", id: "tc-1", input: { answer: "hello" } },
+      { type: "tool-input-start", toolCallId: "tc-1", toolName: "answer" },
+      { type: "tool-input-delta", toolCallId: "tc-1", inputTextDelta: '{"answer":' },
+      { type: "tool-input-delta", toolCallId: "tc-1", inputTextDelta: '"hello"}' },
       {
-        type: "finish",
-        finishReason: "stop",
-        usage: { promptTokens: 10, completionTokens: 5 },
+        type: "tool-input-available",
+        toolCallId: "tc-1",
+        toolName: "answer",
+        input: { answer: "hello" },
       },
+      { type: "finish", finishReason: "stop" },
     ]
 
     const stream = createStream(input).pipeThrough(createToolInputDeltaFilter())
@@ -69,47 +62,59 @@ describe("createToolInputDeltaFilter", () => {
 
     expect(result).toEqual([
       { type: "start", messageId: "msg-1" },
-      { type: "tool-call-start", id: "tc-1", toolName: "answer" },
-      { type: "tool-call-finish", id: "tc-1", input: { answer: "hello" } },
+      { type: "tool-input-start", toolCallId: "tc-1", toolName: "answer" },
       {
-        type: "finish",
-        finishReason: "stop",
-        usage: { promptTokens: 10, completionTokens: 5 },
+        type: "tool-input-available",
+        toolCallId: "tc-1",
+        toolName: "answer",
+        input: { answer: "hello" },
       },
+      { type: "finish", finishReason: "stop" },
     ])
   })
 
-  it("tool-call-start와 tool-call-finish는 보존한다", async () => {
+  it("tool-input-start와 tool-input-available는 보존한다", async () => {
     const input: UIMessageChunk[] = [
-      { type: "tool-call-start", id: "tc-1", toolName: "searchDocuments" },
-      { type: "tool-input-delta", id: "tc-1", delta: '{"query":"test"}' },
-      { type: "tool-call-finish", id: "tc-1", input: { query: "test" } },
+      { type: "tool-input-start", toolCallId: "tc-1", toolName: "searchDocuments" },
+      { type: "tool-input-delta", toolCallId: "tc-1", inputTextDelta: '{"query":"test"}' },
+      {
+        type: "tool-input-available",
+        toolCallId: "tc-1",
+        toolName: "searchDocuments",
+        input: { query: "test" },
+      },
     ]
 
     const stream = createStream(input).pipeThrough(createToolInputDeltaFilter())
     const result = await collectChunks(stream)
 
     expect(result).toHaveLength(2)
-    expect(result[0].type).toBe("tool-call-start")
-    expect(result[1].type).toBe("tool-call-finish")
+    expect(result[0].type).toBe("tool-input-start")
+    expect(result[1].type).toBe("tool-input-available")
   })
 
   it("여러 도구의 delta가 모두 필터링된다", async () => {
     const input: UIMessageChunk[] = [
       { type: "start", messageId: "msg-1" },
-      { type: "tool-call-start", id: "tc-1", toolName: "searchDocuments" },
-      { type: "tool-input-delta", id: "tc-1", delta: '{"query":' },
-      { type: "tool-input-delta", id: "tc-1", delta: '"react"}' },
-      { type: "tool-call-finish", id: "tc-1", input: { query: "react" } },
-      { type: "tool-call-start", id: "tc-2", toolName: "answer" },
-      { type: "tool-input-delta", id: "tc-2", delta: '{"answer":' },
-      { type: "tool-input-delta", id: "tc-2", delta: '"답변"}' },
-      { type: "tool-call-finish", id: "tc-2", input: { answer: "답변" } },
+      { type: "tool-input-start", toolCallId: "tc-1", toolName: "searchDocuments" },
+      { type: "tool-input-delta", toolCallId: "tc-1", inputTextDelta: '{"query":' },
+      { type: "tool-input-delta", toolCallId: "tc-1", inputTextDelta: '"react"}' },
       {
-        type: "finish",
-        finishReason: "stop",
-        usage: { promptTokens: 10, completionTokens: 5 },
+        type: "tool-input-available",
+        toolCallId: "tc-1",
+        toolName: "searchDocuments",
+        input: { query: "react" },
       },
+      { type: "tool-input-start", toolCallId: "tc-2", toolName: "answer" },
+      { type: "tool-input-delta", toolCallId: "tc-2", inputTextDelta: '{"answer":' },
+      { type: "tool-input-delta", toolCallId: "tc-2", inputTextDelta: '"답변"}' },
+      {
+        type: "tool-input-available",
+        toolCallId: "tc-2",
+        toolName: "answer",
+        input: { answer: "답변" },
+      },
+      { type: "finish", finishReason: "stop" },
     ]
 
     const stream = createStream(input).pipeThrough(createToolInputDeltaFilter())
@@ -117,8 +122,8 @@ describe("createToolInputDeltaFilter", () => {
 
     const types = result.map((c) => c.type)
     expect(types).not.toContain("tool-input-delta")
-    expect(types).toContain("tool-call-start")
-    expect(types).toContain("tool-call-finish")
+    expect(types).toContain("tool-input-start")
+    expect(types).toContain("tool-input-available")
     expect(result).toHaveLength(6)
   })
 

@@ -26,6 +26,7 @@ const work = defineCollection({
     role: z.string(),
     dateStart: z.coerce.date(),
     dateEnd: z.coerce.date().optional(),
+    updatedAt: z.coerce.date().optional(),
     isCurrent: z.boolean().default(false),
     location: z.string().optional(),
     summary: z.string(),
@@ -74,6 +75,7 @@ const projects = defineCollection({
     github: z.string().url().optional(),
     dateStart: z.coerce.date(),
     dateEnd: z.coerce.date().optional(),
+    updatedAt: z.coerce.date().optional(),
     priority: z.number(),
   }),
 })
