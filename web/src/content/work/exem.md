@@ -8,11 +8,9 @@ summary: "성능 모니터링 솔루션의 프론트엔드 개발을 담당하�
 location: "Seoul, Korea"
 ---
 
-- 성능 모니터링 대시보드(MaxGauge-VI)의 Table 컴포넌트 아키텍처 리팩토링 — 중복 코드 176줄 제거, 컴포넌트 수 5→4 통합, 743개 테스트 무회귀 달성
-- Table 9분할 구조에서 컬럼 리사이즈 정책을 `우측 캐스케이드 + Flex Basis`로 전환하고, 기준 스토리(WithColumnResize) 기반 버그 재현·수정과 RowPinning 브라우저 테스트 보강으로 고정 행 + 리사이즈 스크롤 동기화 회귀를 차단했습니다.
-  <!-- evidence: Daily Notes/2026-02-11.md | Daily Notes/2026-02-12.md | Daily Notes/2026-02-13.md -->
-- Alert Log 모듈을 상태 슬라이스 → Split View 모달 → 3단 레이아웃 순으로 재구성해 운영자 탐색 동선과 장애 분석 속도를 개선하고 있습니다.
-  <!-- evidence: Daily Notes/2026-02-11.md | Daily Notes/2026-02-12.md | Exem/01-Projects/DPM 대시보드/TODO.md -->
-- Figma ↔ React 디자인 검증 자동화 파이프라인 구축 — Figma REST API, Playwright, pixelmatch, Claude Vision을 연동한 7단계 워크플로우
-- WebEnv(클라이언트 상태 저장소) 구조적 문제 분석 및 개선 방향 설계 — 데이터 삼중화, 캐스케이드 누락, 동시성 문제 등 6가지 아키텍처 이슈 도출
-- SK하이닉스 오라클 라이센스 대시보드 기능 개발 — Site/Fab/Instance 3계층 필터링 UI 구현, 백엔드 API 변경 대응
+- Table 렌더러를 Pinned/Virtual 분리와 splitRows 중앙화로 재구성해 91 suites/743 tests 무회귀를 유지했습니다.
+- Phase 2 리팩토링을 4개 커밋으로 분할해 변경 경계를 명확히 하고 bisect 가능한 검증 흐름을 확보했습니다.
+- Alert Log 모듈을 상태 슬라이스·Split View 모달·3단 레이아웃으로 재구성해 운영자 탐색 동선과 장애 분석 흐름을 개선했습니다.
+- Figma 캡처 병목을 MCP 인라인 경로에서 REST API 스크립트로 전환해 실제 URL 기준 PNG(1264x96, 7.1KB) 생성까지 복구했습니다.
+- `/design-check` 단일 명령으로 Story 생성·구현 캡처·pixel diff·시각 분석·Markdown 보고서 생성을 오케스트레이션해 디자인 QA 흐름을 표준화했습니다.
+- 컬럼 리사이즈를 UI 핸들러와 ColumnResizePolicy로 분리하고 TableHeaderResizeMeta 계층을 도입해 다단 그룹 헤더 조작 일관성과 테스트 가능성을 높였습니다.
