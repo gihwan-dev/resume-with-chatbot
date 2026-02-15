@@ -73,8 +73,6 @@ export const AssistantModal: FC = () => {
       </AssistantModalPrimitive.Anchor>
       <AssistantModalPrimitive.Content
         id={CHAT_MODAL_CONTENT_ID}
-        forceMount
-        portalProps={{ forceMount: true }}
         sideOffset={16}
         aria-labelledby={CHAT_MODAL_TITLE_ID}
         aria-describedby={CHAT_MODAL_DESCRIPTION_ID}
