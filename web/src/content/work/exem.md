@@ -9,8 +9,8 @@ location: "Seoul, Korea"
 ---
 
 - 성능 모니터링 대시보드(MaxGauge-VI)의 Table 컴포넌트 아키텍처 리팩토링 — 중복 코드 176줄 제거, 컴포넌트 수 5→4 통합, 743개 테스트 무회귀 달성
-- Table 9분할 구조에서 컬럼 리사이즈 정책을 `우측 캐스케이드 + Flex Basis`로 전환하고, 우측 고정 컬럼 리사이즈 규칙(핸들러 우선 처리·이벤트 전파 차단)을 정리해 스크롤 동기화 이슈를 스토리·브라우저 테스트로 재현-수정했습니다.
-  <!-- evidence: Daily Notes/2026-02-11.md | Daily Notes/2026-02-12.md | Exem/01-Projects/Table 컴포넌트/설계/아키텍쳐 변경 - 20260213.md | Exem/01-Projects/Table 컴포넌트/설계/Table 컬럼 리사이즈 모델 전환 (우측 캐스케이드 + Flex Basis).md -->
+- Table 9분할 구조에서 컬럼 리사이즈 정책을 `우측 캐스케이드 + Flex Basis`로 전환하고, 기준 스토리(WithColumnResize) 기반 버그 재현·수정과 RowPinning 브라우저 테스트 보강으로 고정 행 + 리사이즈 스크롤 동기화 회귀를 차단했습니다.
+  <!-- evidence: Daily Notes/2026-02-11.md | Daily Notes/2026-02-12.md | Daily Notes/2026-02-13.md -->
 - Alert Log 모듈을 상태 슬라이스 → Split View 모달 → 3단 레이아웃 순으로 재구성해 운영자 탐색 동선과 장애 분석 속도를 개선하고 있습니다.
   <!-- evidence: Daily Notes/2026-02-11.md | Daily Notes/2026-02-12.md | Exem/01-Projects/DPM 대시보드/TODO.md -->
 - Figma ↔ React 디자인 검증 자동화 파이프라인 구축 — Figma REST API, Playwright, pixelmatch, Claude Vision을 연동한 7단계 워크플로우
