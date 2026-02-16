@@ -92,6 +92,10 @@ export const styles = StyleSheet.create({
     lineHeight: 1.5,
     marginBottom: 6,
   },
+  blogLinkText: {
+    fontSize: 8,
+    marginBottom: 2,
+  },
   itemSeparator: {
     marginBottom: 12,
   },

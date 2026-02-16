@@ -58,10 +58,18 @@ export interface SerializedSkillCategory {
   items: string[]
 }
 
+export interface SerializedBlogPost {
+  title: string
+  url: string
+  publishedAt: string
+  summary?: string
+}
+
 export interface SerializedResumeData {
   profile: SerializedProfile
   work: SerializedWork[]
   projects: SerializedProject[]
+  blogPosts: SerializedBlogPost[]
   education: SerializedEducation[]
   certificates: SerializedCertificate[]
   awards: SerializedAward[]

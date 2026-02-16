@@ -1,6 +1,6 @@
 "use client"
 
-import { Award, Briefcase, FolderKanban, Trophy, User } from "lucide-react"
+import { Award, Briefcase, FileText, FolderKanban, Trophy, User } from "lucide-react"
 import type { MouseEvent } from "react"
 import { type SectionId, useActiveSection } from "@/hooks/use-active-section"
 import { cn } from "@/lib/utils"
@@ -15,6 +15,7 @@ const sections: { id: SectionId; label: string; icon: typeof User }[] = [
   { id: "profile", label: "Profile", icon: User },
   { id: "experience", label: "Experience", icon: Briefcase },
   { id: "projects", label: "Projects", icon: FolderKanban },
+  { id: "blog", label: "Blog", icon: FileText },
   { id: "certificates", label: "Certificates", icon: Award },
   { id: "awards", label: "Awards", icon: Trophy },
 ]

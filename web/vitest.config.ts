@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
+        "astro:content": path.resolve(__dirname, "./tests/mocks/astro-content.ts"),
       },
     },
   }

@@ -2,9 +2,11 @@
 import { getCollection, render } from "astro:content"
 import { PdfDownloadButton } from "@/components/pdf/pdf-download-button"
 import { Separator } from "@/components/ui/separator"
+import { getVelogPosts } from "@/lib/blog/velog"
 import { serializeResumeData } from "@/lib/pdf/serialize-resume"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
+import BlogSection from "./_sections/blog-section.astro"
 import CertificateSection from "./_sections/certificate-section.astro"
 import ExperienceSection from "./_sections/experience-section.astro"
 import HeroSection from "./_sections/hero-section.astro"
@@ -19,6 +21,7 @@ const skillsData = skills[0]?.data
 
 const work = await getCollection("work")
 const projects = await getCollection("projects")
+const blogPosts = await getVelogPosts({ limit: 5 })
 
 const certificates = await getCollection("certificates")
 const awards = await getCollection("awards")
@@ -77,6 +80,10 @@ const projectsWithContent = await Promise.all(
 
     <Separator className="my-12" />
 
+    <BlogSection posts={blogPosts} />
+
+    <Separator className="my-12" />
+
     <CertificateSection certificates={certificates} />
 
     <Separator className="my-12" />
@@ -109,7 +116,7 @@ const projectsWithContent = await Promise.all(
 
     // 섹션 뷰 추적: Intersection Observer
     const sections = document.querySelectorAll<HTMLElement>(
-      "#profile, #skills, #experience, #projects, #certificates, #awards"
+      "#profile, #skills, #experience, #projects, #blog, #certificates, #awards"
     )
     const viewed = new Set<string>()
 

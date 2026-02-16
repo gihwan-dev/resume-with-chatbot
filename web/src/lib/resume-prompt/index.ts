@@ -1,4 +1,5 @@
 import { getCollection } from "astro:content"
+import { getVelogPosts } from "@/lib/blog/velog"
 
 /**
  * 날짜를 YYYY.MM 형식으로 변환
@@ -27,13 +28,14 @@ function formatDateRange(dateStart: Date, dateEnd?: Date, isCurrent?: boolean): 
  * Content Collections 데이터를 읽어 프롬프트 문자열로 변환
  */
 export async function buildResumePrompt(): Promise<string> {
-  const [basics, work, projects, education, certificates, awards] = await Promise.all([
+  const [basics, work, projects, education, certificates, awards, blogPosts] = await Promise.all([
     getCollection("basics"),
     getCollection("work"),
     getCollection("projects"),
     getCollection("education"),
     getCollection("certificates"),
     getCollection("awards"),
+    getVelogPosts({ limit: 5 }),
   ])
 
   const sections: string[] = []
@@ -97,6 +99,17 @@ ${projectSections.join("\n\n---\n\n")}`)
   }
 
   // 4. 학력
+  if (blogPosts.length > 0) {
+    const blogSections = blogPosts.map((post, index) => {
+      const date = formatDate(new Date(post.publishedAt))
+      return `${index + 1}. ${post.title} (${date})\n   - 링크: ${post.url}`
+    })
+
+    sections.push(`## 최근 블로그 글
+${blogSections.join("\n")}`)
+  }
+
+  // 5. 학력
   if (education.length > 0) {
     const eduSection = education.map((e) => {
       const dateRange = formatDateRange(e.data.dateStart, e.data.dateEnd)
@@ -107,7 +120,7 @@ ${projectSections.join("\n\n---\n\n")}`)
 ${eduSection.join("\n")}`)
   }
 
-  // 5. 자격증
+  // 6. 자격증
   if (certificates.length > 0) {
     const certSections = certificates.map((c) => {
       const date = formatDate(c.data.date)
@@ -120,7 +133,7 @@ ${eduSection.join("\n")}`)
 ${certSections.join("\n")}`)
   }
 
-  // 6. 대외활동
+  // 7. 대외활동
   if (awards.length > 0) {
     const awardSections = awards.map((a) => {
       const date = a.data.date.getFullYear().toString()
@@ -141,7 +154,7 @@ ${certSections.join("\n")}`)
 ${awardSections.join("\n\n")}`)
   }
 
-  // 7. 링크
+  // 8. 링크
   if (profile?.profiles && profile.profiles.length > 0) {
     const linkSection = profile.profiles
       .map((p: { network: string; url: string }) => `- ${p.network}: ${p.url}`)
