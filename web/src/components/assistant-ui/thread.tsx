@@ -144,7 +144,7 @@ const Composer: FC = () => {
     >
       <ComposerPrimitive.Input
         placeholder="메시지를 입력하세요..."
-        className="aui-composer-input mb-1 max-h-32 min-h-10 w-full resize-none bg-transparent px-4 pt-1 pb-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-0"
+        className="aui-composer-input mb-1 max-h-32 min-h-10 w-full resize-none border-0 bg-transparent px-4 pt-1 pb-2 text-sm shadow-none outline-none placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0"
         rows={1}
         autoFocus
         aria-label="메시지 입력"
