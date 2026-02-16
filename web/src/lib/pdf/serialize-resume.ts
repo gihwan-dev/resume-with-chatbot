@@ -1,16 +1,19 @@
 import { getCollection } from "astro:content"
+import { getVelogPosts } from "@/lib/blog/velog"
 import type { SerializedResumeData } from "./types"
 
 export async function serializeResumeData(): Promise<SerializedResumeData> {
-  const [basics, work, projects, education, certificates, awards, skills] = await Promise.all([
-    getCollection("basics"),
-    getCollection("work"),
-    getCollection("projects"),
-    getCollection("education"),
-    getCollection("certificates"),
-    getCollection("awards"),
-    getCollection("skills"),
-  ])
+  const [basics, work, projects, education, certificates, awards, skills, blogPosts] =
+    await Promise.all([
+      getCollection("basics"),
+      getCollection("work"),
+      getCollection("projects"),
+      getCollection("education"),
+      getCollection("certificates"),
+      getCollection("awards"),
+      getCollection("skills"),
+      getVelogPosts({ limit: 5 }),
+    ])
 
   const profile = basics[0]?.data
 
@@ -51,6 +54,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       dateEnd: p.data.dateEnd?.toISOString(),
       body: p.body?.trim() || undefined,
     })),
+    blogPosts,
     education: education.map((e) => ({
       institution: e.data.institution,
       area: e.data.area,

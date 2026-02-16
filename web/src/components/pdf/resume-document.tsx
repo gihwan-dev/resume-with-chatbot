@@ -119,6 +119,26 @@ function ProjectSection({ projects }: { projects: SerializedResumeData["projects
   )
 }
 
+function BlogSection({ blogPosts }: { blogPosts: SerializedResumeData["blogPosts"] }) {
+  if (blogPosts.length === 0) return null
+  return (
+    <View>
+      <Text style={styles.sectionTitle}>Blog</Text>
+      {blogPosts.map((post) => (
+        <View key={post.url} style={styles.itemSeparator} wrap={false}>
+          <View style={styles.itemHeader}>
+            <Text style={styles.itemTitle}>{post.title}</Text>
+            <Text style={styles.itemDate}>{formatDate(post.publishedAt)}</Text>
+          </View>
+          <Link src={post.url} style={styles.link}>
+            <Text style={styles.blogLinkText}>Read post</Text>
+          </Link>
+        </View>
+      ))}
+    </View>
+  )
+}
+
 function EducationSection({ education }: { education: SerializedResumeData["education"] }) {
   if (education.length === 0) return null
   return (
@@ -195,6 +215,7 @@ export function ResumeDocument({ data }: { data: SerializedResumeData }) {
         <SkillsSection skills={data.skills} />
         <ExperienceSection work={data.work} />
         <ProjectSection projects={data.projects} />
+        <BlogSection blogPosts={data.blogPosts} />
         <EducationSection education={data.education} />
         <CertificateSection certificates={data.certificates} />
         <AwardSection awards={data.awards} />

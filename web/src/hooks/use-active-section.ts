@@ -2,9 +2,16 @@
 
 import { useEffect, useRef, useState } from "react"
 
-export type SectionId = "profile" | "experience" | "projects" | "certificates" | "awards"
+export type SectionId = "profile" | "experience" | "projects" | "blog" | "certificates" | "awards"
 
-const SECTION_IDS: SectionId[] = ["profile", "experience", "projects", "certificates", "awards"]
+const SECTION_IDS: SectionId[] = [
+  "profile",
+  "experience",
+  "projects",
+  "blog",
+  "certificates",
+  "awards",
+]
 
 export function useActiveSection(): SectionId | null {
   const [activeSection, setActiveSection] = useState<SectionId | null>(null)
