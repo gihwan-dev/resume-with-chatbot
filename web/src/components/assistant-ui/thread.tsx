@@ -61,7 +61,7 @@ export const Thread: FC = () => {
       <ThreadHeader />
       <ThreadPrimitive.Viewport
         turnAnchor="top"
-        className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll scroll-smooth px-4"
+        className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-hidden overflow-y-scroll scroll-smooth px-4"
       >
         <ThreadPrimitive.ViewportFooter className="h-4 shrink-0" />
         <ThreadPrimitive.Empty>
@@ -125,13 +125,13 @@ const SuggestionButton: FC<{ text: string }> = ({ text }) => {
   return (
     <Button
       variant="ghost"
-      className="h-auto w-full items-start justify-start rounded-2xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
+      className="h-auto w-full min-w-0 overflow-hidden items-start justify-start rounded-2xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
       onClick={() => {
         trackEvent("chat_message", { method: "suggestion" })
         aui.thread().append({ role: "user", content: [{ type: "text", text }] })
       }}
     >
-      <span className="text-sm">{text}</span>
+      <span className="block w-full truncate text-sm">{text}</span>
     </Button>
   )
 }
@@ -321,7 +321,7 @@ const FollowUpSuggestions: FC = () => {
             key={question}
             variant="secondary"
             size="sm"
-            className="h-auto py-1.5 px-2.5 text-xs font-normal whitespace-normal text-left cursor-pointer border border-transparent hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+            className="h-auto max-w-full min-w-0 overflow-hidden py-1.5 px-2.5 text-left text-xs font-normal cursor-pointer border border-transparent hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
             onClick={() => {
               trackEvent("chat_message", { method: "follow_up" })
               clearQuestions()
@@ -331,7 +331,7 @@ const FollowUpSuggestions: FC = () => {
               })
             }}
           >
-            {question}
+            <span className="block w-full truncate">{question}</span>
           </Button>
         ))}
       </div>
