@@ -1,47 +1,33 @@
 ---
 title: "고객 특화 DB 모니터링 대시보드 개발"
 company: "Exem"
-description: "고객별 모니터링 요구를 단일 제품 구조에서 수용하도록 대시보드 아키텍처를 재설계하고 운영 대응 속도를 개선"
+description: "고객별 모니터링 요구를 단일 제품 구조에서 수용하도록 대시보드 아키텍처를 재설계하고 장애 인지 속도를 70% 개선"
 dateStart: 2025-01-01
-updatedAt: 2026-02-15
-techStack: ["React", "TypeScript", "TanStack Table", "React Grid Layout", "Zustand", "Vite", "Playwright"]
+updatedAt: 2026-02-16
+techStack: ["React", "TypeScript", "TanStack Table", "TanStack Query", "React Grid Layout", "Zustand", "Vite", "Playwright"]
 priority: 1
 ---
 
-#### 모니터링 대시보드 아키텍처 개편 및 React 마이그레이션 (Monitoring Dashboard Re-architecture & React Migration)
+> 대시보드 코어 레이아웃·상태 관리·폴링 아키텍처 설계 및 구현 주도
+
+#### 고객 특화 모니터링 대시보드 아키텍처 재설계
 
 **Problem**
 
-* 카드형 사용자 인터페이스(UI)에서 300개 이상 이기종 DB 상태를 동시에 렌더링할 때 DOM 노드가 23,315개까지 증가했고, `Layouts/sec 61.4`, `Style recalcs/sec 83.4`가 발생해 메인 스레드 점유로 INP가 약 280ms까지 상승했습니다.
-* 고객사별 분기 로직과 전역 의존이 화면 계층에 누적되어 API 명세 변경 시 수정 범위가 대시보드 전반으로 확산됐고, 회귀 영향 분석 비용이 커졌습니다.
+* Vue 기반 레거시 대시보드에서 폴링 주기·재실행 규칙이 화면별로 분산되어 동일 운영 시나리오에서도 네트워크 동작이 달랐습니다.
+* 카드형 UI의 데이터 밀도 한계로 대규모 인스턴스 모니터링 효율이 낮았습니다.
+* **300개 이상** 이기종 DB 상태 동시 렌더링 시 **DOM 23,315개**, `Layouts/sec 61.4`, `Style recalcs/sec 83.4`가 발생해 **INP 280ms**까지 상승했습니다.
 
 **Action**
 
-* `React Grid Layout`의 `x/y/w/h` 좌표 모델로 위젯 배치를 재설계하고 카드형 화면을 그리드 중심 구조로 전환해, 단일 화면의 데이터 밀도를 높였습니다.
-* `Zustand` 선택 구독(selector) 패턴으로 상태 소비 범위를 위젯 단위로 분리해, 폴링 데이터 갱신이 전체 트리 리렌더로 전파되지 않도록 구조를 정리했습니다.
-* React 마이그레이션 과정에서 Playwright 회귀 시나리오를 배포 게이트로 운영해 핵심 사용자 인터페이스 동등성을 검증했습니다.
+* Vue 레거시 단계에서 중앙 Polling Manager를 도입해 화면별로 분산된 폴링 등록·해제·재실행 규칙을 통합했고, React 마이그레이션을 진행하며 TanStack Query로 전환해 폴링을 선언적으로 관리하도록 개선했습니다.
+* `React Grid Layout`의 `x/y/w/h` 좌표 모델로 카드형 화면을 그리드 중심 구조로 전환해 단일 화면 데이터 밀도를 높였습니다.
+* Playwright E2E 테스트로 알람 등 핵심 기능의 통합 테스트를 작성해, 동일 스펙을 유지한 채 안전하게 마이그레이션했습니다.
+* `useFrozenData`로 인터랙션 중 폴링 데이터를 동결해 리렌더를 차단하고, `useDeferredValue`로 렌더링 우선순위를 추가 조정해 드래그·리사이즈 시 폴링에 의한 버벅임을 제거했습니다.
 
 **Result**
 
-* 그리드 기반 재구성과 위젯 단위 상태 분리로 화면 렌더링 경합 구간을 줄여, 장애 인지 시간을 10초에서 3초로 70% 단축했습니다.
-* 레거시 API 의존 제거와 Playwright 회귀 게이트 정착으로 명세 변경 시 영향 분석 경로를 단순화하고 릴리즈 안정성을 높였습니다.
-
----
-
-#### 실시간 데이터 폴링 아키텍처 표준화 및 네트워크 최적화 (Polling Standardization & Network Optimization)
-
-**Problem**
-
-* 화면별로 폴링 주기와 재실행 규칙이 분산되어 동일한 운영 시나리오에서도 동작이 달랐고, 페이지 이탈 후 잔류 요청이 누적되어 백그라운드 트래픽이 증가했습니다.
-* 폴링과 리사이즈 경합이 간헐적으로 발생할 때 `onLayoutChange` 54~70회 연쇄 호출과 DOM mutation 4127~6063 급증이 재현되어, 원인 추적과 재발 방지 기준이 필요했습니다.
-
-**Action**
-
-* 중앙 폴링 관리자(Polling Manager) 모듈에서 호출 등록·해제·즉시 재실행 규칙을 통합해 화면별 타이머 구현을 제거했습니다.
-* `TanStack Query` 정책을 표준화해 `staleTime`을 폴링 주기와 정렬하고, 인터랙션 중 `refetchInterval: false`로 중지한 뒤 종료 시 재개하도록 구성했습니다.
-* `useDeferredValue`로 렌더링 우선순위를 조정하고 Playwright + MutationObserver 기반 시나리오 검증을 적용해 경합 경로를 지속 점검했습니다.
-
-**Result**
-
-* 중앙 폴링 규칙 적용 후 화면 전환과 필터 조작에서 네트워크 동작이 일관되게 유지되고, 페이지 이탈 후 잔류 요청이 감소해 운영 예측 가능성이 높아졌습니다.
-* 경합 증상을 재현 가능한 형태로 표준화해 원인 경로 7개와 검증 시나리오 32개를 회귀 기준으로 고정했고, `onLayoutChange` 연쇄 호출과 DOM mutation 급증 재발을 조기에 감지할 수 있게 했습니다.
+* 장애 인지 시간 **10초 → 3초**(70% 단축)로 운영 대응 속도를 개선했습니다.
+* 그리드 재구성으로 **DOM 20% 이상 감소**, **인터랙션 지연 73-82% 개선**을 달성했습니다.
+* `useFrozenData` + `useDeferredValue` 조합으로 폴링을 유지하면서도 인터랙션 중 렌더 경합을 해소해 조작 응답성을 안정화했습니다.
+* Playwright E2E 게이트로 마이그레이션 안전성을 확보하고 릴리즈 안정성을 높였습니다.

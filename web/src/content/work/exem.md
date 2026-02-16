@@ -2,15 +2,15 @@
 company: "주식회사엑셈"
 role: "프론트엔드 개발자"
 dateStart: 2024-11-01
-updatedAt: 2026-02-15
+updatedAt: 2026-02-16
 isCurrent: true
-summary: "성능 모니터링 솔루션의 프론트엔드 코어 개발을 담당하며, ExtJS 레거시 현대화(React Migration)와 AI 기반 개발 파이프라인 구축을 주도했습니다."
+summary: "성능 모니터링(APM) 솔루션의 실시간 관제·분석 대시보드 프론트엔드 코어를 개발하고 있습니다. 테이블 컴포넌트를 TanStack Table + Flexbox 선언형 구조로 재설계해 셀 렌더링 시간을 1.7배 단축하고, AI 생성 UI의 시각적 회귀 테스트 파이프라인을 구축해 수동 QA 부담을 줄였습니다."
 location: "Seoul, Korea"
 ---
 
-**주요 성과 (Key Achievements)**
+**주요 성과**
 
-- 대규모 모니터링 데이터 처리 구조를 재설계해 실시간 화면의 성능과 확장성을 강화했습니다.
-- 복잡한 테이블 상호작용 구조를 선언형 아키텍처로 전환해 기능 확장과 품질 검증의 안정성을 높였습니다.
-- AI가 생성한 UI의 신뢰성을 확보하기 위해 Visual Feedback Loop를 자동화해 수동 검증 부담을 줄이고 개발 생산성을 개선했습니다.
-- 관제 대시보드 분석 워크플로우를 재구성해 운영자의 장애 인지 및 원인 파악 속도를 개선했습니다.
+- 실시간 대시보드에서 DOM 23,000+개·이벤트 리스너 12,000+개·INP 280ms로 렌더링 병목이 발생해, TanStack Virtual 가상화·이벤트 위임·폴링 최적화(인터랙션 기반 일시정지, staleTime/gcTime 정규화)를 적용하고 렌더링 파이프라인을 재설계했습니다.
+- position absolute + ResizeObserver 3-pass 알고리즘 기반 테이블의 셀 렌더링이 ~22ms/프레임으로 병목이 되어, TanStack Table + CSS Flexbox 선언형 구조로 전환하고 ResizeObserver를 제거(~340줄 삭제, 번들 ~4KB 감소)해 셀 렌더링 시간을 22ms→12ms(1.7배)로 개선했습니다.
+- AI 생성 UI 산출물의 수동 시각 검증 부담을 줄이기 위해, pixelmatch(정량) + Claude 시각 분석(정성)을 조합한 시각적 회귀 테스트(Visual Regression) 파이프라인을 구축했습니다. Figma REST API와 Playwright 스크린샷을 비교하고, Storybook 통합을 통해 이슈 심각도별(Critical/Major/Minor/Nitpick) 리포트를 자동 생성합니다.
+- 운영자가 장애 인지 후 제품 간 연계 분석까지 3뎁스 탐색이 필요했던 구조를 1뎁스로 단축해, 장애 원인 파악 속도를 개선했습니다.
