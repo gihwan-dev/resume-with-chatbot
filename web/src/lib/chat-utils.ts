@@ -3,24 +3,29 @@ import type { SuggestedQuestion } from "@/components/chat/types"
 // Suggested questions for the welcome screen
 export const SUGGESTED_QUESTIONS: SuggestedQuestion[] = [
   {
-    id: "tech-stack",
-    text: "기술 스택이 뭔가요?",
-    icon: "code",
+    id: "accessibility-wcag",
+    text: "접근성(WCAG) 작업 경험이 있나요?",
+    icon: "accessibility",
   },
   {
-    id: "team-experience",
-    text: "팀 협업 경험은?",
-    icon: "users",
+    id: "typescript-quality",
+    text: "TypeScript 안정성과 품질을 어떻게 개선했나요?",
+    icon: "shield-check",
   },
   {
-    id: "recent-project",
-    text: "최근 프로젝트는?",
-    icon: "folder",
+    id: "ai-tools",
+    text: "실무에서 AI 도구를 어떻게 활용했나요?",
+    icon: "bot",
   },
   {
-    id: "problem-solving",
-    text: "문제 해결 경험은?",
-    icon: "lightbulb",
+    id: "design-system",
+    text: "디자인 시스템과 컴포넌트 설계 경험을 알려주세요.",
+    icon: "layers",
+  },
+  {
+    id: "meta-framework",
+    text: "메타 프레임워크/SSR/서버리스 경험이 있나요?",
+    icon: "server",
   },
 ]
 

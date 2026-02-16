@@ -1,4 +1,5 @@
 import { makeAssistantToolUI } from "@assistant-ui/react"
+import { sortSourcesBySection } from "@/lib/evidence-sort"
 import { SourceCarousel } from "./source-carousel"
 import type { Source } from "./types"
 
@@ -22,7 +23,9 @@ export const AnswerToolUI = makeAssistantToolUI<AnswerToolArgs, unknown>({
   render: ({ args }) => {
     if (!args?.sources?.length) return null
 
-    const sources: Source[] = args.sources.map((s, i) => ({
+    const sortedArgsSources = sortSourcesBySection(args.sources)
+
+    const sources: Source[] = sortedArgsSources.map((s, i) => ({
       id: s.id ?? `source-${i}`,
       title: s.title,
       content: SOURCE_TYPE_LABELS[s.type] ?? s.type,

@@ -163,6 +163,12 @@
   outline-offset: 2px;
 }
 
+/* Composer input uses its parent container ring to avoid double focus visuals. */
+.aui-composer-input:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
 .skip-link {
   position: fixed;
   left: 1rem;
