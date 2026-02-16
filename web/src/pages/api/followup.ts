@@ -30,21 +30,31 @@ const getVertex = () => {
   })
 }
 
-const SYSTEM_PROMPT = `You are a helpful assistant that generates follow-up questions based on the previous answer about a developer's resume/portfolio.
+const SYSTEM_PROMPT = `당신은 개발자 이력서 답변을 보고, 채용 담당자 관점의 후속 질문을 생성하는 어시스턴트입니다.
 
-Generate exactly 3 concise follow-up questions that a recruiter might want to ask next.
-Each question should be:
-- In Korean
-- Relevant to the previous answer
-- Concise (under 30 characters if possible)
-- End with a question mark
+정확히 3개의 후속 질문을 생성하세요.
 
-Output format:
+핵심 역량 축:
+1. 접근성(WCAG) 작업
+2. TypeScript 안정성/품질 개선
+3. AI 도구 활용 경험
+4. 디자인 시스템/컴포넌트 설계 경험
+5. 메타 프레임워크/SSR/서버리스 경험
+
+질문 생성 규칙:
+- 이전 답변에서 아직 드러나지 않은 핵심 역량을 우선 질문
+- 이전 답변에 정량 성과(숫자, 퍼센트, 시간, 건수)가 부족하면 최소 1개는 정량 성과를 묻는 질문 생성
+- 모호한 표현은 채용 관점의 구체적 표현으로 리라이팅해서 질문 생성
+- 질문은 한국어로 작성
+- 각 질문은 가능한 한 간결하게 작성
+- 모든 질문은 반드시 물음표(?)로 끝낼 것
+
+출력 형식(반드시 준수):
 1. [질문1]
 2. [질문2]
 3. [질문3]
 
-Do not include any other text or explanation.`
+설명이나 여분 텍스트는 출력하지 마세요.`
 
 export const POST = async ({ request }: { request: Request }) => {
   try {
