@@ -8,7 +8,7 @@ techStack: ["React", "TanStack Table", "TanStack Virtual", "Vitest"]
 priority: 2
 ---
 
-#### 고성능 데이터 그리드 라이브러리 아키텍처 개선 (High-performance Data Grid Architecture)
+#### 고성능 데이터 그리드 라이브러리 아키텍처 개선
 
 **[TanStack Table 기반 데이터 그리드 개선기](https://velog.io/@koreanthuglife/Tanstack-Table-%EA%B8%B0%EB%B0%98-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EA%B7%B8%EB%A6%AC%EB%93%9C-%EA%B0%9C%EC%84%A0%ED%95%98%EA%B8%B0)**
 
@@ -38,4 +38,3 @@ priority: 2
 * 스크롤 시 전체 셀 리렌더링을 변경된 행만 리렌더링으로 축소해 CPU 최대 사용률을 약 **50%** 감소시켰습니다.
 * 이벤트 리스너를 약 **50%** 감소시켜(Chrome DevTools 기준) 리렌더링 시 클로저 생성·폐기에 따른 GC 부담을 절감했습니다.
 * 고정 영역 × 가상 스크롤 × 리사이즈 × 컬럼 폭 등등 다양한 기능 조합을 **600개 이상** 통합 테스트로 회귀를 조기에 차단했습니다.
-``
