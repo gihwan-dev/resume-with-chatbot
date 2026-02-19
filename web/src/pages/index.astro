@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content"
 import { PdfDownloadButton } from "@/components/pdf/pdf-download-button"
 import { Separator } from "@/components/ui/separator"
-import { getVelogPosts } from "@/lib/blog/velog"
+import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
 import { serializeResumeData } from "@/lib/pdf/serialize-resume"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
@@ -21,7 +21,7 @@ const skillsData = skills[0]?.data
 
 const work = await getCollection("work")
 const projects = await getCollection("projects")
-const blogPosts = await getVelogPosts({ limit: 5 })
+const blogPosts = await getObsidianBlogPosts({ limit: 5 })
 
 const certificates = await getCollection("certificates")
 const awards = await getCollection("awards")

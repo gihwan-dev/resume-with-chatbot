@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest"
 
-const { mockGetCollection, mockGetVelogPosts } = vi.hoisted(() => ({
+const { mockGetCollection, mockGetObsidianBlogPosts } = vi.hoisted(() => ({
   mockGetCollection: vi.fn(),
-  mockGetVelogPosts: vi.fn(),
+  mockGetObsidianBlogPosts: vi.fn(),
 }))
 
-vi.mock("@/lib/blog/velog", () => ({
-  getVelogPosts: mockGetVelogPosts,
+vi.mock("@/lib/blog/obsidian-publish", () => ({
+  getObsidianBlogPosts: mockGetObsidianBlogPosts,
 }))
 
 vi.mock("astro:content", () => ({
@@ -18,7 +18,7 @@ import { serializeResumeData } from "../../../src/lib/pdf/serialize-resume"
 describe("serializeResumeData", () => {
   it("blogPosts를 포함해 직렬화한다", async () => {
     mockGetCollection.mockReset()
-    mockGetVelogPosts.mockReset()
+    mockGetObsidianBlogPosts.mockReset()
     mockGetCollection.mockImplementation(async (collectionName) => {
       switch (collectionName) {
         case "basics":
@@ -87,16 +87,16 @@ describe("serializeResumeData", () => {
     const blogPosts = [
       {
         title: "리액트 아키텍처 글",
-        url: "https://velog.io/@koreanthuglife/sample-post",
+        url: "https://publish.obsidian.md/gihwan-dev/50-Blog/sample-post",
         publishedAt: "2026-01-11T08:17:53.000Z",
         summary: "요약",
       },
     ]
-    mockGetVelogPosts.mockResolvedValue(blogPosts)
+    mockGetObsidianBlogPosts.mockResolvedValue(blogPosts)
 
     const result = await serializeResumeData()
 
-    expect(mockGetVelogPosts).toHaveBeenCalledWith({ limit: 5 })
+    expect(mockGetObsidianBlogPosts).toHaveBeenCalledWith({ limit: 5 })
     expect(result.blogPosts).toEqual(blogPosts)
     expect(result.projects).toHaveLength(1)
     expect(result.work).toHaveLength(1)

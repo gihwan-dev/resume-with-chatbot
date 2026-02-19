@@ -1,5 +1,5 @@
 import { getCollection } from "astro:content"
-import { getVelogPosts } from "@/lib/blog/velog"
+import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
 
 /**
  * 날짜를 YYYY.MM 형식으로 변환
@@ -35,7 +35,7 @@ export async function buildResumePrompt(): Promise<string> {
     getCollection("education"),
     getCollection("certificates"),
     getCollection("awards"),
-    getVelogPosts({ limit: 5 }),
+    getObsidianBlogPosts({ limit: 5 }),
   ])
 
   const sections: string[] = []
