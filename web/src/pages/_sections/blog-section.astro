@@ -1,5 +1,5 @@
 ---
-import { VELOG_POSTS_PAGE_URL } from "@/lib/blog/velog"
+import { OBSIDIAN_BLOG_SECTION_URL } from "@/lib/blog/obsidian-publish"
 
 interface BlogPostItem {
   title: string
@@ -36,7 +36,7 @@ function formatDate(iso: string): string {
                 class="text-base font-semibold text-resume-text-heading group-hover:text-resume-primary transition-colors underline-offset-4 hover:underline focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg rounded-sm"
                 data-ga-event="blog_post_click"
                 data-ga-post={post.title}
-                data-ga-source="velog"
+                data-ga-source="obsidian"
               >
                 {post.title}
               </a>
@@ -56,12 +56,12 @@ function formatDate(iso: string): string {
 
   <div class="mt-6">
     <a
-      href={VELOG_POSTS_PAGE_URL}
+      href={OBSIDIAN_BLOG_SECTION_URL}
       target="_blank"
       rel="noopener noreferrer"
       class="inline-flex items-center text-sm font-medium text-resume-primary hover:text-resume-secondary focus-visible:text-resume-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg rounded-sm transition-colors"
       data-ga-event="blog_all_posts_click"
-      data-ga-source="velog"
+      data-ga-source="obsidian"
     >
       View all posts
     </a>

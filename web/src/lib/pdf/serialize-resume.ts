@@ -1,5 +1,5 @@
 import { getCollection } from "astro:content"
-import { getVelogPosts } from "@/lib/blog/velog"
+import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
 import type { SerializedResumeData } from "./types"
 
 export async function serializeResumeData(): Promise<SerializedResumeData> {
@@ -12,7 +12,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       getCollection("certificates"),
       getCollection("awards"),
       getCollection("skills"),
-      getVelogPosts({ limit: 5 }),
+      getObsidianBlogPosts({ limit: 5 }),
     ])
 
   const profile = basics[0]?.data
