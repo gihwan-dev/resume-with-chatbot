@@ -51,11 +51,11 @@
   - 검증: 브라우저 인쇄 미리보기/Save as PDF에서 주요 문단·이미지의 페이지 분할 문제가 재현되지 않는다.
 
 ## Phase 6. [SEQUENTIAL] 통합 검증 및 품질 게이트
-- [ ] **사용자 흐름 E2E 검증 (이력서 -> 포트폴리오 -> 인쇄 저장)**
+- [x] **사용자 흐름 E2E 검증 (이력서 -> 포트폴리오 -> 인쇄 저장)**
   - 목표: 기획서의 면접관 시나리오를 엔드투엔드 플로우로 자동/수동 검증한다.
   - 검증: 이력서 스캔, CTA 이동, 포트폴리오 탐색, 인쇄 저장까지 단절 없이 완료된다.
 
-- [ ] **비기능 요구사항 점검 (접근성/성능/인쇄 품질)**
+- [x] **비기능 요구사항 점검 (접근성/성능/인쇄 품질)**
   - 목표: 접근성, 기본 성능 지표, 인쇄 결과 품질을 점검하고 회귀 기준선을 만든다.
   - 검증: 릴리즈 전 체크리스트가 문서화되고 실패 항목은 수정 이슈로 분리된다.
 
@@ -96,3 +96,10 @@
 - 요구사항 정합화: 포트폴리오는 별도 PDF 다운로드 기능을 제공하지 않고 브라우저 인쇄 최적화 중심으로 운영하기로 기준을 업데이트.
 - E2E 보강: `e2e/portfolio-toc-and-print.spec.ts`에 인쇄 시 외부 링크 URL 노출/본문 블록 페이지 분할 방지 규칙 회귀 검증을 추가.
 - 마일스톤 반영: Phase 5 체크박스를 완료 처리했고, 다음 미완료 단계는 Phase 6(통합 검증/품질 게이트)로 이관.
+**[2026-02-21] 세션 요약 (Phase 6 완료)**:
+- 하이드레이션 안정화: `Layout.astro`의 하이브리드 하이드레이션(`Navigation client:load`, `ChatWidget client:idle`)을 유지하고, `navigation/chat` 준비 이벤트와 `waitForUiReady` 픽스처를 도입해 E2E 플래키를 제거.
+- 사용자 흐름 E2E 추가: `e2e/resume-portfolio-print-flow.spec.ts`를 추가해 이력서 CTA -> 포트폴리오 딥링크 -> 목차 동기화 -> print media -> `page.pdf()` 생성까지 자동 검증.
+- 비기능 게이트 자동화: `scripts/perf-gate.mjs`, `scripts/quality-issue-sync.mjs`, `docs/release-quality-gate.md`, `phase6:verify` 스크립트를 추가해 품질 체크/문서/이슈 연동을 자동화.
+- 성능 개선: 이력서 페이지의 클라이언트 PDF 버튼 직렬화를 제거하고 `GET /api/resume-pdf` 서버 엔드포인트로 전환, dev 훅 충돌을 피하기 위해 PDF 렌더러를 API 요청 시점 동적 import로 조정.
+- 최종 검증: `pnpm -C web run phase6:verify` 통과, Lighthouse 성능은 `/` desktop/mobile `100/99`, `/portfolio/exem-data-grid#overview` desktop/mobile `100/99`로 90 하드게이트를 충족.
+- 마일스톤 반영: Phase 6 체크박스를 완료 처리했고, 다음 미완료 단계는 Phase 7(콘텐츠 이관 및 운영 준비)이다.

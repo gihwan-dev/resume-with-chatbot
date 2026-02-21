@@ -29,6 +29,9 @@ export default defineConfig({
 
   vite: {
     plugins: [tailwindPlugin],
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
     define: {
       __SENTRY_DEBUG__: false,
       __SENTRY_TRACING__: false,

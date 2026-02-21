@@ -1,9 +1,7 @@
 ---
 import { getCollection, render } from "astro:content"
-import { PdfDownloadButton } from "@/components/pdf/pdf-download-button"
 import { Separator } from "@/components/ui/separator"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
-import { serializeResumeData } from "@/lib/pdf/serialize-resume"
 import { RESUME_SUMMARY_BLOCKS_V1 } from "@/lib/resume-portfolio/mapping"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
@@ -16,7 +14,6 @@ import SkillsSection from "./_sections/skills-section.astro"
 
 const basics = await getCollection("basics")
 const profile = basics[0]?.data
-const resumeData = await serializeResumeData()
 const skills = await getCollection("skills")
 const skillsData = skills[0]?.data
 
@@ -54,7 +51,15 @@ const awardsWithContent = await Promise.all(
     <HeroSection profile={profile} />
 
     <div class="mt-4">
-      <PdfDownloadButton data={resumeData} client:only="react" />
+      <a
+        href="/api/resume-pdf"
+        download
+        class="inline-flex items-center gap-2 rounded-md border border-resume-border bg-resume-card-bg px-3 py-2 text-sm font-medium text-resume-text-main hover:bg-resume-highlight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg"
+        data-ga-event="pdf_download"
+        data-ga-file-name={`${profile?.name ?? "resume"}_이력서`}
+      >
+        PDF 다운로드
+      </a>
     </div>
 
     <Separator className="my-12" />

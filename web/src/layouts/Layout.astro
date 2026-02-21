@@ -83,9 +83,9 @@ const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
     <a href="#main-content" class="skip-link">
       본문으로 건너뛰기
     </a>
-    <Navigation client:idle />
+    <Navigation client:load />
     <slot />
-    <ChatWidget client:idle />
+    <ChatWidget client:idle={{ timeout: 1000 }} />
   </body>
 </html>
 
