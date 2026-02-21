@@ -1,26 +1,96 @@
 ---
 import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
-import { buildPortfolioHash } from "@/lib/resume-portfolio/hash"
+import { PORTFOLIO_SECTION_IDS } from "@/lib/resume-portfolio/contracts"
 
 interface Props {
-  cases: PortfolioCaseContract[]
+  portfolioCase: PortfolioCaseContract
 }
 
-const { cases } = Astro.props
+const { portfolioCase } = Astro.props
+
+const SECTION_LABELS: Record<string, string> = {
+  overview: "개요",
+  problem: "문제",
+  decision: "해결 방안",
+  result: "결과",
+  retrospective: "회고",
+}
+
+// Ensure we only show sections defined in the contract for this case
+const activeSections = PORTFOLIO_SECTION_IDS.filter(id => portfolioCase.sections.includes(id))
 ---
 
-<nav class="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-6 print:hidden">
-  <h2 class="text-sm font-bold text-resume-text-heading uppercase tracking-wider mb-6">Contents</h2>
-  <ul class="space-y-6">
-    {cases.map((c) => (
+<nav class="sticky top-24 pt-4 pb-8 max-h-[calc(100vh-6rem)] overflow-y-auto w-[250px] xl:w-[300px] border-r border-resume-border print:hidden pr-6">
+  <div class="mb-8">
+    <a href="/portfolio" class="inline-flex items-center text-sm font-medium text-resume-text-muted hover:text-resume-primary transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+      포트폴리오 목록
+    </a>
+  </div>
+
+  <h2 class="text-xs font-bold text-resume-text-muted uppercase tracking-wider mb-6">목차</h2>
+
+  <ul class="space-y-4 toc-list">
+    {activeSections.map((sectionId) => (
       <li>
         <a 
-          href={buildPortfolioHash(c.caseId, "overview")} 
-          class="block text-sm font-semibold text-resume-text-heading hover:text-resume-primary transition-colors mb-2"
+          href={`#${portfolioCase.caseId}.${sectionId}`} 
+          data-section-id={`${portfolioCase.caseId}.${sectionId}`}
+          class="toc-link block text-sm font-medium text-resume-text-muted hover:text-resume-text-heading transition-colors py-1 border-l-2 border-transparent pl-4"
         >
-          {c.title}
+          {SECTION_LABELS[sectionId] || sectionId}
         </a>
       </li>
     ))}
   </ul>
 </nav>
+
+<script>
+  function setupScrollSpy() {
+    const observerOptions = {
+      root: null,
+      rootMargin: "0px 0px -40% 0px", // Trigger when the element reaches the top 40% of viewport
+      threshold: 0.1
+    };
+
+    const tocLinks = document.querySelectorAll('.toc-link');
+    
+    // Create an intersection observer
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.getAttribute('id');
+          
+          // Remove active class from all links
+          tocLinks.forEach(link => {
+            link.classList.remove('text-resume-primary', 'border-resume-primary', 'font-bold');
+            link.classList.add('text-resume-text-muted', 'font-medium', 'border-transparent');
+          });
+          
+          // Add active class to corresponding link
+          const activeLink = document.querySelector(`.toc-link[data-section-id="${id}"]`);
+          if (activeLink) {
+            activeLink.classList.remove('text-resume-text-muted', 'font-medium', 'border-transparent');
+            activeLink.classList.add('text-resume-primary', 'border-resume-primary', 'font-bold');
+          }
+        }
+      });
+    }, observerOptions);
+
+    // Observe all sections that have matching TOC links
+    tocLinks.forEach(link => {
+      const targetId = link.getAttribute('data-section-id');
+      if (targetId) {
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+          observer.observe(targetElement);
+        }
+      }
+    });
+  }
+
+  // Setup on page load and on view transitions
+  document.addEventListener('astro:page-load', setupScrollSpy);
+</script>

@@ -8,9 +8,24 @@ techStack: ["React", "TanStack Table", "TanStack Virtual", "Vitest"]
 priority: 2
 ---
 
+import CompareToggle from "@/components/portfolio/compare-toggle.astro"
+
 #### 고성능 데이터 그리드 라이브러리 아키텍처 개선
 
 **[TanStack Table 기반 데이터 그리드 개선기](https://velog.io/@koreanthuglife/Tanstack-Table-%EA%B8%B0%EB%B0%98-%EB%8D%B0%EC%9D%B4%ED%84%B0-%EA%B7%B8%EB%A6%AC%EB%93%9C-%EA%B0%9C%EC%84%A0%ED%95%98%EA%B8%B0)**
+
+<CompareToggle beforeLabel="기존 <table> 기반 아키텍처" afterLabel="가상화 및 div 기반 아키텍처">
+  <div slot="before">
+    - DOM에 모든 행이 렌더링되어 노드 수가 23,000개 이상으로 급증
+    - 리사이즈 및 레이아웃 재계산에 과도한 비용 발생 (평균 22ms)
+    - 스크롤/정렬 시 화면 전체가 리렌더링되는 병목 현상
+  </div>
+  <div slot="after">
+    - **DOM 노드 90% 감소**: 화면에 보이는 요소(View Port)만 렌더링
+    - **리사이즈 속도 44배 향상**: (22ms → 0.5ms) 레이아웃 엔진 최적화
+    - **CPU 사용률 절반 감소**: 변경된 행만 리렌더링하도록 Memoization 적용
+  </div>
+</CompareToggle>
 
 **Problem**
 

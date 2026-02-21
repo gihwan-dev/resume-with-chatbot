@@ -1,0 +1,89 @@
+---
+import { getCollection, render } from "astro:content"
+import Layout from "@/layouts/Layout.astro"
+import CaseStudySection from "@/components/portfolio/case-study-section.astro"
+import TableOfContents from "@/components/portfolio/table-of-contents.astro"
+import { PORTFOLIO_CASES_V1, RESUME_PORTFOLIO_MAPPING_V1 } from "@/lib/resume-portfolio/mapping"
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects")
+
+  // Generate paths for each case in PORTFOLIO_CASES_V1
+  return PORTFOLIO_CASES_V1.map((portfolioCase) => {
+    const project = projects.find((p) => p.id === portfolioCase.caseId)
+    
+    return {
+      params: { slug: portfolioCase.caseId },
+      props: { portfolioCase, project },
+    }
+  }).filter(path => path.props.project !== undefined)
+}
+
+const { portfolioCase, project } = Astro.props
+
+if (!project) {
+  throw new Error(`Project not found for caseId: ${portfolioCase.caseId}`)
+}
+
+const mapping = RESUME_PORTFOLIO_MAPPING_V1.find(m => m.portfolioCaseId === portfolioCase.caseId)
+const resumeHref = mapping ? `/#${mapping.resumeItemId}` : "/"
+
+const { Content } = await render(project)
+---
+
+<Layout title={`${portfolioCase.title} | 최기환 포트폴리오`}>
+  <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8 print:py-0 print:px-0 print:max-w-full">
+    <div class="mb-8 print:hidden">
+      <!-- 이력서 메인으로 돌아가게 -->
+      <a id="back-to-resume-link" href={resumeHref} class="inline-flex items-center text-sm font-medium text-resume-text-muted hover:text-resume-primary transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+        이력서로 돌아가기
+      </a>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('astro:page-load', () => {
+        const link = document.getElementById('back-to-resume-link');
+        const searchParams = new URLSearchParams(window.location.search);
+        const bscroll = searchParams.get('__bscroll');
+        if (link && bscroll) {
+          const href = new URL(link.href);
+          href.searchParams.set('__bscroll', bscroll);
+          link.href = href.toString();
+        }
+      });
+    </script>
+
+
+    <div class="grid grid-cols-1 lg:grid-cols-[250px_1fr] xl:grid-cols-[300px_1fr] gap-12 lg:gap-24 relative">
+      <aside class="hidden lg:block">
+        <TableOfContents portfolioCase={portfolioCase} />
+      </aside>
+
+      <main class="w-full max-w-[800px] print:max-w-full print:w-full">
+        <div class="print:mb-12 hidden print:block">
+          <h1 class="text-4xl font-bold mb-2">포트폴리오 상세 케이스 스터디</h1>
+          <p class="text-resume-text-muted">최기환 (Gihwan-dev)</p>
+          <hr class="mt-8 mb-12 border-resume-border" />
+        </div>
+
+        <CaseStudySection 
+          portfolioCase={portfolioCase} 
+          project={project} 
+        >
+          <Content />
+        </CaseStudySection>
+      </main>
+    </div>
+  </div>
+</Layout>
+
+<style is:global>
+  /* 뷰 트랜지션 애니메이션 효과 지정 (필요 시 커스텀 가능) */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+  }
+</style>

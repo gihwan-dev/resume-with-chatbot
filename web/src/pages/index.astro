@@ -130,6 +130,54 @@ const awardsWithContent = await Promise.all(
     }
   }
 
+  function setupScrollMemory() {
+    // 1. Capture scroll on outbound portfolio clicks
+    document.addEventListener("click", (e) => {
+      const link = (e.target as HTMLElement).closest("a")
+      if (!link) return
+      
+      const href = link.getAttribute("href")
+      if (href && href.startsWith("/portfolio")) {
+        // Prevent default, append query param, then navigate
+        e.preventDefault()
+        const currentScroll = Math.round(window.scrollY)
+        
+        let newHref = href
+        const urlObj = new URL(href, window.location.origin)
+        urlObj.searchParams.set("__bscroll", currentScroll.toString())
+        
+        // ClientRouter/ViewTransitions works best if we just use normal Astro router navigation 
+        // by pushing state or just navigating. Window.location works fine with Astro ViewTransitions intercept
+        window.location.assign(urlObj.toString())
+      }
+    })
+
+    // 2. Restore scroll if returning from portfolio
+    const params = new URLSearchParams(window.location.search)
+    const storedScroll = params.get("__bscroll")
+    
+    if (storedScroll) {
+      const scrollY = parseInt(storedScroll, 10)
+      if (!isNaN(scrollY)) {
+        // Use timeout to ensure DOM is settled (especially over view transitions)
+        setTimeout(() => {
+          window.scrollTo({ top: scrollY, behavior: "instant" })
+          
+          // Clean up the URL without triggering a reload or transition
+          const newUrl = new URL(window.location.href)
+          newUrl.searchParams.delete("__bscroll")
+          window.history.replaceState({}, "", newUrl.toString())
+        }, 50)
+      }
+    }
+  }
+
   setupAnalytics()
-  document.addEventListener("astro:after-swap", setupAnalytics)
+  setupScrollMemory()
+  
+  // Setup again on view transitions
+  document.addEventListener("astro:after-swap", () => {
+    setupAnalytics()
+    setupScrollMemory()
+  })
 </script>

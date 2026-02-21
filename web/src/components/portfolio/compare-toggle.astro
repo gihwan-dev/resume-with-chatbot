@@ -1,0 +1,95 @@
+---
+interface Props {
+  beforeLabel?: string;
+  afterLabel?: string;
+}
+
+const { beforeLabel = "Before (개선 전)", afterLabel = "After (개선 후)" } = Astro.props;
+---
+
+<compare-toggle class="block my-8 rounded-xl border border-resume-border bg-resume-card-bg overflow-hidden shadow-sm print:border-none print:shadow-none print:my-4">
+  <div class="flex border-b border-resume-border p-2 bg-resume-bg/50 print:hidden">
+    <button
+      data-toggle="before"
+      class="flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all text-resume-text-muted hover:text-resume-text-main"
+    >
+      {beforeLabel}
+    </button>
+    <button
+      data-toggle="after"
+      class="flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all bg-resume-bg text-resume-primary shadow-sm border border-resume-primary/30"
+    >
+      {afterLabel}
+    </button>
+  </div>
+  
+  <div class="relative p-6 pt-8 print:p-0 print:pt-4">
+    <div data-content="before" class="hidden print:hidden animate-in fade-in zoom-in-95 duration-200">
+      <slot name="before" />
+    </div>
+    <div data-content="after" class="print:hidden animate-in fade-in zoom-in-95 duration-200">
+      <slot name="after" />
+    </div>
+    
+    <div class="hidden print:block space-y-12">
+      <div class="break-inside-avoid">
+        <h4 class="font-bold text-lg mb-4 pb-2 border-b border-resume-border text-resume-text-heading">{beforeLabel}</h4>
+        <div class="opacity-80 grayscale">
+          <slot name="before" />
+        </div>
+      </div>
+      <div class="break-inside-avoid">
+        <h4 class="font-bold text-lg mb-4 pb-2 border-b border-resume-border text-resume-primary">{afterLabel}</h4>
+        <div>
+          <slot name="after" />
+        </div>
+      </div>
+    </div>
+  </div>
+</compare-toggle>
+
+<script>
+  class CompareToggle extends HTMLElement {
+    connectedCallback() {
+      // Prevents multiple attachments if re-rendered
+      if (this.dataset.initialized) return;
+      this.dataset.initialized = "true";
+
+      const btnBefore = this.querySelector('[data-toggle="before"]');
+      const btnAfter = this.querySelector('[data-toggle="after"]');
+      const contentBefore = this.querySelector('[data-content="before"]');
+      const contentAfter = this.querySelector('[data-content="after"]');
+
+      if (!btnBefore || !btnAfter || !contentBefore || !contentAfter) return;
+
+      const activeBtnClass = "bg-resume-bg text-resume-primary shadow-sm border border-resume-primary/30";
+      const inactiveBtnClass = "text-resume-text-muted hover:text-resume-text-main";
+      const activeBtnClassOld = "bg-resume-card-bg text-resume-text-heading shadow-sm border border-resume-border";
+
+      btnBefore.addEventListener('click', () => {
+        contentBefore.classList.remove('hidden');
+        contentAfter.classList.add('hidden');
+        
+        btnBefore.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${activeBtnClassOld}`;
+        btnAfter.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${inactiveBtnClass}`;
+      });
+
+      btnAfter.addEventListener('click', () => {
+        contentBefore.classList.add('hidden');
+        contentAfter.classList.remove('hidden');
+        
+        btnBefore.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${inactiveBtnClass}`;
+        btnAfter.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${activeBtnClass}`;
+      });
+      
+      // Initialize state to After
+      btnBefore.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${inactiveBtnClass}`;
+      btnAfter.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${activeBtnClass}`;
+    }
+  }
+
+  // Define the custom element if it hasn't been defined yet
+  if (!customElements.get('compare-toggle')) {
+    customElements.define('compare-toggle', CompareToggle);
+  }
+</script>

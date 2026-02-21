@@ -1,9 +1,8 @@
 ---
-import { getCollection, render } from "astro:content"
-import CaseStudySection from "@/components/portfolio/case-study-section.astro"
-import TableOfContents from "@/components/portfolio/table-of-contents.astro"
+import { getCollection } from "astro:content"
 import Layout from "@/layouts/Layout.astro"
 import { PORTFOLIO_CASES_V1 } from "@/lib/resume-portfolio/mapping"
+import { Badge } from "@/components/ui/badge"
 
 const projects = await getCollection("projects")
 
@@ -14,8 +13,7 @@ const portfolioProjects = await Promise.all(
     const project = projects.find((p) => p.id === portfolioCase.caseId)
     if (!project) return null
 
-    const { Content } = await render(project)
-    return { portfolioCase, project, Content }
+    return { portfolioCase, project }
   })
 ).then((results) => results.filter((r) => r !== null))
 ---
@@ -32,29 +30,53 @@ const portfolioProjects = await Promise.all(
       </a>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-[250px_1fr] xl:grid-cols-[300px_1fr] gap-12 lg:gap-24 relative">
-      <aside class="hidden lg:block">
-        <TableOfContents cases={PORTFOLIO_CASES_V1} />
-      </aside>
-
-      <main class="w-full max-w-[800px] print:max-w-full print:w-full">
-        <div class="print:mb-12 hidden print:block">
-          <h1 class="text-4xl font-bold mb-2">포트폴리오 상세 케이스 스터디</h1>
-          <p class="text-resume-text-muted">최기환 (Gihwan-dev)</p>
-          <hr class="mt-8 mb-12 border-resume-border" />
-        </div>
-
-        {
-          portfolioProjects.map((data) => (
-            data && <CaseStudySection 
-              portfolioCase={data.portfolioCase} 
-              project={data.project} 
-            >
-              <data.Content />
-            </CaseStudySection>
-          ))
-        }
-      </main>
+    <div class="mb-12">
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-resume-text-heading mb-4 tracking-tight">포트폴리오</h1>
+      <p class="text-lg text-resume-text-main/80">상세 케이스 스터디를 통해 문제 해결력과 아키텍처 설계 역량을 확인하세요.</p>
     </div>
+
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+      {
+        portfolioProjects.map((data) => (
+          data && (
+            <a 
+              href={`/portfolio/${data.portfolioCase.caseId}`}
+              class="group block bg-resume-card-bg border border-resume-border rounded-xl p-8 hover:border-resume-primary transition-all duration-300 hover:shadow-md"
+            >
+              <h2 class="text-2xl font-bold text-resume-text-heading mb-3 group-hover:text-resume-primary transition-colors">
+                {data.portfolioCase.title}
+              </h2>
+              
+              <p class="text-resume-text-main/80 mb-6 line-clamp-3 leading-relaxed">
+                {data.project.data.description}
+              </p>
+
+              {data.project.data.techStack && data.project.data.techStack.length > 0 && (
+                <div class="flex flex-wrap gap-2 mb-6">
+                  {data.project.data.techStack.slice(0, 4).map((tech) => (
+                    <Badge variant="outline" className="text-xs font-normal bg-resume-bg text-resume-text-main border-resume-border">
+                      {tech}
+                    </Badge>
+                  ))}
+                  {data.project.data.techStack.length > 4 && (
+                    <Badge variant="outline" className="text-xs font-normal bg-transparent text-resume-text-muted border-transparent pl-1">
+                      +{data.project.data.techStack.length - 4}
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              <div class="flex items-center text-resume-primary font-medium text-sm group-hover:translate-x-1 transition-transform">
+                케이스 스터디 읽기
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-1">
+                  <path d="M5 12h14"/>
+                  <path d="m12 5 7 7-7 7"/>
+                </svg>
+              </div>
+            </a>
+          )
+        ))
+      }
+    </main>
   </div>
 </Layout>
