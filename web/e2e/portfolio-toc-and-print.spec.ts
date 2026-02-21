@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test"
 import { mockApiRoutes } from "./fixtures/mock-api"
 
+const hasAvoidRule = (value: string | null | undefined): boolean => {
+  if (!value) return false
+  return value.includes("avoid")
+}
+
 test.describe("Portfolio TOC behavior", () => {
   test.beforeEach(async ({ page }) => {
     await mockApiRoutes(page)
@@ -50,5 +55,75 @@ test.describe("Portfolio TOC behavior", () => {
     await page.emulateMedia({ media: "print" })
 
     await expect(tocNav).not.toBeVisible()
+  })
+
+  test("인쇄 미디어에서는 외부 링크 URL이 본문에 노출된다", async ({ page }) => {
+    await page.goto("/portfolio/exem-data-grid#overview")
+    await page.emulateMedia({ media: "print" })
+
+    const externalLink = page.locator('.portfolio-prose a[href^="http"]').first()
+    await expect(externalLink).toBeVisible()
+
+    const href = await externalLink.getAttribute("href")
+    expect(href).toBeTruthy()
+
+    const afterContent = await externalLink.evaluate(
+      (element) => window.getComputedStyle(element, "::after").content
+    )
+
+    expect(afterContent).toContain(href ?? "")
+  })
+
+  test("인쇄 미디어에서는 주요 본문 블록이 페이지 분할 방지 규칙을 따른다", async ({ page }) => {
+    await page.goto("/portfolio/exem-data-grid#overview")
+    await page.emulateMedia({ media: "print" })
+
+    const styleMap = await page.evaluate<Record<
+      string,
+      { breakInside: string; pageBreakInside: string }
+    > | null>(() => {
+      const prose = document.querySelector(".portfolio-prose")
+      if (!(prose instanceof HTMLElement)) return null
+
+      const fixture = document.createElement("div")
+      fixture.setAttribute("data-test-print-fixture", "true")
+      fixture.innerHTML = `
+        <p>print paragraph</p>
+        <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="pixel" />
+        <figure><img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="pixel2" /></figure>
+        <pre>print code block</pre>
+        <blockquote>print quote</blockquote>
+        <table><tbody><tr><td>print cell</td></tr></tbody></table>
+      `
+      prose.appendChild(fixture)
+
+      const selectors = ["p", "img", "figure", "pre", "blockquote", "table"]
+      const results: Record<string, { breakInside: string; pageBreakInside: string }> = {}
+
+      for (const selector of selectors) {
+        const element = fixture.querySelector(selector)
+        if (!element) continue
+
+        const style = window.getComputedStyle(element)
+        results[selector] = {
+          breakInside: style.breakInside,
+          pageBreakInside: style.getPropertyValue("page-break-inside"),
+        }
+      }
+
+      fixture.remove()
+      return results
+    })
+
+    expect(styleMap).not.toBeNull()
+
+    for (const selector of ["p", "img", "figure", "pre", "blockquote", "table"] as const) {
+      const styleEntry = styleMap?.[selector]
+      expect(styleEntry, `${selector} selector style is required`).toBeTruthy()
+      expect(
+        hasAvoidRule(styleEntry?.breakInside) || hasAvoidRule(styleEntry?.pageBreakInside),
+        `${selector} should avoid page break in print`
+      ).toBe(true)
+    }
   })
 })
