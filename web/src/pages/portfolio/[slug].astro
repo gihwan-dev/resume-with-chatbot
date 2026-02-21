@@ -60,7 +60,11 @@ const { Content } = await render(project)
       </a>
     </div>
 
-    <script is:inline define:vars={{ allowedSectionIds: portfolioCase.sections, defaultSectionId, caseId: portfolioCase.caseId }}>
+    <script
+      is:inline
+      data-astro-rerun
+      define:vars={{ allowedSectionIds: portfolioCase.sections, defaultSectionId, caseId: portfolioCase.caseId }}
+    >
       const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
       const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
       const sectionIdSet = new Set(allowedSectionIds)

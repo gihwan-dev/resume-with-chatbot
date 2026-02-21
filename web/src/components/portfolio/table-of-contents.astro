@@ -47,12 +47,10 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
   </ul>
 </nav>
 
-<script>
+<script is:inline data-astro-rerun>
   const ACTIVE_CLASSES = ["text-resume-primary", "border-resume-primary", "font-bold"]
   const INACTIVE_CLASSES = ["text-resume-text-muted", "font-medium", "border-transparent"]
-  const tocWindow = window as Window & {
-    __resumeTocPageLoadHandler?: () => void
-  }
+  const tocWindow = window
 
   function readHashSectionId() {
     if (!window.location.hash) return null
@@ -70,10 +68,10 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
   function setupScrollSpy() {
     cleanupScrollSpy()
 
-    const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>(".toc-link"))
+    const tocLinks = Array.from(document.querySelectorAll(".toc-link"))
     if (tocLinks.length === 0) return
 
-    const linkBySectionId = new Map<string, HTMLAnchorElement>()
+    const linkBySectionId = new Map()
     for (const link of tocLinks) {
       const sectionId = link.getAttribute("data-section-id")
       if (!sectionId) continue
@@ -83,11 +81,11 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
     const sectionIds = Array.from(linkBySectionId.keys())
     const sections = sectionIds
       .map((sectionId) => document.getElementById(sectionId))
-      .filter((section): section is HTMLElement => section !== null)
+      .filter((section) => section !== null)
 
     if (sections.length === 0) return
 
-    const setActiveSection = (sectionId: string) => {
+    const setActiveSection = (sectionId) => {
       for (const link of tocLinks) {
         link.classList.remove(...ACTIVE_CLASSES)
         link.classList.add(...INACTIVE_CLASSES)
@@ -102,7 +100,7 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
       activeLink.setAttribute("aria-current", "location")
     }
 
-    const scrollToSection = (sectionId: string, behavior: ScrollBehavior = "smooth") => {
+    const scrollToSection = (sectionId, behavior = "smooth") => {
       const target = document.getElementById(sectionId)
       if (!target) return
 
@@ -112,7 +110,7 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
       })
     }
 
-    const onLinkClick = (event: Event) => {
+    const onLinkClick = (event) => {
       const link = event.currentTarget
       if (!(link instanceof HTMLAnchorElement)) return
 
@@ -132,7 +130,7 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
       link.addEventListener("click", onLinkClick)
     }
 
-    let pendingRafId: number | null = null
+    let pendingRafId = null
 
     const observer = new IntersectionObserver(
       (entries) => {
