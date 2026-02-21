@@ -55,14 +55,21 @@ const awardsWithContent = await Promise.all(
         id="resume-pdf-download-link"
         href="/api/resume-pdf"
         download
-        class="inline-flex items-center gap-2 rounded-md border border-resume-border bg-resume-card-bg px-3 py-2 text-sm font-medium text-resume-text-main hover:bg-resume-highlight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg"
+        class="inline-flex items-center justify-center rounded-md border border-resume-border bg-resume-card-bg px-3 py-2 text-sm font-medium text-resume-text-main hover:bg-resume-highlight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg"
         data-ga-event="pdf_download"
         data-ga-file-name={`${profile?.name ?? "resume"}_이력서`}
         data-default-label="PDF 다운로드"
         data-loading-label="마크다운 변환 중..."
         aria-busy="false"
       >
-        <span data-download-label>PDF 다운로드</span>
+        <span class="relative inline-flex items-center justify-center">
+          <span data-download-label-sizer class="invisible pointer-events-none" aria-hidden="true">
+            PDF 다운로드
+          </span>
+          <span data-download-label class="absolute inset-0 inline-flex items-center justify-center">
+            PDF 다운로드
+          </span>
+        </span>
       </a>
     </div>
 
@@ -250,10 +257,15 @@ const awardsWithContent = await Promise.all(
     if (!(link instanceof HTMLAnchorElement)) return
 
     const label = link.querySelector<HTMLElement>("[data-download-label]")
+    const labelSizer = link.querySelector<HTMLElement>("[data-download-label-sizer]")
     const defaultLabel = link.dataset.defaultLabel ?? "PDF 다운로드"
     const loadingLabel = link.dataset.loadingLabel ?? "다운로드 준비 중..."
     const fileNameBase = link.dataset.gaFileName ?? "resume"
     const fallbackFileName = fileNameBase.endsWith(".pdf") ? fileNameBase : `${fileNameBase}.pdf`
+    if (labelSizer) {
+      labelSizer.textContent =
+        loadingLabel.length >= defaultLabel.length ? loadingLabel : defaultLabel
+    }
 
     const setLoadingState = (loading: boolean) => {
       link.dataset.loading = loading ? "true" : "false"
