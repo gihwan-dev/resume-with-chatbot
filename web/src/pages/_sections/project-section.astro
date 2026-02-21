@@ -1,5 +1,11 @@
 ---
+import { Markdown } from "@astropub/md"
 import { Badge } from "@/components/ui/badge"
+import type { ResumeSummaryBlock } from "@/lib/resume-portfolio/contracts"
+
+interface Props {
+  projects: ResumeSummaryBlock[]
+}
 
 const { projects } = Astro.props
 ---
@@ -13,265 +19,74 @@ const { projects } = Astro.props
   </h2>
   <div class="space-y-8">
     {
-      projects.map((project: any) => (
-        <div class="group bg-resume-card-bg rounded-sm border border-resume-border p-6 flex flex-col transition-all duration-300 hover:border-resume-primary/50 hover:bg-resume-highlight/30">
+      projects.map((project) => (
+        <div
+          id={project.resumeItemId}
+          class="group bg-resume-card-bg rounded-sm border border-resume-border p-6 flex flex-col transition-all duration-300 hover:border-resume-primary/50 hover:bg-resume-highlight/30"
+        >
           <div class="mb-6">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2">
-              <div>
-                <h3 class="text-xl font-bold text-resume-text-heading font-heading leading-tight group-hover:text-resume-primary transition-colors">
-                  {project.data.title}
-                </h3>
-                {project.data.company && (
-                  <p class="text-base text-resume-text-muted mt-1 font-medium">
-                    {project.data.company}
-                  </p>
-                )}
+            <h3 class="text-xl font-bold text-resume-text-heading font-heading leading-tight group-hover:text-resume-primary transition-colors mb-4">
+              {project.title}
+            </h3>
+
+            {project.technologies && project.technologies.length > 0 ? (
+              <div class="flex flex-wrap gap-1.5 mb-4">
+                {project.technologies.map((tech) => (
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-normal text-resume-text-main bg-resume-bg border-resume-border px-2 py-0.5"
+                  >
+                    {tech}
+                  </Badge>
+                ))}
               </div>
-              <span class="text-sm text-resume-text-muted font-mono whitespace-nowrap border border-resume-border px-2 py-0.5 rounded-sm">
-                {project.data.dateStart.toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                })}
-                {" - "}
-                {project.data.dateEnd
-                  ? project.data.dateEnd.toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                    })
-                  : "Present"}
-              </span>
-            </div>
+            ) : null}
 
-            <div class="flex flex-wrap gap-1.5 mb-4">
-              {project.data.techStack.map((tech: string) => (
-                <Badge
-                  variant="outline"
-                  className="text-xs font-normal text-resume-text-main bg-resume-bg border-resume-border px-2 py-0.5"
-                >
-                  {tech}
-                </Badge>
-              ))}
-            </div>
-
-            <p class="text-resume-text-main/80 mb-4 text-[0.95rem] leading-relaxed">
-              {project.data.description}
+            <p class="text-resume-text-main/80 mb-6 text-[0.95rem] leading-relaxed">
+              {project.summary}
             </p>
 
-            <div class="project-content prose prose-neutral dark:prose-invert max-w-none text-resume-text-main/90">
-              <project.Content />
-            </div>
+            {project.accomplishments && project.accomplishments.length > 0 ? (
+              <ul class="resume-bullet-list space-y-2">
+                {project.accomplishments.map((item) => (
+                  <li class="pl-4 relative text-[0.95rem] text-resume-text-main/90 leading-relaxed">
+                    <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-resume-primary/70" />
+                    <Markdown of={item} />
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
 
-          {(project.data.link || project.data.github) && (
-            <div class="flex gap-4 text-sm pt-6 border-t border-resume-border mt-auto">
-              {project.data.link && (
-                <a
-                  href={project.data.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-resume-primary hover:text-resume-secondary focus-visible:text-resume-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg rounded-sm font-medium flex items-center gap-1 transition-colors group-hover:underline decoration-2 underline-offset-4"
-                  data-ga-event="project_link_click"
-                  data-ga-project={project.data.title}
-                  data-ga-method="visit"
+          {project.ctaHref && project.ctaLabel ? (
+            <div class="flex justify-start pt-4 mt-auto">
+              <a
+                href={project.ctaHref}
+                class="inline-flex items-center text-sm font-semibold text-resume-primary hover:text-resume-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm group/btn"
+                data-ga-event="project_portfolio_click"
+                data-ga-project={project.title}
+              >
+                {project.ctaLabel}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="ml-1.5 h-4 w-4 transition-transform group-hover/btn:translate-x-1"
                 >
-                  Visit Project
-                </a>
-              )}
-              {project.data.github && (
-                <a
-                  href={project.data.github}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-resume-text-muted hover:text-resume-text-main focus-visible:text-resume-text-main focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg rounded-sm font-medium flex items-center gap-1 transition-colors"
-                  data-ga-event="project_link_click"
-                  data-ga-project={project.data.title}
-                  data-ga-method="github"
-                >
-                  View Code
-                </a>
-              )}
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </a>
             </div>
-          )}
+          ) : null}
         </div>
       ))
     }
   </div>
 </section>
-
-<style is:global>
-  .project-content h3,
-  .award-content h3 {
-    font-size: 0.875rem /* 14px */;
-    line-height: 1.25rem /* 20px */;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--primary);
-    background-color: var(--resume-highlight);
-    margin-top: 1.5rem /* 24px */;
-    margin-bottom: 0.75rem /* 12px */;
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-  }
-
-  .project-content ul,
-  .award-content ul,
-  .award-content ol {
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-    list-style-type: disc;
-    padding-left: 1.5rem;
-  }
-
-  .award-content ol {
-    list-style-type: decimal;
-  }
-
-  .project-content li,
-  .award-content li {
-    margin-top: 0.25rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .project-content p,
-  .award-content p {
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .project-content a {
-    color: var(--resume-primary);
-    font-weight: 600;
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
-    transition: all 0.2s;
-  }
-
-  .project-content a::before {
-    content: "";
-    display: inline-block;
-    width: 0.875em;
-    height: 0.875em;
-    background-color: currentColor;
-    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E");
-    mask-repeat: no-repeat;
-    mask-position: center;
-    mask-size: contain;
-    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'/%3E%3Cpath d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'/%3E%3C/svg%3E");
-    -webkit-mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    -webkit-mask-size: contain;
-    margin-right: 0.25rem;
-    vertical-align: middle;
-    position: relative;
-    top: -1px;
-  }
-
-  .project-content a:hover {
-    color: var(--resume-secondary);
-    text-decoration-thickness: 2px;
-  }
-
-  /* P→A→R 섹션형 레이아웃 스타일 */
-  .project-content h4 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--resume-text-heading);
-    margin-top: 2rem;
-    margin-bottom: 0.75rem;
-    padding-left: 0.75rem;
-    border-left: 3px solid var(--primary);
-  }
-
-  .project-content hr {
-    border: none;
-    border-top: 1px dashed var(--resume-border);
-    margin: 1.5rem 0;
-  }
-
-  /* P/A/R 라벨 기본 스타일 */
-  .project-content strong {
-    font-weight: 600;
-  }
-
-  .project-content .par-label {
-    display: inline-block;
-    font-size: 0.75rem;
-    font-weight: 600;
-    padding: 0.125rem 0.5rem;
-    border-radius: 0.25rem;
-    margin-right: 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
-    margin-top: 0.75rem;
-  }
-
-  /* Problem 라벨 - 핑크/로즈 계열 */
-  .project-content .par-label-problem {
-    background-color: rgb(253 242 248);
-    color: rgb(190 18 60);
-    border: 1px solid rgb(251 207 232);
-  }
-
-  :root.dark .project-content .par-label-problem {
-    background-color: rgb(80 20 40);
-    color: rgb(251 207 232);
-    border: 1px solid rgb(120 40 60);
-  }
-
-  /* Action 라벨 - 인디고/블루 계열 */
-  .project-content .par-label-action {
-    background-color: rgb(238 242 255);
-    color: rgb(67 56 202);
-    border: 1px solid rgb(199 210 254);
-  }
-
-  :root.dark .project-content .par-label-action {
-    background-color: rgb(30 30 70);
-    color: rgb(199 210 254);
-    border: 1px solid rgb(60 60 120);
-  }
-
-  /* Result 라벨 - 에메랄드/그린 계열 */
-  .project-content .par-label-result {
-    background-color: rgb(236 253 245);
-    color: rgb(4 120 87);
-    border: 1px solid rgb(167 243 208);
-  }
-
-  :root.dark .project-content .par-label-result {
-    background-color: rgb(20 60 50);
-    color: rgb(167 243 208);
-    border: 1px solid rgb(40 100 80);
-  }
-</style>
-
-<script>
-  function applyParLabelStyles() {
-    const projectContents = document.querySelectorAll(".project-content");
-
-    projectContents.forEach((content) => {
-      const strongElements = content.querySelectorAll("p > strong:first-child");
-
-      strongElements.forEach((strong) => {
-        const text = strong.textContent?.trim().toLowerCase() || "";
-
-        if (text.startsWith("problem")) {
-          strong.classList.add("par-label", "par-label-problem");
-        } else if (text.startsWith("action")) {
-          strong.classList.add("par-label", "par-label-action");
-        } else if (text.startsWith("result")) {
-          strong.classList.add("par-label", "par-label-result");
-        }
-      });
-    });
-  }
-
-  // 초기 로드 시 실행
-  applyParLabelStyles();
-
-  // Astro View Transitions 지원
-  document.addEventListener("astro:after-swap", applyParLabelStyles);
-</script>

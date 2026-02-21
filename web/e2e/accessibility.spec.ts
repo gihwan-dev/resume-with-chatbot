@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright"
 import { expect, test } from "@playwright/test"
 import { mockApiRoutes } from "./fixtures/mock-api"
+import { waitForUiReady } from "./fixtures/ui-ready"
 
 const FAB_SELECTOR = ".aui-modal-button"
 const MODAL_CONTENT_SELECTOR = ".aui-modal-content"
@@ -13,7 +14,7 @@ async function preparePage(page: import("@playwright/test").Page, theme: "light"
   }, theme)
   await mockApiRoutes(page)
   await page.goto("/")
-  await page.waitForSelector(FAB_SELECTOR)
+  await waitForUiReady(page)
 }
 
 async function openModal(page: import("@playwright/test").Page) {

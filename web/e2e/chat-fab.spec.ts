@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test"
 import { mockApiRoutes } from "./fixtures/mock-api"
 import { mockChatStreamWithToolCall } from "./fixtures/mock-streams"
+import { waitForUiReady } from "./fixtures/ui-ready"
 
 const FAB_SELECTOR = ".aui-modal-button"
 const MODAL_CONTENT_SELECTOR = ".aui-modal-content"
@@ -31,7 +32,7 @@ test.describe("Chat FAB visibility", () => {
   test.beforeEach(async ({ page }) => {
     await mockApiRoutes(page)
     await page.goto("/")
-    await page.waitForSelector(FAB_SELECTOR)
+    await waitForUiReady(page)
   })
 
   test("페이지 로드 시 FAB가 표시된다", async ({ page }) => {
@@ -114,7 +115,7 @@ test.describe("Chat and mobile sheet exclusivity", () => {
   test.beforeEach(async ({ page }) => {
     await mockApiRoutes(page)
     await page.goto("/")
-    await page.waitForSelector(FAB_SELECTOR)
+    await waitForUiReady(page)
   })
 
   test("챗봇이 열린 상태에서 사이드바를 열면 챗봇이 닫힌다", async ({ page }) => {
@@ -143,7 +144,7 @@ test.describe("Desktop layer priority", () => {
   test.beforeEach(async ({ page }) => {
     await mockApiRoutes(page)
     await page.goto("/")
-    await page.waitForSelector(FAB_SELECTOR)
+    await waitForUiReady(page)
   })
 
   test("데스크톱에서 챗봇 레이어가 사이드바보다 높다", async ({ page }) => {

@@ -51,16 +51,62 @@ describe("serializeResumeData", () => {
         case "projects":
           return [
             {
+              id: "exem-customer-dashboard",
               data: {
-                title: "Data Grid",
+                title: "고객 특화 DB 모니터링 대시보드 개발",
                 company: "Exem",
                 description: "project summary",
-                techStack: ["React"],
+                techStack: ["React", "TypeScript", "TanStack Query"],
                 link: undefined,
                 github: undefined,
                 dateStart: new Date("2025-01-01"),
                 dateEnd: undefined,
                 priority: 1,
+              },
+              body: "project body",
+            },
+            {
+              id: "exem-data-grid",
+              data: {
+                title: "데이터 그리드 개발",
+                company: "Exem",
+                description: "project summary",
+                techStack: ["React", "TanStack Table", "TanStack Virtual"],
+                link: undefined,
+                github: undefined,
+                dateStart: new Date("2025-02-01"),
+                dateEnd: undefined,
+                priority: 2,
+              },
+              body: "project body",
+            },
+            {
+              id: "exem-new-generation",
+              data: {
+                title: "차세대 데이터베이스 성능 모니터링 제품 개발",
+                company: "Exem",
+                description: "project summary",
+                techStack: ["React", "TypeScript", "Zustand"],
+                link: undefined,
+                github: undefined,
+                dateStart: new Date("2025-03-01"),
+                dateEnd: undefined,
+                priority: 3,
+              },
+              body: "project body",
+            },
+            {
+              id: "exem-dx-improvement",
+              data: {
+                title: "개발 생산성 향상 및 자동화 인프라 구축",
+                company: "Exem",
+                description: "project summary",
+                techStack: ["Nest.js", "TypeScript", "Docker"],
+                link: undefined,
+                github: undefined,
+                dateStart: new Date("2025-04-01"),
+                dateEnd: undefined,
+                priority: 4,
               },
               body: "project body",
             },
@@ -98,7 +144,10 @@ describe("serializeResumeData", () => {
 
     expect(mockGetObsidianBlogPosts).toHaveBeenCalledWith({ limit: 5 })
     expect(result.blogPosts).toEqual(blogPosts)
-    expect(result.projects).toHaveLength(1)
+    expect(result.projects).toHaveLength(4)
+    expect(result.projects[0].summary).toContain("장애 인지 시간을 10초에서 3초로 단축")
+    expect(result.projects[0].accomplishments.length).toBeGreaterThan(0)
+    expect(result.projects[0].evidenceIds.length).toBeGreaterThan(0)
     expect(result.work).toHaveLength(1)
   })
 })

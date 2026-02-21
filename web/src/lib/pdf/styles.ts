@@ -172,6 +172,23 @@ export const styles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 1.6,
   },
+  mdQuoteRow: {
+    flexDirection: "row",
+    marginBottom: 6,
+    marginTop: 2,
+  },
+  mdQuoteBar: {
+    width: 2,
+    backgroundColor: "#94a3b8",
+    borderRadius: 1,
+    marginRight: 6,
+  },
+  mdQuoteContent: {
+    flex: 1,
+    fontSize: 9,
+    color: colors.muted,
+    lineHeight: 1.6,
+  },
   mdHr: {
     borderBottomWidth: 0.5,
     borderBottomColor: colors.border,

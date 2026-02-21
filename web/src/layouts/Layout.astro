@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css"
+import { ClientRouter } from "astro:transitions"
 import { SEO } from "astro-seo"
 import { ChatWidget } from "@/components/chat/chat-widget"
 import { Navigation } from "@/components/navigation"
@@ -23,6 +24,7 @@ const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <ClientRouter />
 
     {gaId && (
       <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
@@ -81,9 +83,9 @@ const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
     <a href="#main-content" class="skip-link">
       본문으로 건너뛰기
     </a>
-    <Navigation client:idle />
+    <Navigation client:load />
     <slot />
-    <ChatWidget client:idle />
+    <ChatWidget client:idle={{ timeout: 1000 }} />
   </body>
 </html>
 

@@ -1,9 +1,8 @@
 ---
 import { getCollection, render } from "astro:content"
-import { PdfDownloadButton } from "@/components/pdf/pdf-download-button"
 import { Separator } from "@/components/ui/separator"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
-import { serializeResumeData } from "@/lib/pdf/serialize-resume"
+import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
 import BlogSection from "./_sections/blog-section.astro"
@@ -15,13 +14,12 @@ import SkillsSection from "./_sections/skills-section.astro"
 
 const basics = await getCollection("basics")
 const profile = basics[0]?.data
-const resumeData = await serializeResumeData()
 const skills = await getCollection("skills")
 const skillsData = skills[0]?.data
 
 const work = await getCollection("work")
-const projects = await getCollection("projects")
 const blogPosts = await getObsidianBlogPosts({ limit: 5 })
+const projects = await getCollection("projects")
 
 const certificates = await getCollection("certificates")
 const awards = await getCollection("awards")
@@ -30,8 +28,6 @@ const awards = await getCollection("awards")
 const sortedWork = work.sort((a, b) => b.data.dateStart.valueOf() - a.data.dateStart.valueOf())
 
 const sortedAwards = awards.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-const sortedProjects = projects.sort((a, b) => a.data.priority - b.data.priority)
-
 const workWithContent = await Promise.all(
   sortedWork.map(async (entry) => {
     const { Content } = await render(entry)
@@ -46,12 +42,7 @@ const awardsWithContent = await Promise.all(
   })
 )
 
-const projectsWithContent = await Promise.all(
-  sortedProjects.map(async (entry) => {
-    const { Content } = await render(entry)
-    return { ...entry, Content }
-  })
-)
+const { summaryBlocks } = buildResumePortfolioContracts(projects)
 ---
 
 <Layout title={`${profile?.name} | AI와 함께하는 개발자 이력서`}>
@@ -63,7 +54,26 @@ const projectsWithContent = await Promise.all(
     <HeroSection profile={profile} />
 
     <div class="mt-4">
-      <PdfDownloadButton data={resumeData} client:only="react" />
+      <a
+        id="resume-pdf-download-link"
+        href="/api/resume-pdf"
+        download
+        class="inline-flex items-center justify-center rounded-md border border-resume-border bg-resume-card-bg px-3 py-2 text-sm font-medium text-resume-text-main hover:bg-resume-highlight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg"
+        data-ga-event="pdf_download"
+        data-ga-file-name={`${profile?.name ?? "resume"}_이력서`}
+        data-default-label="PDF 다운로드"
+        data-loading-label="마크다운 변환 중..."
+        aria-busy="false"
+      >
+        <span class="relative inline-flex items-center justify-center">
+          <span data-download-label-sizer class="invisible pointer-events-none" aria-hidden="true">
+            PDF 다운로드
+          </span>
+          <span data-download-label class="absolute inset-0 inline-flex items-center justify-center">
+            PDF 다운로드
+          </span>
+        </span>
+      </a>
     </div>
 
     <Separator className="my-12" />
@@ -76,7 +86,7 @@ const projectsWithContent = await Promise.all(
 
     <Separator className="my-12" />
 
-    <ProjectSection projects={projectsWithContent} />
+    <ProjectSection projects={summaryBlocks} />
 
     <Separator className="my-12" />
 
@@ -93,26 +103,48 @@ const projectsWithContent = await Promise.all(
 </Layout>
 
 <script>
+  const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
+  const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+
+  type ResumePageWindow = Window & {
+    __resumeAnalyticsClickBound?: boolean
+    __resumeSectionObserver?: IntersectionObserver
+    __resumePortfolioClickBound?: boolean
+    __resumePdfDownloadBound?: boolean
+    gtag?: (command: string, eventName: string, params?: Record<string, string>) => void
+  }
+
+  function buildPortfolioReturnScrollKey(historyIndex: number): string {
+    return `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${historyIndex}`
+  }
+
   function setupAnalytics() {
-    if (typeof window.gtag !== "function") return
+    const resumeWindow = window as ResumePageWindow
+    if (typeof resumeWindow.gtag !== "function") return
 
-    // 클릭 이벤트 위임: data-ga-event 속성이 있는 요소
-    document.addEventListener("click", (e) => {
-      const target = (e.target as HTMLElement).closest<HTMLElement>("[data-ga-event]")
-      if (!target) return
+    if (!resumeWindow.__resumeAnalyticsClickBound) {
+      // 클릭 이벤트 위임: data-ga-event 속성이 있는 요소
+      document.addEventListener("click", (e) => {
+        const target = (e.target as HTMLElement).closest("[data-ga-event]") as HTMLElement | null
+        if (!target) return
 
-      const eventName = target.dataset.gaEvent!
-      const params: Record<string, string> = {}
+        const eventName = target.dataset.gaEvent!
+        const params: Record<string, string> = {}
 
-      for (const [key, value] of Object.entries(target.dataset)) {
-        if (key.startsWith("ga") && key !== "gaEvent" && value) {
-          const paramKey = key.slice(2).toLowerCase()
-          params[paramKey] = value
+        for (const [key, value] of Object.entries(target.dataset)) {
+          if (key.startsWith("ga") && key !== "gaEvent" && value) {
+            const paramKey = key.slice(2).toLowerCase()
+            params[paramKey] = value
+          }
         }
-      }
 
-      window.gtag("event", eventName, params)
-    })
+        resumeWindow.gtag?.("event", eventName, params)
+      })
+
+      resumeWindow.__resumeAnalyticsClickBound = true
+    }
+
+    resumeWindow.__resumeSectionObserver?.disconnect()
 
     // 섹션 뷰 추적: Intersection Observer
     const sections = document.querySelectorAll<HTMLElement>(
@@ -125,7 +157,7 @@ const projectsWithContent = await Promise.all(
         for (const entry of entries) {
           if (entry.isIntersecting && !viewed.has(entry.target.id)) {
             viewed.add(entry.target.id)
-            window.gtag("event", "section_view", {
+            resumeWindow.gtag?.("event", "section_view", {
               section_name: entry.target.id,
             })
           }
@@ -137,8 +169,163 @@ const projectsWithContent = await Promise.all(
     for (const section of sections) {
       observer.observe(section)
     }
+
+    resumeWindow.__resumeSectionObserver = observer
+  }
+
+  function setupPortfolioReturnHint() {
+    const resumeWindow = window as ResumePageWindow
+    if (resumeWindow.__resumePortfolioClickBound) return
+
+    document.addEventListener(
+      "click",
+      (e) => {
+        const link = (e.target as HTMLElement | null)?.closest("a")
+        if (!link) return
+
+        const href = link.getAttribute("href")
+        if (!href || !href.startsWith("/portfolio")) return
+
+        const historyIndex = window.history.state?.index
+        if (typeof historyIndex === "number") {
+          sessionStorage.setItem(PORTFOLIO_RETURN_INDEX_KEY, historyIndex.toString())
+          sessionStorage.setItem(
+            buildPortfolioReturnScrollKey(historyIndex),
+            Math.round(window.scrollY).toString()
+          )
+        } else {
+          sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+        }
+      },
+      { capture: true }
+    )
+
+    resumeWindow.__resumePortfolioClickBound = true
+  }
+
+  function restorePortfolioReturnScroll() {
+    const historyIndex = window.history.state?.index
+    if (typeof historyIndex !== "number") return
+
+    const expectedIndex = sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY)
+    if (expectedIndex !== historyIndex.toString()) return
+
+    const scrollKey = buildPortfolioReturnScrollKey(historyIndex)
+    const storedScroll = sessionStorage.getItem(scrollKey)
+    sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+    sessionStorage.removeItem(scrollKey)
+
+    if (storedScroll === null) return
+
+    const targetScrollY = Number.parseInt(storedScroll, 10)
+    if (!Number.isFinite(targetScrollY)) return
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, Math.max(0, targetScrollY))
+      })
+    })
+  }
+
+  function parseDownloadFileName(contentDisposition: string | null, fallbackFileName: string): string {
+    if (!contentDisposition) return fallbackFileName
+
+    const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i)
+    if (utf8Match?.[1]) {
+      try {
+        return decodeURIComponent(utf8Match[1])
+      } catch {
+        return utf8Match[1]
+      }
+    }
+
+    const quotedMatch = contentDisposition.match(/filename="([^"]+)"/i)
+    if (quotedMatch?.[1]) {
+      return quotedMatch[1]
+    }
+
+    const plainMatch = contentDisposition.match(/filename=([^;]+)/i)
+    if (plainMatch?.[1]) {
+      return plainMatch[1].trim()
+    }
+
+    return fallbackFileName
+  }
+
+  function setupPdfDownloadLoading() {
+    const resumeWindow = window as ResumePageWindow
+    if (resumeWindow.__resumePdfDownloadBound) return
+
+    const link = document.getElementById("resume-pdf-download-link")
+    if (!(link instanceof HTMLAnchorElement)) return
+
+    const label = link.querySelector<HTMLElement>("[data-download-label]")
+    const labelSizer = link.querySelector<HTMLElement>("[data-download-label-sizer]")
+    const defaultLabel = link.dataset.defaultLabel ?? "PDF 다운로드"
+    const loadingLabel = link.dataset.loadingLabel ?? "다운로드 준비 중..."
+    const fileNameBase = link.dataset.gaFileName ?? "resume"
+    const fallbackFileName = fileNameBase.endsWith(".pdf") ? fileNameBase : `${fileNameBase}.pdf`
+    if (labelSizer) {
+      labelSizer.textContent =
+        loadingLabel.length >= defaultLabel.length ? loadingLabel : defaultLabel
+    }
+
+    const setLoadingState = (loading: boolean) => {
+      link.dataset.loading = loading ? "true" : "false"
+      link.setAttribute("aria-busy", loading ? "true" : "false")
+      link.setAttribute("aria-disabled", loading ? "true" : "false")
+      link.classList.toggle("opacity-60", loading)
+      link.classList.toggle("cursor-wait", loading)
+      if (label) {
+        label.textContent = loading ? loadingLabel : defaultLabel
+      }
+    }
+
+    const onClick = async (event: MouseEvent) => {
+      if (link.dataset.loading === "true") {
+        event.preventDefault()
+        return
+      }
+
+      event.preventDefault()
+      setLoadingState(true)
+
+      try {
+        const response = await fetch(link.href, {
+          method: "GET",
+          credentials: "same-origin",
+        })
+
+        if (!response.ok) {
+          throw new Error(`Failed to download PDF: ${response.status}`)
+        }
+
+        const blob = await response.blob()
+        const fileName = parseDownloadFileName(
+          response.headers.get("content-disposition"),
+          fallbackFileName
+        )
+        const blobUrl = URL.createObjectURL(blob)
+        const downloadAnchor = document.createElement("a")
+        downloadAnchor.href = blobUrl
+        downloadAnchor.download = fileName
+        document.body.appendChild(downloadAnchor)
+        downloadAnchor.click()
+        document.body.removeChild(downloadAnchor)
+        URL.revokeObjectURL(blobUrl)
+      } catch (error) {
+        console.error("PDF 다운로드 실패:", error)
+      } finally {
+        setLoadingState(false)
+      }
+    }
+
+    link.addEventListener("click", onClick)
+    resumeWindow.__resumePdfDownloadBound = true
   }
 
   setupAnalytics()
-  document.addEventListener("astro:after-swap", setupAnalytics)
+  setupPortfolioReturnHint()
+  restorePortfolioReturnScroll()
+  setupPdfDownloadLoading()
 </script>

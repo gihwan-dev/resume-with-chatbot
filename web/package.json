@@ -11,12 +11,16 @@
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
+    "typecheck": "tsc --noEmit && astro check",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "a11y:axe": "playwright test e2e/accessibility.spec.ts --project=chromium",
-    "a11y:lighthouse": "mkdir -p ./lighthouse && lighthouse http://localhost:4321 --only-categories=accessibility --output=html --output=json --output-path=./lighthouse/accessibility --quiet --chrome-flags='--headless=new --no-sandbox'"
+    "a11y:lighthouse": "mkdir -p ./lighthouse && lighthouse http://localhost:4321 --only-categories=accessibility --output=html --output=json --output-path=./lighthouse/accessibility --quiet --chrome-flags='--headless=new --no-sandbox'",
+    "perf:gate": "node scripts/perf-gate.mjs",
+    "quality:sync-issues": "node scripts/quality-issue-sync.mjs",
+    "phase6:verify": "pnpm run typecheck && pnpm run lint && pnpm run test:run && pnpm exec playwright test e2e/resume-portfolio-print-flow.spec.ts e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/chat-fab.spec.ts e2e/accessibility.spec.ts --project=chromium && (pnpm run perf:gate; PERF_EXIT=$?; pnpm run quality:sync-issues; SYNC_EXIT=$?; if [ $PERF_EXIT -ne 0 ]; then exit $PERF_EXIT; fi; exit $SYNC_EXIT)"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.10",
@@ -29,6 +33,7 @@
     "@astrojs/react": "^4.4.2",
     "@astrojs/sitemap": "^3.7.0",
     "@astrojs/vercel": "^9.0.4",
+    "@astropub/md": "^1.0.0",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-collapsible": "^1.1.12",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -77,5 +82,6 @@
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
     "vitest": "^4.0.18"
-  }
+  },
+  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
 }

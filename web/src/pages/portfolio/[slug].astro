@@ -1,0 +1,248 @@
+---
+import { type CollectionEntry, getCollection, render } from "astro:content"
+import CaseStudySection from "@/components/portfolio/case-study-section.astro"
+import TableOfContents from "@/components/portfolio/table-of-contents.astro"
+import Layout from "@/layouts/Layout.astro"
+import type { PortfolioCaseContract, PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
+import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
+
+export async function getStaticPaths() {
+  const projects = await getCollection("projects")
+  const { cases, mappings, projectByCaseId } = buildResumePortfolioContracts(projects)
+
+  return cases
+    .map((portfolioCase) => {
+      const project = projectByCaseId.get(portfolioCase.caseId)
+      if (!project) return null
+
+      const mapping = mappings.find((item) => item.portfolioCaseId === portfolioCase.caseId)
+
+      return {
+        params: { slug: portfolioCase.caseId },
+        props: {
+          portfolioCase,
+          project,
+          resumeItemId: mapping?.resumeItemId ?? null,
+          defaultSectionId: mapping?.defaultSectionId ?? "overview",
+        },
+      }
+    })
+    .filter((path): path is NonNullable<typeof path> => path !== null)
+}
+
+interface PortfolioSlugPageProps {
+  portfolioCase: PortfolioCaseContract
+  project: CollectionEntry<"projects">
+  resumeItemId: string | null
+  defaultSectionId: PortfolioSectionId
+}
+
+const { portfolioCase, project, resumeItemId, defaultSectionId } =
+  Astro.props as PortfolioSlugPageProps
+
+if (!project) {
+  throw new Error(`Project not found for caseId: ${portfolioCase.caseId}`)
+}
+
+const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
+
+const { Content } = await render(project)
+---
+
+<Layout title={`${portfolioCase.title} | 최기환 포트폴리오`}>
+  <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8 print:py-0 print:px-0 print:max-w-full">
+    <div class="mb-8 print:hidden">
+      <a id="back-to-resume-link" href={resumeHref} class="inline-flex items-center text-sm font-medium text-resume-text-muted hover:text-resume-primary transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4">
+          <path d="m15 18-6-6 6-6"/>
+        </svg>
+        이력서로 돌아가기
+      </a>
+    </div>
+
+    <script
+      is:inline
+      data-astro-rerun
+      define:vars={{ allowedSectionIds: portfolioCase.sections, defaultSectionId, caseId: portfolioCase.caseId }}
+    >
+      const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
+      const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+      const sectionIdSet = new Set(allowedSectionIds)
+      const expectedPathname = `/portfolio/${caseId}`
+
+      const portfolioWindow = window
+
+      function readHashSectionId() {
+        if (!window.location.hash) return null
+
+        try {
+          const decoded = decodeURIComponent(window.location.hash.slice(1))
+          return decoded || null
+        } catch {
+          return null
+        }
+      }
+
+      function normalizeSectionHash() {
+        const currentSectionId = readHashSectionId()
+        if (currentSectionId === null) return null
+        if (sectionIdSet.has(currentSectionId)) return currentSectionId
+
+        const nextUrl = new URL(window.location.href)
+        nextUrl.hash = defaultSectionId
+        window.history.replaceState(window.history.state, "", nextUrl.toString())
+
+        return defaultSectionId
+      }
+
+      function scrollToSection(sectionId, behavior = "auto") {
+        if (!sectionId) return
+
+        const target = document.getElementById(sectionId)
+        if (!target) return
+
+        requestAnimationFrame(() => {
+          target.scrollIntoView({
+            block: "start",
+            behavior,
+          })
+        })
+      }
+
+      function scrollToSectionFromHash(behavior = "auto") {
+        const normalizedSectionId = normalizeSectionHash()
+        if (!normalizedSectionId) return
+
+        scrollToSection(normalizedSectionId, behavior)
+      }
+
+      let cleanupPortfolioPage = () => {}
+
+      function setupPortfolioPage() {
+        cleanupPortfolioPage()
+        const cleanups = []
+
+        const link = document.getElementById("back-to-resume-link")
+        if (link instanceof HTMLAnchorElement) {
+          const rawResumeIndex = sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY)
+          const onBackClick = (event) => {
+            event.preventDefault()
+
+            const latestResumeIndex = Number.parseInt(
+              sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY) ?? "",
+              10
+            )
+            const latestCurrentIndex = window.history.state?.index
+
+            if (
+              Number.isInteger(latestResumeIndex) &&
+              typeof latestCurrentIndex === "number" &&
+              latestCurrentIndex > latestResumeIndex
+            ) {
+              const stepsBack = latestCurrentIndex - latestResumeIndex
+
+              if (window.history.length > stepsBack) {
+                window.history.go(-stepsBack)
+                return
+              }
+            }
+
+            if (window.history.length > 1) {
+              window.history.back()
+              return
+            }
+
+            sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+            const fallbackResumeIndex = Number.parseInt(rawResumeIndex, 10)
+            if (Number.isInteger(fallbackResumeIndex)) {
+              sessionStorage.removeItem(
+                `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${fallbackResumeIndex}`
+              )
+            }
+            window.location.assign(link.href)
+          }
+
+          if (rawResumeIndex !== null) {
+            link.addEventListener("click", onBackClick)
+            cleanups.push(() => link.removeEventListener("click", onBackClick))
+          }
+        }
+
+        const onHashChange = () => {
+          scrollToSectionFromHash("smooth")
+        }
+
+        window.addEventListener("hashchange", onHashChange)
+        cleanups.push(() => window.removeEventListener("hashchange", onHashChange))
+
+        scrollToSectionFromHash("auto")
+
+        cleanupPortfolioPage = () => {
+          for (const cleanup of cleanups) {
+            cleanup()
+          }
+        }
+      }
+
+      const onPortfolioPageLoad = () => {
+        if (window.location.pathname !== expectedPathname) {
+          cleanupPortfolioPage()
+          return
+        }
+
+        setupPortfolioPage()
+      }
+
+      if (portfolioWindow.__resumePortfolioPageLoadHandler) {
+        document.removeEventListener("astro:page-load", portfolioWindow.__resumePortfolioPageLoadHandler)
+      }
+
+      portfolioWindow.__resumePortfolioPageLoadHandler = onPortfolioPageLoad
+      document.addEventListener("astro:page-load", onPortfolioPageLoad)
+      onPortfolioPageLoad()
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          cleanupPortfolioPage()
+
+          if (portfolioWindow.__resumePortfolioPageLoadHandler === onPortfolioPageLoad) {
+            document.removeEventListener("astro:page-load", onPortfolioPageLoad)
+            delete portfolioWindow.__resumePortfolioPageLoadHandler
+          }
+        },
+        { once: true }
+      )
+    </script>
+
+
+    <div class="grid grid-cols-1 lg:grid-cols-[250px_1fr] xl:grid-cols-[300px_1fr] gap-12 lg:gap-24 relative">
+      <aside class="hidden lg:block">
+        <TableOfContents portfolioCase={portfolioCase} />
+      </aside>
+
+      <main class="w-full max-w-[800px] print:max-w-full print:w-full">
+        <div class="print:mb-12 hidden print:block">
+          <h1 class="text-4xl font-bold mb-2">포트폴리오 상세 케이스 스터디</h1>
+          <p class="text-resume-text-muted">최기환 (Gihwan-dev)</p>
+          <hr class="mt-8 mb-12 border-resume-border" />
+        </div>
+
+        <CaseStudySection 
+          portfolioCase={portfolioCase} 
+          project={project} 
+        >
+          <Content />
+        </CaseStudySection>
+      </main>
+    </div>
+  </div>
+</Layout>
+
+<style is:global>
+  /* 뷰 트랜지션 애니메이션 효과 지정 (필요 시 커스텀 가능) */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.3s;
+  }
+</style>

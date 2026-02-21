@@ -18,15 +18,15 @@ export interface SerializedWork {
 }
 
 export interface SerializedProject {
+  resumeItemId: string
   title: string
-  company?: string
-  description: string
-  techStack: string[]
-  link?: string
-  github?: string
-  dateStart: string
-  dateEnd?: string
-  body?: string
+  summary: string
+  hasPortfolio: boolean
+  technologies: string[]
+  accomplishments: string[]
+  evidenceIds: string[]
+  ctaLabel?: string
+  ctaHref?: string
 }
 
 export interface SerializedEducation {

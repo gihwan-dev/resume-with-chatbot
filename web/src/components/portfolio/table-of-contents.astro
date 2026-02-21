@@ -1,0 +1,224 @@
+---
+import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
+import { PORTFOLIO_SECTION_IDS } from "@/lib/resume-portfolio/contracts"
+
+interface Props {
+  portfolioCase: PortfolioCaseContract
+}
+
+const { portfolioCase } = Astro.props
+
+const SECTION_LABELS: Record<string, string> = {
+  overview: "개요",
+  problem: "문제",
+  decision: "해결 방안",
+  result: "결과",
+  retrospective: "회고",
+}
+
+// Ensure we only show sections defined in the contract for this case
+const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sections.includes(id))
+---
+
+<nav class="sticky top-24 pt-4 pb-8 max-h-[calc(100vh-6rem)] overflow-y-auto w-[250px] xl:w-[300px] border-r border-resume-border print:hidden pr-6">
+  <div class="mb-8">
+    <a href="/portfolio" class="inline-flex items-center text-sm font-medium text-resume-text-muted hover:text-resume-primary transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4">
+        <path d="m15 18-6-6 6-6"/>
+      </svg>
+      포트폴리오 목록
+    </a>
+  </div>
+
+  <h2 class="text-xs font-bold text-resume-text-muted uppercase tracking-wider mb-6">목차</h2>
+
+  <ul class="space-y-4 toc-list">
+    {activeSections.map((sectionId) => (
+      <li>
+        <a 
+          href={`#${sectionId}`} 
+          data-section-id={sectionId}
+          class="toc-link block text-sm font-medium text-resume-text-muted hover:text-resume-text-heading transition-colors py-1 border-l-2 border-transparent pl-4"
+        >
+          {SECTION_LABELS[sectionId] || sectionId}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<script is:inline data-astro-rerun>
+  const ACTIVE_CLASSES = ["text-resume-primary", "border-resume-primary", "font-bold"]
+  const INACTIVE_CLASSES = ["text-resume-text-muted", "font-medium", "border-transparent"]
+  const tocWindow = window
+
+  function readHashSectionId() {
+    if (!window.location.hash) return null
+
+    try {
+      const decoded = decodeURIComponent(window.location.hash.slice(1))
+      return decoded || null
+    } catch {
+      return null
+    }
+  }
+
+  let cleanupScrollSpy = () => {}
+
+  function setupScrollSpy() {
+    cleanupScrollSpy()
+
+    const tocLinks = Array.from(document.querySelectorAll(".toc-link"))
+    if (tocLinks.length === 0) return
+
+    const linkBySectionId = new Map()
+    for (const link of tocLinks) {
+      const sectionId = link.getAttribute("data-section-id")
+      if (!sectionId) continue
+      linkBySectionId.set(sectionId, link)
+    }
+
+    const sectionIds = Array.from(linkBySectionId.keys())
+    const sections = sectionIds
+      .map((sectionId) => document.getElementById(sectionId))
+      .filter((section) => section !== null)
+
+    if (sections.length === 0) return
+
+    const setActiveSection = (sectionId) => {
+      for (const link of tocLinks) {
+        link.classList.remove(...ACTIVE_CLASSES)
+        link.classList.add(...INACTIVE_CLASSES)
+        link.removeAttribute("aria-current")
+      }
+
+      const activeLink = linkBySectionId.get(sectionId)
+      if (!activeLink) return
+
+      activeLink.classList.remove(...INACTIVE_CLASSES)
+      activeLink.classList.add(...ACTIVE_CLASSES)
+      activeLink.setAttribute("aria-current", "location")
+    }
+
+    const scrollToSection = (sectionId, behavior = "smooth") => {
+      const target = document.getElementById(sectionId)
+      if (!target) return
+
+      target.scrollIntoView({
+        block: "start",
+        behavior,
+      })
+    }
+
+    const onLinkClick = (event) => {
+      const link = event.currentTarget
+      if (!(link instanceof HTMLAnchorElement)) return
+
+      const sectionId = link.getAttribute("data-section-id")
+      if (!sectionId) return
+
+      event.preventDefault()
+      setActiveSection(sectionId)
+      scrollToSection(sectionId, "smooth")
+
+      const nextUrl = new URL(window.location.href)
+      nextUrl.hash = sectionId
+      window.history.replaceState(window.history.state, "", nextUrl.toString())
+    }
+
+    for (const link of tocLinks) {
+      link.addEventListener("click", onLinkClick)
+    }
+
+    let pendingRafId = null
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const intersectingEntries = entries.filter((entry) => entry.isIntersecting)
+        if (intersectingEntries.length === 0) return
+
+        intersectingEntries.sort((a, b) => {
+          if (b.intersectionRatio !== a.intersectionRatio) {
+            return b.intersectionRatio - a.intersectionRatio
+          }
+
+          return Math.abs(a.boundingClientRect.top) - Math.abs(b.boundingClientRect.top)
+        })
+
+        const nextSectionId = intersectingEntries[0]?.target?.id
+        if (!nextSectionId || !linkBySectionId.has(nextSectionId)) return
+
+        if (pendingRafId !== null) {
+          cancelAnimationFrame(pendingRafId)
+        }
+
+        pendingRafId = requestAnimationFrame(() => {
+          setActiveSection(nextSectionId)
+          pendingRafId = null
+        })
+      },
+      {
+        rootMargin: "-20% 0px -55% 0px",
+        threshold: [0.1, 0.25, 0.5, 0.75, 1],
+      }
+    )
+
+    for (const section of sections) {
+      observer.observe(section)
+    }
+
+    const onHashChange = () => {
+      const sectionId = readHashSectionId()
+      if (!sectionId || !linkBySectionId.has(sectionId)) return
+
+      setActiveSection(sectionId)
+    }
+
+    window.addEventListener("hashchange", onHashChange)
+
+    const initialSectionId = readHashSectionId()
+    if (initialSectionId && linkBySectionId.has(initialSectionId)) {
+      setActiveSection(initialSectionId)
+    } else {
+      setActiveSection(sectionIds[0])
+    }
+
+    cleanupScrollSpy = () => {
+      if (pendingRafId !== null) {
+        cancelAnimationFrame(pendingRafId)
+      }
+
+      observer.disconnect()
+      window.removeEventListener("hashchange", onHashChange)
+
+      for (const link of tocLinks) {
+        link.removeEventListener("click", onLinkClick)
+      }
+    }
+  }
+
+  const onTocPageLoad = () => {
+    setupScrollSpy()
+  }
+
+  if (tocWindow.__resumeTocPageLoadHandler) {
+    document.removeEventListener("astro:page-load", tocWindow.__resumeTocPageLoadHandler)
+  }
+
+  tocWindow.__resumeTocPageLoadHandler = onTocPageLoad
+  document.addEventListener("astro:page-load", onTocPageLoad)
+  onTocPageLoad()
+
+  document.addEventListener(
+    "astro:before-swap",
+    () => {
+      cleanupScrollSpy()
+
+      if (tocWindow.__resumeTocPageLoadHandler === onTocPageLoad) {
+        document.removeEventListener("astro:page-load", onTocPageLoad)
+        delete tocWindow.__resumeTocPageLoadHandler
+      }
+    },
+    { once: true }
+  )
+</script>
