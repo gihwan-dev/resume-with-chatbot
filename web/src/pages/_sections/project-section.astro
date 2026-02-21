@@ -20,7 +20,10 @@ const { projects } = Astro.props
   <div class="space-y-8">
     {
       projects.map((project) => (
-        <div class="group bg-resume-card-bg rounded-sm border border-resume-border p-6 flex flex-col transition-all duration-300 hover:border-resume-primary/50 hover:bg-resume-highlight/30">
+        <div
+          id={project.resumeItemId}
+          class="group bg-resume-card-bg rounded-sm border border-resume-border p-6 flex flex-col transition-all duration-300 hover:border-resume-primary/50 hover:bg-resume-highlight/30"
+        >
           <div class="mb-6">
             <h3 class="text-xl font-bold text-resume-text-heading font-heading leading-tight group-hover:text-resume-primary transition-colors mb-4">
               {project.title}

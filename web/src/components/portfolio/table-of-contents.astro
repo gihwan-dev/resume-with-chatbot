@@ -50,6 +50,9 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
 <script>
   const ACTIVE_CLASSES = ["text-resume-primary", "border-resume-primary", "font-bold"]
   const INACTIVE_CLASSES = ["text-resume-text-muted", "font-medium", "border-transparent"]
+  const tocWindow = window as Window & {
+    __resumeTocPageLoadHandler?: () => void
+  }
 
   function readHashSectionId() {
     if (!window.location.hash) return null
@@ -196,6 +199,28 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
     }
   }
 
-  // Setup on page load and on view transitions
-  document.addEventListener("astro:page-load", setupScrollSpy)
+  const onTocPageLoad = () => {
+    setupScrollSpy()
+  }
+
+  if (tocWindow.__resumeTocPageLoadHandler) {
+    document.removeEventListener("astro:page-load", tocWindow.__resumeTocPageLoadHandler)
+  }
+
+  tocWindow.__resumeTocPageLoadHandler = onTocPageLoad
+  document.addEventListener("astro:page-load", onTocPageLoad)
+  onTocPageLoad()
+
+  document.addEventListener(
+    "astro:before-swap",
+    () => {
+      cleanupScrollSpy()
+
+      if (tocWindow.__resumeTocPageLoadHandler === onTocPageLoad) {
+        document.removeEventListener("astro:page-load", onTocPageLoad)
+        delete tocWindow.__resumeTocPageLoadHandler
+      }
+    },
+    { once: true }
+  )
 </script>

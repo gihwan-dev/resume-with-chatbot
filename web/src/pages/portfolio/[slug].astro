@@ -60,10 +60,13 @@ const { Content } = await render(project)
       </a>
     </div>
 
-    <script is:inline define:vars={{ allowedSectionIds: portfolioCase.sections, defaultSectionId }}>
+    <script is:inline define:vars={{ allowedSectionIds: portfolioCase.sections, defaultSectionId, caseId: portfolioCase.caseId }}>
       const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
       const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
       const sectionIdSet = new Set(allowedSectionIds)
+      const expectedPathname = `/portfolio/${caseId}`
+
+      const portfolioWindow = window
 
       function readHashSectionId() {
         if (!window.location.hash) return null
@@ -177,7 +180,35 @@ const { Content } = await render(project)
         }
       }
 
-      document.addEventListener("astro:page-load", setupPortfolioPage)
+      const onPortfolioPageLoad = () => {
+        if (window.location.pathname !== expectedPathname) {
+          cleanupPortfolioPage()
+          return
+        }
+
+        setupPortfolioPage()
+      }
+
+      if (portfolioWindow.__resumePortfolioPageLoadHandler) {
+        document.removeEventListener("astro:page-load", portfolioWindow.__resumePortfolioPageLoadHandler)
+      }
+
+      portfolioWindow.__resumePortfolioPageLoadHandler = onPortfolioPageLoad
+      document.addEventListener("astro:page-load", onPortfolioPageLoad)
+      onPortfolioPageLoad()
+
+      document.addEventListener(
+        "astro:before-swap",
+        () => {
+          cleanupPortfolioPage()
+
+          if (portfolioWindow.__resumePortfolioPageLoadHandler === onPortfolioPageLoad) {
+            document.removeEventListener("astro:page-load", onPortfolioPageLoad)
+            delete portfolioWindow.__resumePortfolioPageLoadHandler
+          }
+        },
+        { once: true }
+      )
     </script>
 
 
