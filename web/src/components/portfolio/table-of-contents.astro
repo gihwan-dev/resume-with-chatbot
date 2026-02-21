@@ -17,7 +17,7 @@ const SECTION_LABELS: Record<string, string> = {
 }
 
 // Ensure we only show sections defined in the contract for this case
-const activeSections = PORTFOLIO_SECTION_IDS.filter(id => portfolioCase.sections.includes(id))
+const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sections.includes(id))
 ---
 
 <nav class="sticky top-24 pt-4 pb-8 max-h-[calc(100vh-6rem)] overflow-y-auto w-[250px] xl:w-[300px] border-r border-resume-border print:hidden pr-6">

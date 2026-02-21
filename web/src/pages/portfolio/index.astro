@@ -1,8 +1,8 @@
 ---
 import { getCollection } from "astro:content"
+import { Badge } from "@/components/ui/badge"
 import Layout from "@/layouts/Layout.astro"
 import { PORTFOLIO_CASES_V1 } from "@/lib/resume-portfolio/mapping"
-import { Badge } from "@/components/ui/badge"
 
 const projects = await getCollection("projects")
 

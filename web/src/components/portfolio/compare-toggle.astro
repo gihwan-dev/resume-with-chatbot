@@ -1,10 +1,10 @@
 ---
 interface Props {
-  beforeLabel?: string;
-  afterLabel?: string;
+  beforeLabel?: string
+  afterLabel?: string
 }
 
-const { beforeLabel = "Before (개선 전)", afterLabel = "After (개선 후)" } = Astro.props;
+const { beforeLabel = "Before (개선 전)", afterLabel = "After (개선 후)" } = Astro.props
 ---
 
 <compare-toggle class="block my-8 rounded-xl border border-resume-border bg-resume-card-bg overflow-hidden shadow-sm print:border-none print:shadow-none print:my-4">
