@@ -1,8 +1,8 @@
 ---
 import { getCollection, render } from "astro:content"
-import Layout from "@/layouts/Layout.astro"
 import CaseStudySection from "@/components/portfolio/case-study-section.astro"
 import TableOfContents from "@/components/portfolio/table-of-contents.astro"
+import Layout from "@/layouts/Layout.astro"
 import { PORTFOLIO_CASES_V1, RESUME_PORTFOLIO_MAPPING_V1 } from "@/lib/resume-portfolio/mapping"
 
 export async function getStaticPaths() {
@@ -11,12 +11,12 @@ export async function getStaticPaths() {
   // Generate paths for each case in PORTFOLIO_CASES_V1
   return PORTFOLIO_CASES_V1.map((portfolioCase) => {
     const project = projects.find((p) => p.id === portfolioCase.caseId)
-    
+
     return {
       params: { slug: portfolioCase.caseId },
       props: { portfolioCase, project },
     }
-  }).filter(path => path.props.project !== undefined)
+  }).filter((path) => path.props.project !== undefined)
 }
 
 const { portfolioCase, project } = Astro.props
@@ -25,7 +25,7 @@ if (!project) {
   throw new Error(`Project not found for caseId: ${portfolioCase.caseId}`)
 }
 
-const mapping = RESUME_PORTFOLIO_MAPPING_V1.find(m => m.portfolioCaseId === portfolioCase.caseId)
+const mapping = RESUME_PORTFOLIO_MAPPING_V1.find((m) => m.portfolioCaseId === portfolioCase.caseId)
 const resumeHref = mapping ? `/#${mapping.resumeItemId}` : "/"
 
 const { Content } = await render(project)
@@ -44,16 +44,53 @@ const { Content } = await render(project)
     </div>
 
     <script is:inline>
-      document.addEventListener('astro:page-load', () => {
-        const link = document.getElementById('back-to-resume-link');
-        const searchParams = new URLSearchParams(window.location.search);
-        const bscroll = searchParams.get('__bscroll');
-        if (link && bscroll) {
-          const href = new URL(link.href);
-          href.searchParams.set('__bscroll', bscroll);
-          link.href = href.toString();
-        }
-      });
+      const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
+      const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+
+      document.addEventListener("astro:page-load", () => {
+        const link = document.getElementById("back-to-resume-link")
+        if (!(link instanceof HTMLAnchorElement)) return
+
+        const rawResumeIndex = sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY)
+        if (rawResumeIndex === null) return
+
+        link.addEventListener("click", (event) => {
+          event.preventDefault()
+
+          const latestResumeIndex = Number.parseInt(
+            sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY) ?? "",
+            10
+          )
+          const latestCurrentIndex = window.history.state?.index
+
+          if (
+            Number.isInteger(latestResumeIndex) &&
+            typeof latestCurrentIndex === "number" &&
+            latestCurrentIndex > latestResumeIndex
+          ) {
+            const stepsBack = latestCurrentIndex - latestResumeIndex
+
+            if (window.history.length > stepsBack) {
+              window.history.go(-stepsBack)
+              return
+            }
+          }
+
+          if (window.history.length > 1) {
+            window.history.back()
+            return
+          }
+
+          sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+          const fallbackResumeIndex = Number.parseInt(rawResumeIndex, 10)
+          if (Number.isInteger(fallbackResumeIndex)) {
+            sessionStorage.removeItem(
+              `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${fallbackResumeIndex}`
+            )
+          }
+          window.location.assign(link.href)
+        })
+      })
     </script>
 
 

@@ -84,26 +84,47 @@ const awardsWithContent = await Promise.all(
 </Layout>
 
 <script>
+  const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
+  const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+
+  type ResumePageWindow = Window & {
+    __resumeAnalyticsClickBound?: boolean
+    __resumeSectionObserver?: IntersectionObserver
+    __resumePortfolioClickBound?: boolean
+    gtag?: (command: string, eventName: string, params?: Record<string, string>) => void
+  }
+
+  function buildPortfolioReturnScrollKey(historyIndex: number): string {
+    return `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${historyIndex}`
+  }
+
   function setupAnalytics() {
-    if (typeof window.gtag !== "function") return
+    const resumeWindow = window as ResumePageWindow
+    if (typeof resumeWindow.gtag !== "function") return
 
-    // 클릭 이벤트 위임: data-ga-event 속성이 있는 요소
-    document.addEventListener("click", (e) => {
-      const target = (e.target as HTMLElement).closest("[data-ga-event]") as HTMLElement | null
-      if (!target) return
+    if (!resumeWindow.__resumeAnalyticsClickBound) {
+      // 클릭 이벤트 위임: data-ga-event 속성이 있는 요소
+      document.addEventListener("click", (e) => {
+        const target = (e.target as HTMLElement).closest("[data-ga-event]") as HTMLElement | null
+        if (!target) return
 
-      const eventName = target.dataset.gaEvent!
-      const params: Record<string, string> = {}
+        const eventName = target.dataset.gaEvent!
+        const params: Record<string, string> = {}
 
-      for (const [key, value] of Object.entries(target.dataset)) {
-        if (key.startsWith("ga") && key !== "gaEvent" && value) {
-          const paramKey = key.slice(2).toLowerCase()
-          params[paramKey] = value
+        for (const [key, value] of Object.entries(target.dataset)) {
+          if (key.startsWith("ga") && key !== "gaEvent" && value) {
+            const paramKey = key.slice(2).toLowerCase()
+            params[paramKey] = value
+          }
         }
-      }
 
-      window.gtag("event", eventName, params)
-    })
+        resumeWindow.gtag?.("event", eventName, params)
+      })
+
+      resumeWindow.__resumeAnalyticsClickBound = true
+    }
+
+    resumeWindow.__resumeSectionObserver?.disconnect()
 
     // 섹션 뷰 추적: Intersection Observer
     const sections = document.querySelectorAll<HTMLElement>(
@@ -116,7 +137,7 @@ const awardsWithContent = await Promise.all(
         for (const entry of entries) {
           if (entry.isIntersecting && !viewed.has(entry.target.id)) {
             viewed.add(entry.target.id)
-            window.gtag("event", "section_view", {
+            resumeWindow.gtag?.("event", "section_view", {
               section_name: entry.target.id,
             })
           }
@@ -128,56 +149,65 @@ const awardsWithContent = await Promise.all(
     for (const section of sections) {
       observer.observe(section)
     }
+
+    resumeWindow.__resumeSectionObserver = observer
   }
 
-  function setupScrollMemory() {
-    // 1. Capture scroll on outbound portfolio clicks
-    document.addEventListener("click", (e) => {
-      const link = (e.target as HTMLElement).closest("a")
-      if (!link) return
-      
-      const href = link.getAttribute("href")
-      if (href && href.startsWith("/portfolio")) {
-        // Prevent default, append query param, then navigate
-        e.preventDefault()
-        const currentScroll = Math.round(window.scrollY)
-        
-        let newHref = href
-        const urlObj = new URL(href, window.location.origin)
-        urlObj.searchParams.set("__bscroll", currentScroll.toString())
-        
-        // ClientRouter/ViewTransitions works best if we just use normal Astro router navigation 
-        // by pushing state or just navigating. Window.location works fine with Astro ViewTransitions intercept
-        window.location.assign(urlObj.toString())
-      }
-    })
+  function setupPortfolioReturnHint() {
+    const resumeWindow = window as ResumePageWindow
+    if (resumeWindow.__resumePortfolioClickBound) return
 
-    // 2. Restore scroll if returning from portfolio
-    const params = new URLSearchParams(window.location.search)
-    const storedScroll = params.get("__bscroll")
-    
-    if (storedScroll) {
-      const scrollY = parseInt(storedScroll, 10)
-      if (!isNaN(scrollY)) {
-        // Use timeout to ensure DOM is settled (especially over view transitions)
-        setTimeout(() => {
-          window.scrollTo({ top: scrollY, behavior: "instant" })
-          
-          // Clean up the URL without triggering a reload or transition
-          const newUrl = new URL(window.location.href)
-          newUrl.searchParams.delete("__bscroll")
-          window.history.replaceState({}, "", newUrl.toString())
-        }, 50)
-      }
-    }
+    document.addEventListener(
+      "click",
+      (e) => {
+        const link = (e.target as HTMLElement | null)?.closest("a")
+        if (!link) return
+
+        const href = link.getAttribute("href")
+        if (!href || !href.startsWith("/portfolio")) return
+
+        const historyIndex = window.history.state?.index
+        if (typeof historyIndex === "number") {
+          sessionStorage.setItem(PORTFOLIO_RETURN_INDEX_KEY, historyIndex.toString())
+          sessionStorage.setItem(
+            buildPortfolioReturnScrollKey(historyIndex),
+            Math.round(window.scrollY).toString()
+          )
+        } else {
+          sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+        }
+      },
+      { capture: true }
+    )
+
+    resumeWindow.__resumePortfolioClickBound = true
+  }
+
+  function restorePortfolioReturnScroll() {
+    const historyIndex = window.history.state?.index
+    if (typeof historyIndex !== "number") return
+
+    const expectedIndex = sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY)
+    if (expectedIndex !== historyIndex.toString()) return
+
+    const scrollKey = buildPortfolioReturnScrollKey(historyIndex)
+    const storedScroll = sessionStorage.getItem(scrollKey)
+    sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+    sessionStorage.removeItem(scrollKey)
+
+    if (storedScroll === null) return
+
+    const targetScrollY = Number.parseInt(storedScroll, 10)
+    if (!Number.isFinite(targetScrollY)) return
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, Math.max(0, targetScrollY))
+      })
+    })
   }
 
   setupAnalytics()
-  setupScrollMemory()
-  
-  // Setup again on view transitions
-  document.addEventListener("astro:after-swap", () => {
-    setupAnalytics()
-    setupScrollMemory()
-  })
+  setupPortfolioReturnHint()
+  restorePortfolioReturnScroll()
 </script>
