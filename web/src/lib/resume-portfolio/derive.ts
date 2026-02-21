@@ -16,7 +16,7 @@ type ProjectEntryLike = {
   }
 }
 
-export interface ResumePortfolioContracts<TProjectEntry extends ProjectEntryLike> {
+interface ResumePortfolioContracts<TProjectEntry extends ProjectEntryLike> {
   resumeItems: ResumeItemContract[]
   summaryBlocks: ResumeSummaryBlock[]
   mappings: ResumePortfolioMappingEntry[]

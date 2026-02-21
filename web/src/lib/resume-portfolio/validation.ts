@@ -12,7 +12,7 @@ type ResumeSummaryBlockForValidation = Pick<
   "resumeItemId" | "hasPortfolio" | "ctaHref" | "evidenceIds"
 >
 
-export interface ValidateResumePortfolioMappingInput {
+interface ValidateResumePortfolioMappingInput {
   resumeItems?: readonly ResumeItemContract[]
   resumeItemIds?: readonly string[]
   mappings: readonly ResumePortfolioMappingEntry[]
@@ -20,7 +20,7 @@ export interface ValidateResumePortfolioMappingInput {
   summaryBlocks?: readonly ResumeSummaryBlockForValidation[]
 }
 
-export interface ValidateResumePortfolioMappingResult {
+interface ValidateResumePortfolioMappingResult {
   isValid: boolean
   errors: string[]
   warnings: string[]
