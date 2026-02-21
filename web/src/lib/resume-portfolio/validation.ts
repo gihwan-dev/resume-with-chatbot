@@ -3,13 +3,21 @@ import {
   type PortfolioCaseContract,
   type ResumeItemContract,
   type ResumePortfolioMappingEntry,
+  type ResumeSummaryBlock,
 } from "./contracts"
+import { parsePortfolioCtaHref } from "./hash"
+
+type ResumeSummaryBlockForValidation = Pick<
+  ResumeSummaryBlock,
+  "resumeItemId" | "hasPortfolio" | "ctaHref"
+>
 
 export interface ValidateResumePortfolioMappingInput {
   resumeItems?: readonly ResumeItemContract[]
   resumeItemIds?: readonly string[]
   mappings: readonly ResumePortfolioMappingEntry[]
   cases: readonly PortfolioCaseContract[]
+  summaryBlocks?: readonly ResumeSummaryBlockForValidation[]
 }
 
 export interface ValidateResumePortfolioMappingResult {
@@ -65,6 +73,7 @@ export function validateResumePortfolioMapping(
   const caseCount = new Map<string, number>()
   const mappedResumeItemIds = new Set<string>()
   const mappedCaseIds = new Set<string>()
+  const mappingByResumeItemId = new Map<string, ResumePortfolioMappingEntry>()
 
   for (const mapping of input.mappings) {
     resumeItemCount.set(mapping.resumeItemId, (resumeItemCount.get(mapping.resumeItemId) ?? 0) + 1)
@@ -72,6 +81,9 @@ export function validateResumePortfolioMapping(
 
     mappedResumeItemIds.add(mapping.resumeItemId)
     mappedCaseIds.add(mapping.portfolioCaseId)
+    if (!mappingByResumeItemId.has(mapping.resumeItemId)) {
+      mappingByResumeItemId.set(mapping.resumeItemId, mapping)
+    }
 
     if (!resumeItemIdSet.has(mapping.resumeItemId)) {
       pushUnique(
@@ -122,6 +134,89 @@ export function validateResumePortfolioMapping(
   for (const caseId of caseIdSet) {
     if (!mappedCaseIds.has(caseId)) {
       pushUnique(warnings, `매핑되지 않은 portfolioCaseId가 있습니다: ${caseId}`)
+    }
+  }
+
+  const summaryBlocks = input.summaryBlocks
+  if (summaryBlocks && summaryBlocks.length > 0) {
+    const summaryByResumeItemId = new Map<string, ResumeSummaryBlockForValidation>()
+
+    for (const summaryBlock of summaryBlocks) {
+      if (summaryByResumeItemId.has(summaryBlock.resumeItemId)) {
+        pushUnique(
+          errors,
+          `resumeItemId가 요약 블록에서 중복되었습니다: ${summaryBlock.resumeItemId}`
+        )
+      }
+
+      summaryByResumeItemId.set(summaryBlock.resumeItemId, summaryBlock)
+
+      if (!resumeItemIdSet.has(summaryBlock.resumeItemId)) {
+        pushUnique(
+          errors,
+          `알 수 없는 resumeItemId가 요약 블록에 포함되어 있습니다: ${summaryBlock.resumeItemId}`
+        )
+      }
+
+      if (!summaryBlock.hasPortfolio && summaryBlock.ctaHref) {
+        pushUnique(
+          warnings,
+          `hasPortfolio=false 항목에 CTA가 설정되어 있습니다: ${summaryBlock.resumeItemId}`
+        )
+      }
+    }
+
+    for (const resumeItemId of requiredResumeItemIdSet) {
+      const summaryBlock = summaryByResumeItemId.get(resumeItemId)
+      if (!summaryBlock) {
+        pushUnique(errors, `요약 블록이 누락된 resumeItemId가 있습니다: ${resumeItemId}`)
+        continue
+      }
+
+      if (!summaryBlock.hasPortfolio) {
+        pushUnique(errors, `resume item 계약과 summary hasPortfolio 값이 다릅니다: ${resumeItemId}`)
+      }
+
+      if (!summaryBlock.ctaHref) {
+        pushUnique(errors, `CTA href가 누락된 resumeItemId가 있습니다: ${resumeItemId}`)
+        continue
+      }
+
+      const anchor = parsePortfolioCtaHref(summaryBlock.ctaHref)
+      if (!anchor) {
+        pushUnique(
+          errors,
+          `CTA href 형식이 잘못되었습니다(허용: /portfolio/[slug]#section): ${resumeItemId}`
+        )
+        continue
+      }
+
+      if (!caseIdSet.has(anchor.caseId)) {
+        pushUnique(
+          errors,
+          `CTA href의 caseId가 유효하지 않습니다: ${resumeItemId} -> ${anchor.caseId}`
+        )
+      }
+
+      const mapping = mappingByResumeItemId.get(resumeItemId)
+      if (!mapping) {
+        pushUnique(errors, `CTA 검증용 매핑이 누락되었습니다: ${resumeItemId}`)
+        continue
+      }
+
+      if (anchor.caseId !== mapping.portfolioCaseId) {
+        pushUnique(
+          errors,
+          `CTA href의 caseId가 매핑과 다릅니다: ${resumeItemId} (cta=${anchor.caseId}, mapping=${mapping.portfolioCaseId})`
+        )
+      }
+
+      if (anchor.sectionId !== mapping.defaultSectionId) {
+        pushUnique(
+          errors,
+          `CTA href의 sectionId가 매핑과 다릅니다: ${resumeItemId} (cta=${anchor.sectionId}, mapping=${mapping.defaultSectionId})`
+        )
+      }
     }
   }
 

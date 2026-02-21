@@ -13,6 +13,8 @@ const { portfolioCase, project } = Astro.props
 ---
 
 <article id={`${portfolioCase.caseId}.overview`} class="mb-32 scroll-mt-24 group/case relative">
+  <span id="overview" aria-hidden="true" class="absolute -top-24" />
+
   <div class="mb-12">
     <h1 class="text-3xl sm:text-4xl font-extrabold text-resume-text-heading mb-6 tracking-tight leading-tight">
       {portfolioCase.title}

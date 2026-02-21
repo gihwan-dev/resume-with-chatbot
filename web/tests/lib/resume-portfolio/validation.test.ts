@@ -3,6 +3,7 @@ import {
   PORTFOLIO_CASES_V1,
   RESUME_ITEMS_V1,
   RESUME_PORTFOLIO_MAPPING_V1,
+  RESUME_SUMMARY_BLOCKS_V1,
 } from "@/lib/resume-portfolio/mapping"
 import { validateResumePortfolioMapping } from "@/lib/resume-portfolio/validation"
 
@@ -12,6 +13,7 @@ describe("validateResumePortfolioMapping", () => {
       resumeItems: RESUME_ITEMS_V1,
       mappings: RESUME_PORTFOLIO_MAPPING_V1,
       cases: PORTFOLIO_CASES_V1,
+      summaryBlocks: RESUME_SUMMARY_BLOCKS_V1,
     })
 
     expect(result.isValid).toBe(true)
@@ -118,6 +120,86 @@ describe("validateResumePortfolioMapping", () => {
     expect(result.isValid).toBe(false)
     expect(result.errors).toEqual(
       expect.arrayContaining([expect.stringContaining("매핑이 누락된 resumeItemId")])
+    )
+  })
+
+  it("CTA 누락 케이스: hasPortfolio=true 항목의 ctaHref 누락 시 오류를 반환한다", () => {
+    const brokenSummaryBlocks = RESUME_SUMMARY_BLOCKS_V1.map((item) => ({ ...item }))
+    brokenSummaryBlocks[0] = {
+      ...brokenSummaryBlocks[0],
+      ctaHref: undefined,
+    }
+
+    const result = validateResumePortfolioMapping({
+      resumeItems: RESUME_ITEMS_V1,
+      mappings: RESUME_PORTFOLIO_MAPPING_V1,
+      cases: PORTFOLIO_CASES_V1,
+      summaryBlocks: brokenSummaryBlocks,
+    })
+
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([expect.stringContaining("CTA href가 누락된 resumeItemId")])
+    )
+  })
+
+  it("CTA 형식 오류 케이스: /portfolio/[slug]#section 형식이 아니면 오류를 반환한다", () => {
+    const brokenSummaryBlocks = RESUME_SUMMARY_BLOCKS_V1.map((item) => ({ ...item }))
+    brokenSummaryBlocks[0] = {
+      ...brokenSummaryBlocks[0],
+      ctaHref: "/portfolio#exem-customer-dashboard.overview",
+    }
+
+    const result = validateResumePortfolioMapping({
+      resumeItems: RESUME_ITEMS_V1,
+      mappings: RESUME_PORTFOLIO_MAPPING_V1,
+      cases: PORTFOLIO_CASES_V1,
+      summaryBlocks: brokenSummaryBlocks,
+    })
+
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([expect.stringContaining("CTA href 형식이 잘못되었습니다")])
+    )
+  })
+
+  it("CTA caseId 불일치 케이스: 매핑과 다르면 오류를 반환한다", () => {
+    const brokenSummaryBlocks = RESUME_SUMMARY_BLOCKS_V1.map((item) => ({ ...item }))
+    brokenSummaryBlocks[0] = {
+      ...brokenSummaryBlocks[0],
+      ctaHref: "/portfolio/exem-data-grid#overview",
+    }
+
+    const result = validateResumePortfolioMapping({
+      resumeItems: RESUME_ITEMS_V1,
+      mappings: RESUME_PORTFOLIO_MAPPING_V1,
+      cases: PORTFOLIO_CASES_V1,
+      summaryBlocks: brokenSummaryBlocks,
+    })
+
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([expect.stringContaining("CTA href의 caseId가 매핑과 다릅니다")])
+    )
+  })
+
+  it("CTA sectionId 불일치 케이스: 매핑 기본 섹션과 다르면 오류를 반환한다", () => {
+    const brokenSummaryBlocks = RESUME_SUMMARY_BLOCKS_V1.map((item) => ({ ...item }))
+    brokenSummaryBlocks[0] = {
+      ...brokenSummaryBlocks[0],
+      ctaHref: "/portfolio/exem-customer-dashboard#problem",
+    }
+
+    const result = validateResumePortfolioMapping({
+      resumeItems: RESUME_ITEMS_V1,
+      mappings: RESUME_PORTFOLIO_MAPPING_V1,
+      cases: PORTFOLIO_CASES_V1,
+      summaryBlocks: brokenSummaryBlocks,
+    })
+
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([expect.stringContaining("CTA href의 sectionId가 매핑과 다릅니다")])
     )
   })
 })

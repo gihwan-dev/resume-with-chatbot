@@ -33,11 +33,11 @@
   - 검증: 프린트 미리보기에서 웹 전용 UI가 숨김 처리되고 핵심 문단/이미지가 중간 절단되지 않는다.
 
 ## Phase 4. [PARALLEL:PG-2] 기능 구현 트랙 (Codex) - 데이터 모델 및 연결 로직
-- [ ] **이력서-포트폴리오 매핑 데이터 모델 구현**
+- [x] **이력서-포트폴리오 매핑 데이터 모델 구현**
   - 목표: 이력서 항목 ID와 포트폴리오 케이스 스터디 섹션 ID를 연결하는 데이터 계층을 구현한다.
   - 검증: 잘못된 매핑(누락/중복/깨진 링크) 검증 로직이 동작한다.
 
-- [ ] **CTA 이동 및 딥링크 라우팅 기능 구현**
+- [x] **CTA 이동 및 딥링크 라우팅 기능 구현**
   - 목표: 이력서 CTA 클릭 시 포트폴리오의 정확한 프로젝트/섹션으로 이동하는 라우팅을 구현한다.
   - 검증: 새로고침 후에도 동일한 포트폴리오 섹션으로 복원된다.
 
@@ -81,9 +81,14 @@
 
 **[2026-02-21] 세션 요약**:
 - 발견된 이슈: 초기 검증에서 `src/lib/blog/velog.ts`의 `fast-xml-parser` 타입 선언 누락으로 `astro check`/`tsc --noEmit`가 실패했으나, 의존성 동기화(`pnpm --dir web install`) 후 해결 완료.
-- 아키텍처 결정: 딥링크 규칙을 `/portfolio#<caseId>.<sectionId>`로 고정하고, 프로젝트 카드 단위 1:1 매핑 계약(V1)을 문서+타입+검증 유틸로 고정.
+- 아키텍처 결정: 딥링크 규칙을 `/portfolio/<caseId>#<sectionId>`로 고정하고, 프로젝트 카드 단위 1:1 매핑 계약(V1)을 문서+타입+검증 유틸로 고정.
 **[2026-02-21] 세션 요약 (Phase 2 완료)**:
 - 구현 완료: 이력서 페이지(index.astro)의 프로젝트 섹션을 `RESUME_SUMMARY_BLOCKS_V1` 하드코딩 데이터 기반으로 개편.
 - 디자인 변경: 박스형 임팩트 카드 대신 가독성이 높은 마크다운 불릿 리스트(`accomplishments`)로 렌더링하도록 `contracts.ts` 스키마 수정 및 `@astropub/md` 도입.
 - UX 개선: 포트폴리오 유도 버튼을 시각적 노이즈가 적은 텍스트 링크(대안 1번) 스타일로 변경하여 이력서 톤앤매너 유지.
 - 검증: Astro 컴파일러 파싱 문제 해결 및 `typecheck`/`lint` 통과.
+**[2026-02-21] 세션 요약 (Phase 4 완료)**:
+- 매핑/링크 계약: `buildPortfolioCtaHref`, `parsePortfolioCtaHref`를 추가하고 CTA href 생성을 `/portfolio/<caseId>#<sectionId>` 규칙으로 일원화.
+- 검증 강화: `validateResumePortfolioMapping` 입력에 `summaryBlocks`를 추가해 `hasPortfolio=true` 항목의 CTA 누락/형식 오류/caseId·sectionId 불일치를 배포 실패 조건으로 검증.
+- 라우팅 복원: 포트폴리오 상세 페이지에서 유효하지 않은 hash 접근 시 `#overview`로 정규화하고, 새로고침 시 hash 유지 동작을 보장.
+- E2E 보강: `e2e/portfolio-deep-link.spec.ts`를 추가해 CTA 이동, 새로고침 복원, invalid hash 폴백을 자동 검증.

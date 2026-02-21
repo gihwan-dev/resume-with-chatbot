@@ -27,6 +27,7 @@ if (!project) {
 
 const mapping = RESUME_PORTFOLIO_MAPPING_V1.find((m) => m.portfolioCaseId === portfolioCase.caseId)
 const resumeHref = mapping ? `/#${mapping.resumeItemId}` : "/"
+const defaultSectionId = mapping?.defaultSectionId ?? "overview"
 
 const { Content } = await render(project)
 ---
@@ -43,53 +44,85 @@ const { Content } = await render(project)
       </a>
     </div>
 
-    <script is:inline>
+    <script is:inline define:vars={{ allowedSectionIds: portfolioCase.sections, defaultSectionId }}>
       const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
       const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+      const sectionIdSet = new Set(allowedSectionIds)
+
+      function normalizeSectionHash() {
+        const hash = window.location.hash
+        if (!hash) return
+
+        const currentSectionId = hash.slice(1)
+        if (sectionIdSet.has(currentSectionId)) return
+
+        const nextUrl = new URL(window.location.href)
+        nextUrl.hash = defaultSectionId
+        window.history.replaceState(window.history.state, "", nextUrl.toString())
+      }
+
+      function scrollToSectionFromHash() {
+        const sectionId = window.location.hash.slice(1)
+        if (!sectionId) return
+
+        const target = document.getElementById(sectionId)
+        if (!target) return
+
+        requestAnimationFrame(() => {
+          target.scrollIntoView({
+            block: "start",
+            behavior: "auto",
+          })
+        })
+      }
 
       document.addEventListener("astro:page-load", () => {
         const link = document.getElementById("back-to-resume-link")
         if (!(link instanceof HTMLAnchorElement)) return
 
         const rawResumeIndex = sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY)
-        if (rawResumeIndex === null) return
 
-        link.addEventListener("click", (event) => {
-          event.preventDefault()
+        if (rawResumeIndex !== null) {
+          link.addEventListener("click", (event) => {
+            event.preventDefault()
 
-          const latestResumeIndex = Number.parseInt(
-            sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY) ?? "",
-            10
-          )
-          const latestCurrentIndex = window.history.state?.index
+            const latestResumeIndex = Number.parseInt(
+              sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY) ?? "",
+              10
+            )
+            const latestCurrentIndex = window.history.state?.index
 
-          if (
-            Number.isInteger(latestResumeIndex) &&
-            typeof latestCurrentIndex === "number" &&
-            latestCurrentIndex > latestResumeIndex
-          ) {
-            const stepsBack = latestCurrentIndex - latestResumeIndex
+            if (
+              Number.isInteger(latestResumeIndex) &&
+              typeof latestCurrentIndex === "number" &&
+              latestCurrentIndex > latestResumeIndex
+            ) {
+              const stepsBack = latestCurrentIndex - latestResumeIndex
 
-            if (window.history.length > stepsBack) {
-              window.history.go(-stepsBack)
+              if (window.history.length > stepsBack) {
+                window.history.go(-stepsBack)
+                return
+              }
+            }
+
+            if (window.history.length > 1) {
+              window.history.back()
               return
             }
-          }
 
-          if (window.history.length > 1) {
-            window.history.back()
-            return
-          }
+            sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+            const fallbackResumeIndex = Number.parseInt(rawResumeIndex, 10)
+            if (Number.isInteger(fallbackResumeIndex)) {
+              sessionStorage.removeItem(
+                `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${fallbackResumeIndex}`
+              )
+            }
+            window.location.assign(link.href)
+          })
+        }
 
-          sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
-          const fallbackResumeIndex = Number.parseInt(rawResumeIndex, 10)
-          if (Number.isInteger(fallbackResumeIndex)) {
-            sessionStorage.removeItem(
-              `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${fallbackResumeIndex}`
-            )
-          }
-          window.location.assign(link.href)
-        })
+        normalizeSectionHash()
+        scrollToSectionFromHash()
       })
     </script>
 
