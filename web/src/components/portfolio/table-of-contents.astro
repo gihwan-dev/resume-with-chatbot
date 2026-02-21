@@ -36,8 +36,8 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
     {activeSections.map((sectionId) => (
       <li>
         <a 
-          href={`#${portfolioCase.caseId}.${sectionId}`} 
-          data-section-id={`${portfolioCase.caseId}.${sectionId}`}
+          href={`#${sectionId}`} 
+          data-section-id={sectionId}
           class="toc-link block text-sm font-medium text-resume-text-muted hover:text-resume-text-heading transition-colors py-1 border-l-2 border-transparent pl-4"
         >
           {SECTION_LABELS[sectionId] || sectionId}
@@ -48,49 +48,154 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
 </nav>
 
 <script>
+  const ACTIVE_CLASSES = ["text-resume-primary", "border-resume-primary", "font-bold"]
+  const INACTIVE_CLASSES = ["text-resume-text-muted", "font-medium", "border-transparent"]
+
+  function readHashSectionId() {
+    if (!window.location.hash) return null
+
+    try {
+      const decoded = decodeURIComponent(window.location.hash.slice(1))
+      return decoded || null
+    } catch {
+      return null
+    }
+  }
+
+  let cleanupScrollSpy = () => {}
+
   function setupScrollSpy() {
-    const observerOptions = {
-      root: null,
-      rootMargin: "0px 0px -40% 0px", // Trigger when the element reaches the top 40% of viewport
-      threshold: 0.1
-    };
+    cleanupScrollSpy()
 
-    const tocLinks = document.querySelectorAll('.toc-link');
-    
-    // Create an intersection observer
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const id = entry.target.getAttribute('id');
-          
-          // Remove active class from all links
-          tocLinks.forEach(link => {
-            link.classList.remove('text-resume-primary', 'border-resume-primary', 'font-bold');
-            link.classList.add('text-resume-text-muted', 'font-medium', 'border-transparent');
-          });
-          
-          // Add active class to corresponding link
-          const activeLink = document.querySelector(`.toc-link[data-section-id="${id}"]`);
-          if (activeLink) {
-            activeLink.classList.remove('text-resume-text-muted', 'font-medium', 'border-transparent');
-            activeLink.classList.add('text-resume-primary', 'border-resume-primary', 'font-bold');
-          }
-        }
-      });
-    }, observerOptions);
+    const tocLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>(".toc-link"))
+    if (tocLinks.length === 0) return
 
-    // Observe all sections that have matching TOC links
-    tocLinks.forEach(link => {
-      const targetId = link.getAttribute('data-section-id');
-      if (targetId) {
-        const targetElement = document.getElementById(targetId);
-        if (targetElement) {
-          observer.observe(targetElement);
-        }
+    const linkBySectionId = new Map<string, HTMLAnchorElement>()
+    for (const link of tocLinks) {
+      const sectionId = link.getAttribute("data-section-id")
+      if (!sectionId) continue
+      linkBySectionId.set(sectionId, link)
+    }
+
+    const sectionIds = Array.from(linkBySectionId.keys())
+    const sections = sectionIds
+      .map((sectionId) => document.getElementById(sectionId))
+      .filter((section): section is HTMLElement => section !== null)
+
+    if (sections.length === 0) return
+
+    const setActiveSection = (sectionId: string) => {
+      for (const link of tocLinks) {
+        link.classList.remove(...ACTIVE_CLASSES)
+        link.classList.add(...INACTIVE_CLASSES)
+        link.removeAttribute("aria-current")
       }
-    });
+
+      const activeLink = linkBySectionId.get(sectionId)
+      if (!activeLink) return
+
+      activeLink.classList.remove(...INACTIVE_CLASSES)
+      activeLink.classList.add(...ACTIVE_CLASSES)
+      activeLink.setAttribute("aria-current", "location")
+    }
+
+    const scrollToSection = (sectionId: string, behavior: ScrollBehavior = "smooth") => {
+      const target = document.getElementById(sectionId)
+      if (!target) return
+
+      target.scrollIntoView({
+        block: "start",
+        behavior,
+      })
+    }
+
+    const onLinkClick = (event: Event) => {
+      const link = event.currentTarget
+      if (!(link instanceof HTMLAnchorElement)) return
+
+      const sectionId = link.getAttribute("data-section-id")
+      if (!sectionId) return
+
+      event.preventDefault()
+      setActiveSection(sectionId)
+      scrollToSection(sectionId, "smooth")
+
+      const nextUrl = new URL(window.location.href)
+      nextUrl.hash = sectionId
+      window.history.replaceState(window.history.state, "", nextUrl.toString())
+    }
+
+    for (const link of tocLinks) {
+      link.addEventListener("click", onLinkClick)
+    }
+
+    let pendingRafId: number | null = null
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const intersectingEntries = entries.filter((entry) => entry.isIntersecting)
+        if (intersectingEntries.length === 0) return
+
+        intersectingEntries.sort((a, b) => {
+          if (b.intersectionRatio !== a.intersectionRatio) {
+            return b.intersectionRatio - a.intersectionRatio
+          }
+
+          return Math.abs(a.boundingClientRect.top) - Math.abs(b.boundingClientRect.top)
+        })
+
+        const nextSectionId = intersectingEntries[0]?.target?.id
+        if (!nextSectionId || !linkBySectionId.has(nextSectionId)) return
+
+        if (pendingRafId !== null) {
+          cancelAnimationFrame(pendingRafId)
+        }
+
+        pendingRafId = requestAnimationFrame(() => {
+          setActiveSection(nextSectionId)
+          pendingRafId = null
+        })
+      },
+      {
+        rootMargin: "-20% 0px -55% 0px",
+        threshold: [0.1, 0.25, 0.5, 0.75, 1],
+      }
+    )
+
+    for (const section of sections) {
+      observer.observe(section)
+    }
+
+    const onHashChange = () => {
+      const sectionId = readHashSectionId()
+      if (!sectionId || !linkBySectionId.has(sectionId)) return
+
+      setActiveSection(sectionId)
+    }
+
+    window.addEventListener("hashchange", onHashChange)
+
+    const initialSectionId = readHashSectionId()
+    if (initialSectionId && linkBySectionId.has(initialSectionId)) {
+      setActiveSection(initialSectionId)
+    } else {
+      setActiveSection(sectionIds[0])
+    }
+
+    cleanupScrollSpy = () => {
+      if (pendingRafId !== null) {
+        cancelAnimationFrame(pendingRafId)
+      }
+
+      observer.disconnect()
+      window.removeEventListener("hashchange", onHashChange)
+
+      for (const link of tocLinks) {
+        link.removeEventListener("click", onLinkClick)
+      }
+    }
   }
 
   // Setup on page load and on view transitions
-  document.addEventListener('astro:page-load', setupScrollSpy);
+  document.addEventListener("astro:page-load", setupScrollSpy)
 </script>
