@@ -1,12 +1,11 @@
 import { expect, test } from "@playwright/test"
 import { mockApiRoutes } from "./fixtures/mock-api"
-import { waitForUiReady } from "./fixtures/ui-ready"
 
 test.describe("Resume -> Portfolio -> Print flow", () => {
   test.beforeEach(async ({ page }) => {
     await mockApiRoutes(page)
     await page.goto("/")
-    await waitForUiReady(page)
+    await expect(page.getByRole("link", { name: "상세 케이스 스터디 보기" }).first()).toBeVisible()
   })
 
   test("이력서 CTA 이동부터 포트폴리오 인쇄 저장까지 단절 없이 진행된다", async ({ page }) => {

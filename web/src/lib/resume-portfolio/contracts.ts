@@ -20,6 +20,7 @@ export interface ResumeSummaryBlock {
   hasPortfolio: boolean
   technologies: string[]
   accomplishments: string[]
+  evidenceIds: string[]
   ctaLabel?: string
   ctaHref?: string
 }
@@ -41,4 +42,16 @@ export interface PortfolioCaseContract {
   title: string
   sections: PortfolioSectionId[]
   ctaLabel: string
+}
+
+export interface ResumePortfolioContentItem {
+  projectId: string
+  resumeItemId: string
+  resumeSummary: string
+  accomplishments: string[]
+  hasPortfolio: boolean
+  ctaLabel: string
+  defaultSectionId: PortfolioSectionId
+  sections: PortfolioSectionId[]
+  evidenceIds: string[]
 }

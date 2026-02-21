@@ -2,20 +2,19 @@
 import { getCollection } from "astro:content"
 import { Badge } from "@/components/ui/badge"
 import Layout from "@/layouts/Layout.astro"
-import { PORTFOLIO_CASES_V1 } from "@/lib/resume-portfolio/mapping"
+import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 
 const projects = await getCollection("projects")
+const { cases, projectByCaseId } = buildResumePortfolioContracts(projects)
 
-// PORTFOLIO_CASES_V1 순서대로 프로젝트를 불러옵니다.
-const portfolioProjects = await Promise.all(
-  PORTFOLIO_CASES_V1.map(async (portfolioCase) => {
-    // caseId matches the slug/id of the project in astro:content
-    const project = projects.find((p) => p.id === portfolioCase.caseId)
+const portfolioProjects = cases
+  .map((portfolioCase) => {
+    const project = projectByCaseId.get(portfolioCase.caseId)
     if (!project) return null
 
     return { portfolioCase, project }
   })
-).then((results) => results.filter((r) => r !== null))
+  .filter((result): result is NonNullable<typeof result> => result !== null)
 ---
 
 <Layout title="최기환 포트폴리오 | AI와 함께하는 개발자 이력서">

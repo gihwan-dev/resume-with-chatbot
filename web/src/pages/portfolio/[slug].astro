@@ -1,33 +1,50 @@
 ---
-import { getCollection, render } from "astro:content"
+import { type CollectionEntry, getCollection, render } from "astro:content"
 import CaseStudySection from "@/components/portfolio/case-study-section.astro"
 import TableOfContents from "@/components/portfolio/table-of-contents.astro"
 import Layout from "@/layouts/Layout.astro"
-import { PORTFOLIO_CASES_V1, RESUME_PORTFOLIO_MAPPING_V1 } from "@/lib/resume-portfolio/mapping"
+import type { PortfolioCaseContract, PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
+import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 
 export async function getStaticPaths() {
   const projects = await getCollection("projects")
+  const { cases, mappings, projectByCaseId } = buildResumePortfolioContracts(projects)
 
-  // Generate paths for each case in PORTFOLIO_CASES_V1
-  return PORTFOLIO_CASES_V1.map((portfolioCase) => {
-    const project = projects.find((p) => p.id === portfolioCase.caseId)
+  return cases
+    .map((portfolioCase) => {
+      const project = projectByCaseId.get(portfolioCase.caseId)
+      if (!project) return null
 
-    return {
-      params: { slug: portfolioCase.caseId },
-      props: { portfolioCase, project },
-    }
-  }).filter((path) => path.props.project !== undefined)
+      const mapping = mappings.find((item) => item.portfolioCaseId === portfolioCase.caseId)
+
+      return {
+        params: { slug: portfolioCase.caseId },
+        props: {
+          portfolioCase,
+          project,
+          resumeItemId: mapping?.resumeItemId ?? null,
+          defaultSectionId: mapping?.defaultSectionId ?? "overview",
+        },
+      }
+    })
+    .filter((path): path is NonNullable<typeof path> => path !== null)
 }
 
-const { portfolioCase, project } = Astro.props
+interface PortfolioSlugPageProps {
+  portfolioCase: PortfolioCaseContract
+  project: CollectionEntry<"projects">
+  resumeItemId: string | null
+  defaultSectionId: PortfolioSectionId
+}
+
+const { portfolioCase, project, resumeItemId, defaultSectionId } =
+  Astro.props as PortfolioSlugPageProps
 
 if (!project) {
   throw new Error(`Project not found for caseId: ${portfolioCase.caseId}`)
 }
 
-const mapping = RESUME_PORTFOLIO_MAPPING_V1.find((m) => m.portfolioCaseId === portfolioCase.caseId)
-const resumeHref = mapping ? `/#${mapping.resumeItemId}` : "/"
-const defaultSectionId = mapping?.defaultSectionId ?? "overview"
+const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
 
 const { Content } = await render(project)
 ---

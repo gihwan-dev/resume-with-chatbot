@@ -1,5 +1,6 @@
 import { getCollection } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
+import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import type { SerializedResumeData } from "./types"
 
 export async function serializeResumeData(): Promise<SerializedResumeData> {
@@ -21,7 +22,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
     (a, b) => b.data.dateStart.getTime() - a.data.dateStart.getTime()
   )
 
-  const sortedProjects = [...projects].sort((a, b) => a.data.priority - b.data.priority)
+  const { summaryBlocks } = buildResumePortfolioContracts(projects)
 
   const sortedAwards = [...awards].sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
 
@@ -43,16 +44,16 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       location: w.data.location,
       summary: w.data.summary,
     })),
-    projects: sortedProjects.map((p) => ({
-      title: p.data.title,
-      company: p.data.company,
-      description: p.data.description,
-      techStack: p.data.techStack,
-      link: p.data.link,
-      github: p.data.github,
-      dateStart: p.data.dateStart.toISOString(),
-      dateEnd: p.data.dateEnd?.toISOString(),
-      body: p.body?.trim() || undefined,
+    projects: summaryBlocks.map((summaryBlock) => ({
+      resumeItemId: summaryBlock.resumeItemId,
+      title: summaryBlock.title,
+      summary: summaryBlock.summary,
+      hasPortfolio: summaryBlock.hasPortfolio,
+      technologies: summaryBlock.technologies,
+      accomplishments: summaryBlock.accomplishments,
+      evidenceIds: summaryBlock.evidenceIds,
+      ctaLabel: summaryBlock.ctaLabel,
+      ctaHref: summaryBlock.ctaHref,
     })),
     blogPosts,
     education: education.map((e) => ({

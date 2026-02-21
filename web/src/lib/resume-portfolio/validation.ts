@@ -9,7 +9,7 @@ import { parsePortfolioCtaHref } from "./hash"
 
 type ResumeSummaryBlockForValidation = Pick<
   ResumeSummaryBlock,
-  "resumeItemId" | "hasPortfolio" | "ctaHref"
+  "resumeItemId" | "hasPortfolio" | "ctaHref" | "evidenceIds"
 >
 
 export interface ValidateResumePortfolioMappingInput {
@@ -180,6 +180,22 @@ export function validateResumePortfolioMapping(
       if (!summaryBlock.ctaHref) {
         pushUnique(errors, `CTA href가 누락된 resumeItemId가 있습니다: ${resumeItemId}`)
         continue
+      }
+
+      if (!Array.isArray(summaryBlock.evidenceIds) || summaryBlock.evidenceIds.length === 0) {
+        pushUnique(errors, `evidenceIds가 누락된 resumeItemId가 있습니다: ${resumeItemId}`)
+      } else {
+        const normalizedEvidenceIds = summaryBlock.evidenceIds
+          .map((evidenceId) => evidenceId.trim())
+          .filter(Boolean)
+
+        if (normalizedEvidenceIds.length !== summaryBlock.evidenceIds.length) {
+          pushUnique(errors, `빈 evidenceId가 포함된 resumeItemId가 있습니다: ${resumeItemId}`)
+        }
+
+        if (new Set(normalizedEvidenceIds).size !== normalizedEvidenceIds.length) {
+          pushUnique(errors, `evidenceIds가 중복된 resumeItemId가 있습니다: ${resumeItemId}`)
+        }
       }
 
       const anchor = parsePortfolioCtaHref(summaryBlock.ctaHref)

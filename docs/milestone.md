@@ -60,11 +60,11 @@
   - 검증: 릴리즈 전 체크리스트가 문서화되고 실패 항목은 수정 이슈로 분리된다.
 
 ## Phase 7. [SEQUENTIAL] 콘텐츠 이관 및 운영 준비
-- [ ] **기존 이력서 콘텐츠를 이중 구조로 이관**
+- [x] **기존 이력서 콘텐츠를 이중 구조로 이관**
   - 목표: 요약형 이력서 콘텐츠와 스토리형 포트폴리오 콘텐츠를 같은 근거에 기반해 분리 정리한다.
   - 검증: 핵심 프로젝트마다 "요약 1개 + 상세 케이스 스터디 1개"가 연결된다.
 
-- [ ] **운영 가이드 및 업데이트 규칙 정리**
+- [x] **운영 가이드 및 업데이트 규칙 정리**
   - 목표: 이후 자동 업데이트/수동 보정 시 UI 트랙과 기능 트랙의 책임 경계를 운영 문서에 반영한다.
   - 검증: 다음 작업자가 문서만 보고 동일한 방식으로 기능 추가/수정할 수 있다.
 
@@ -103,3 +103,9 @@
 - 성능 개선: 이력서 페이지의 클라이언트 PDF 버튼 직렬화를 제거하고 `GET /api/resume-pdf` 서버 엔드포인트로 전환, dev 훅 충돌을 피하기 위해 PDF 렌더러를 API 요청 시점 동적 import로 조정.
 - 최종 검증: `pnpm -C web run phase6:verify` 통과, Lighthouse 성능은 `/` desktop/mobile `100/99`, `/portfolio/exem-data-grid#overview` desktop/mobile `100/99`로 90 하드게이트를 충족.
 - 마일스톤 반영: Phase 6 체크박스를 완료 처리했고, 다음 미완료 단계는 Phase 7(콘텐츠 이관 및 운영 준비)이다.
+**[2026-02-21] 세션 요약 (Phase 7 완료)**:
+- 콘텐츠 스키마 개편: `web/src/lib/resume-portfolio/content.ts`와 `derive.ts`를 도입해 프로젝트 4건의 요약/상세/매핑/케이스 계약을 단일 소스에서 파생하도록 변경.
+- API 정리: 기존 `mapping.ts` 기반 V1 상수를 제거하고, Resume/Portfolio 페이지를 `buildResumePortfolioContracts` 소비 방식으로 전환.
+- 검증 강화: `validateResumePortfolioMapping`에 `evidenceIds` 누락/중복 검증을 추가해 `hasPortfolio=true` 항목의 근거 ID를 필수 게이트로 고정.
+- 테스트 확장: `tests/lib/resume-portfolio/content-schema.test.ts`를 추가하고 `validation.test.ts`를 신규 스키마 기반으로 갱신.
+- 운영 문서화: `docs/resume-content-operations.md`를 추가해 UI 트랙/기능 트랙 책임 경계, 자동 업데이트/수동 보정 규칙, 실패 대응, PR 체크리스트를 정리.

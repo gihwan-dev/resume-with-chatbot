@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content"
 import { Separator } from "@/components/ui/separator"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
-import { RESUME_SUMMARY_BLOCKS_V1 } from "@/lib/resume-portfolio/mapping"
+import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
 import BlogSection from "./_sections/blog-section.astro"
@@ -19,6 +19,7 @@ const skillsData = skills[0]?.data
 
 const work = await getCollection("work")
 const blogPosts = await getObsidianBlogPosts({ limit: 5 })
+const projects = await getCollection("projects")
 
 const certificates = await getCollection("certificates")
 const awards = await getCollection("awards")
@@ -40,6 +41,8 @@ const awardsWithContent = await Promise.all(
     return { ...entry, Content }
   })
 )
+
+const { summaryBlocks } = buildResumePortfolioContracts(projects)
 ---
 
 <Layout title={`${profile?.name} | AI와 함께하는 개발자 이력서`}>
@@ -83,7 +86,7 @@ const awardsWithContent = await Promise.all(
 
     <Separator className="my-12" />
 
-    <ProjectSection projects={RESUME_SUMMARY_BLOCKS_V1} />
+    <ProjectSection projects={summaryBlocks} />
 
     <Separator className="my-12" />
 
