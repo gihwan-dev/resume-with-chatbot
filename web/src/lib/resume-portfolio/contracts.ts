@@ -13,20 +13,13 @@ export interface PortfolioAnchor {
   sectionId: PortfolioSectionId
 }
 
-export interface ImpactMetric {
-  label: string
-  value: string
-  unit?: string
-  context?: string
-}
-
 export interface ResumeSummaryBlock {
   resumeItemId: string
   title: string
   summary: string
   hasPortfolio: boolean
   technologies: string[]
-  impactMetrics: ImpactMetric[]
+  accomplishments: string[]
   ctaLabel?: string
   ctaHref?: string
 }

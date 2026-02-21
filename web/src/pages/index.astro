@@ -4,6 +4,7 @@ import { PdfDownloadButton } from "@/components/pdf/pdf-download-button"
 import { Separator } from "@/components/ui/separator"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
 import { serializeResumeData } from "@/lib/pdf/serialize-resume"
+import { RESUME_SUMMARY_BLOCKS_V1 } from "@/lib/resume-portfolio/mapping"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
 import BlogSection from "./_sections/blog-section.astro"
@@ -20,7 +21,6 @@ const skills = await getCollection("skills")
 const skillsData = skills[0]?.data
 
 const work = await getCollection("work")
-const projects = await getCollection("projects")
 const blogPosts = await getObsidianBlogPosts({ limit: 5 })
 
 const certificates = await getCollection("certificates")
@@ -30,8 +30,6 @@ const awards = await getCollection("awards")
 const sortedWork = work.sort((a, b) => b.data.dateStart.valueOf() - a.data.dateStart.valueOf())
 
 const sortedAwards = awards.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-const sortedProjects = projects.sort((a, b) => a.data.priority - b.data.priority)
-
 const workWithContent = await Promise.all(
   sortedWork.map(async (entry) => {
     const { Content } = await render(entry)
@@ -41,13 +39,6 @@ const workWithContent = await Promise.all(
 
 const awardsWithContent = await Promise.all(
   sortedAwards.map(async (entry) => {
-    const { Content } = await render(entry)
-    return { ...entry, Content }
-  })
-)
-
-const projectsWithContent = await Promise.all(
-  sortedProjects.map(async (entry) => {
     const { Content } = await render(entry)
     return { ...entry, Content }
   })
@@ -76,7 +67,7 @@ const projectsWithContent = await Promise.all(
 
     <Separator className="my-12" />
 
-    <ProjectSection projects={projectsWithContent} />
+    <ProjectSection projects={RESUME_SUMMARY_BLOCKS_V1} />
 
     <Separator className="my-12" />
 
@@ -98,7 +89,7 @@ const projectsWithContent = await Promise.all(
 
     // 클릭 이벤트 위임: data-ga-event 속성이 있는 요소
     document.addEventListener("click", (e) => {
-      const target = (e.target as HTMLElement).closest<HTMLElement>("[data-ga-event]")
+      const target = (e.target as HTMLElement).closest("[data-ga-event]") as HTMLElement | null
       if (!target) return
 
       const eventName = target.dataset.gaEvent!

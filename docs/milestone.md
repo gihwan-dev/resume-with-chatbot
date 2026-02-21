@@ -15,11 +15,11 @@
   - 검증: UI 트랙과 기능 트랙이 동일한 타입/필드 정의를 기준으로 병렬 작업 가능하다.
 
 ## Phase 2. [PARALLEL:PG-1] UI 구현 트랙 (Gemini) - 이력서 페이지
-- [ ] **이력서 스캔 최적 레이아웃 구현**
+- [x] **이력서 스캔 최적 레이아웃 구현**
   - 목표: F자형 스캔에 맞춘 단일 컬럼/최대 폭 제한/여백 중심 레이아웃을 적용한다.
   - 검증: 1~2분 스캔에서 헤더, 핵심 역량, 임팩트 불릿이 시각적으로 우선 노출된다.
 
-- [ ] **임팩트 요약 블록 및 CTA 버튼 UI 구현**
+- [x] **임팩트 요약 블록 및 CTA 버튼 UI 구현**
   - 목표: `기술 -> 개선/개발 -> 수치 임팩트` 패턴 불릿과 "상세 케이스 스터디 보기" 버튼 UI를 구성한다.
   - 검증: 각 주요 프로젝트 요약 하단에 포트폴리오 이동 CTA가 일관된 스타일로 노출된다.
 
@@ -82,4 +82,8 @@
 **[2026-02-21] 세션 요약**:
 - 발견된 이슈: 초기 검증에서 `src/lib/blog/velog.ts`의 `fast-xml-parser` 타입 선언 누락으로 `astro check`/`tsc --noEmit`가 실패했으나, 의존성 동기화(`pnpm --dir web install`) 후 해결 완료.
 - 아키텍처 결정: 딥링크 규칙을 `/portfolio#<caseId>.<sectionId>`로 고정하고, 프로젝트 카드 단위 1:1 매핑 계약(V1)을 문서+타입+검증 유틸로 고정.
-- 다음 페이즈 영향: Phase 2/3 UI는 `ResumeSummaryBlock`/CTA 규칙을 기준으로 구현 가능하며, Phase 4 기능은 `RESUME_PORTFOLIO_MAPPING_V1`, `PORTFOLIO_CASES_V1`, `validateResumePortfolioMapping`을 바로 재사용 가능.
+**[2026-02-21] 세션 요약 (Phase 2 완료)**:
+- 구현 완료: 이력서 페이지(index.astro)의 프로젝트 섹션을 `RESUME_SUMMARY_BLOCKS_V1` 하드코딩 데이터 기반으로 개편.
+- 디자인 변경: 박스형 임팩트 카드 대신 가독성이 높은 마크다운 불릿 리스트(`accomplishments`)로 렌더링하도록 `contracts.ts` 스키마 수정 및 `@astropub/md` 도입.
+- UX 개선: 포트폴리오 유도 버튼을 시각적 노이즈가 적은 텍스트 링크(대안 1번) 스타일로 변경하여 이력서 톤앤매너 유지.
+- 검증: Astro 컴파일러 파싱 문제 해결 및 `typecheck`/`lint` 통과.

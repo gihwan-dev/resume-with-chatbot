@@ -89,9 +89,9 @@ export const RESUME_SUMMARY_BLOCKS_V1: ResumeSummaryBlock[] = [
       "React 기반 대시보드 아키텍처 재설계로 장애 인지 시간을 10초에서 3초로 단축하고 인터랙션 지연을 개선했습니다.",
     hasPortfolio: true,
     technologies: ["React", "TypeScript", "TanStack Query", "Zustand", "Playwright"],
-    impactMetrics: [
-      { label: "장애 인지 시간", value: "70%", context: "10초 -> 3초 단축" },
-      { label: "인터랙션 지연", value: "73-82%", context: "체감 응답성 개선" },
+    accomplishments: [
+      "**React, TanStack Query** 기반의 대시보드 아키텍처를 재설계하여 대규모 데이터 렌더링 병목 현상을 해결했습니다.",
+      "**장애 인지 시간 70% 단축** (10초 → 3초) 및 **인터랙션 지연 73~82% 개선**으로 사용자의 체감 응답성을 크게 높였습니다.",
     ],
     ctaLabel: "상세 케이스 스터디 보기",
     ctaHref: `/portfolio${buildPortfolioHash("exem-customer-dashboard", "overview")}`,
@@ -103,9 +103,9 @@ export const RESUME_SUMMARY_BLOCKS_V1: ResumeSummaryBlock[] = [
       "공용 그리드를 div 기반 가상화 구조로 전환해 렌더링 병목을 제거하고 대규모 데이터 화면의 성능 안정성을 확보했습니다.",
     hasPortfolio: true,
     technologies: ["React", "TanStack Table", "TanStack Virtual", "Vitest"],
-    impactMetrics: [
-      { label: "DOM 노드 수", value: "90%", context: "동시 렌더링 노드 감소" },
-      { label: "리사이즈 처리", value: "44x", context: "22ms -> 0.5ms" },
+    accomplishments: [
+      "**TanStack Virtual**을 활용해 공용 그리드를 `div` 기반 가상화 구조로 자체 구축하고 범용 컴포넌트화했습니다.",
+      "동시 렌더링 **DOM 노드 수 90% 감소** 및 리사이즈 처리 속도 **44배 향상** (22ms → 0.5ms)을 달성하여 대용량 화면의 성능을 확보했습니다.",
     ],
     ctaLabel: "상세 케이스 스터디 보기",
     ctaHref: `/portfolio${buildPortfolioHash("exem-data-grid", "overview")}`,
@@ -117,9 +117,9 @@ export const RESUME_SUMMARY_BLOCKS_V1: ResumeSummaryBlock[] = [
       "차트 유형별 도메인 폼 아키텍처와 상태 지역화 패턴으로 제품 확장성과 운영 안정성을 동시에 개선했습니다.",
     hasPortfolio: true,
     technologies: ["React", "TypeScript", "Zustand", "Vite", "TanStack Query"],
-    impactMetrics: [
-      { label: "확장성", value: "향상", context: "차트 타입별 독립 스키마 도입" },
-      { label: "운영 안정성", value: "향상", context: "도메인 제약 기반 검증 구조 적용" },
+    accomplishments: [
+      "**Zustand**를 활용한 상태 지역화와 차트 유형별 독립 스키마를 통해 도메인 폼 아키텍처를 설계했습니다.",
+      "도메인 제약 기반의 철저한 런타임 검증을 통해 시스템의 **초기 결함율을 낮추고 제품의 확장성과 운영 안정성을 확보**했습니다.",
     ],
     ctaLabel: "상세 케이스 스터디 보기",
     ctaHref: `/portfolio${buildPortfolioHash("exem-new-generation", "overview")}`,
@@ -131,9 +131,9 @@ export const RESUME_SUMMARY_BLOCKS_V1: ResumeSummaryBlock[] = [
       "폐쇄망 환경 제약을 반영한 리포트/온보딩 자동화 인프라를 구축해 팀 피드백 루프와 입사자 적응 속도를 개선했습니다.",
     hasPortfolio: true,
     technologies: ["Nest.js", "TypeScript", "React", "MinIO", "N8N", "Docker"],
-    impactMetrics: [
-      { label: "레포트 접근 시간", value: "97%", context: "다운로드 중심 흐름 제거" },
-      { label: "온보딩 시간", value: "5분", context: "수 시간 -> 5분 단축" },
+    accomplishments: [
+      "**Nest.js, Docker** 등을 활용해 폐쇄망 환경의 제약을 우회하는 리포트 및 온보딩 자동화 파이프라인을 구축했습니다.",
+      "신규 입사자 온보딩 소요 시간을 **수 시간에서 5분 이내로 단축**하고, 고객 레포트 접근 시간을 **97% 개선**하여 팀 생산성을 극대화했습니다.",
     ],
     ctaLabel: "상세 케이스 스터디 보기",
     ctaHref: `/portfolio${buildPortfolioHash("exem-dx-improvement", "overview")}`,
