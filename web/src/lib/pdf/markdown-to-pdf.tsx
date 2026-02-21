@@ -27,6 +27,61 @@ const parBadgeStyleMap: Record<ParLabel, typeof styles.parProblemBadge> = {
   Result: styles.parResultBadge,
 }
 
+function stripHtmlTags(input: string): string {
+  return input.replace(/<[^>]+>/g, "")
+}
+
+function normalizeInlineHtml(input: string): string {
+  return input
+    .replace(/<h3[^>]*>(.*?)<\/h3>/gi, (_, text: string) => `### ${stripHtmlTags(text).trim()}`)
+    .replace(/<h4[^>]*>(.*?)<\/h4>/gi, (_, text: string) => `#### ${stripHtmlTags(text).trim()}`)
+    .replace(
+      /<blockquote[^>]*>(.*?)<\/blockquote>/gi,
+      (_, text: string) => `> ${stripHtmlTags(text).trim()}`
+    )
+    .replace(/<li[^>]*>(.*?)<\/li>/gi, (_, text: string) => `* ${stripHtmlTags(text).trim()}`)
+}
+
+export function normalizeMarkdownForPdf(markdown: string): string {
+  const lines = markdown.split("\n")
+  const normalizedLines: string[] = []
+
+  for (const rawLine of lines) {
+    const line = normalizeInlineHtml(rawLine)
+    const trimmed = line.trim()
+
+    if (trimmed === "") {
+      normalizedLines.push("")
+      continue
+    }
+
+    if (/^import\s.+from\s+["'][^"']+["'];?$/.test(trimmed)) {
+      continue
+    }
+
+    if (/^<\/?CompareToggle\b[^>]*>$/.test(trimmed)) {
+      continue
+    }
+
+    if (/^<\/?div\b[^>]*>$/.test(trimmed)) {
+      continue
+    }
+
+    if (/^<\/?(ul|ol)\b[^>]*>$/.test(trimmed)) {
+      continue
+    }
+
+    // Any leftover full-line HTML tag is not printable markdown for PDF.
+    if (/^<\/?[a-z][^>]*>$/i.test(trimmed)) {
+      continue
+    }
+
+    normalizedLines.push(line)
+  }
+
+  return normalizedLines.join("\n")
+}
+
 function isParLabel(text: string): ParLabel | null {
   const trimmed = text.trim()
   for (const label of PAR_LABELS) {
@@ -150,7 +205,7 @@ function renderInline(segments: InlineSegment[], key: string): PdfNode {
 }
 
 export function markdownToPdf(markdown: string): PdfNode[] {
-  const lines = markdown.split("\n")
+  const lines = normalizeMarkdownForPdf(markdown).split("\n")
   const nodes: PdfNode[] = []
   let i = 0
 
@@ -219,6 +274,20 @@ export function markdownToPdf(markdown: string): PdfNode[] {
         <View key={`ul-${i}`} style={styles.mdBulletRow}>
           <Text style={styles.mdBulletMarker}>•</Text>
           <View style={styles.mdBulletContent}>{renderInline(segments, `ult-${i}`)}</View>
+        </View>
+      )
+      i++
+      continue
+    }
+
+    // Blockquote: > quoted text
+    const quoteMatch = trimmed.match(/^>\s+(.+)/)
+    if (quoteMatch) {
+      const segments = parseInline(quoteMatch[1])
+      nodes.push(
+        <View key={`quote-${i}`} style={styles.mdQuoteRow}>
+          <View style={styles.mdQuoteBar} />
+          <View style={styles.mdQuoteContent}>{renderInline(segments, `quotet-${i}`)}</View>
         </View>
       )
       i++
