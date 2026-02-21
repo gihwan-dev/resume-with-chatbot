@@ -1,0 +1,140 @@
+---
+import type { CollectionEntry } from "astro:content"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
+
+interface Props {
+  portfolioCase: PortfolioCaseContract
+  project: CollectionEntry<"projects">
+}
+
+const { portfolioCase, project } = Astro.props
+---
+
+<article id={`${portfolioCase.caseId}.overview`} class="mb-32 scroll-mt-24 group/case relative">
+  <div class="mb-12">
+    <h1 class="text-3xl sm:text-4xl font-extrabold text-resume-text-heading mb-6 tracking-tight leading-tight">
+      {portfolioCase.title}
+    </h1>
+    
+    <div class="text-lg text-resume-text-main/80 mb-8 leading-relaxed">
+      {project.data.description}
+    </div>
+
+    {project.data.techStack && project.data.techStack.length > 0 && (
+      <div class="flex flex-wrap gap-2 mb-8">
+        {project.data.techStack.map((tech) => (
+          <Badge variant="outline" className="text-sm font-normal bg-resume-card-bg text-resume-text-main border-resume-border">
+            {tech}
+          </Badge>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <div class="portfolio-prose">
+    <slot />
+  </div>
+  
+  <Separator className="mt-24 print:hidden" />
+</article>
+
+<style is:global>
+  .portfolio-prose {
+    color: var(--resume-text-main);
+    line-height: 1.8;
+  }
+  .portfolio-prose h3, .portfolio-prose h4 {
+    color: var(--resume-text-heading);
+    font-weight: 700;
+    margin-top: 2.5em;
+    margin-bottom: 1em;
+    font-size: 1.5rem;
+    scroll-margin-top: 6rem;
+  }
+  .portfolio-prose h4 {
+    font-size: 1.25rem;
+  }
+  .portfolio-prose p {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+    opacity: 0.9;
+  }
+  .portfolio-prose ul {
+    margin-top: 1.25em;
+    margin-bottom: 1.25em;
+    padding-left: 1.625em;
+    list-style-type: disc;
+    opacity: 0.9;
+  }
+  .portfolio-prose li {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    padding-left: 0.375em;
+  }
+  .portfolio-prose li::marker {
+    color: var(--resume-primary);
+    opacity: 0.7;
+  }
+  .portfolio-prose strong {
+    color: var(--resume-text-heading);
+    font-weight: 600;
+  }
+  .portfolio-prose a {
+    color: var(--resume-primary);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 0.2s ease;
+  }
+  .portfolio-prose a:hover {
+    color: var(--resume-secondary);
+  }
+  .portfolio-prose hr {
+    margin-top: 3em;
+    margin-bottom: 3em;
+    border: 0;
+    border-top: 1px solid var(--resume-border);
+  }
+  .portfolio-prose blockquote {
+    border-left: 4px solid var(--resume-primary);
+    padding-left: 1rem;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+    font-size: 1.125rem;
+    color: var(--resume-text-heading);
+    font-style: italic;
+    background-color: var(--resume-highlight);
+    padding: 1rem 1rem 1rem 1.25rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+  }
+  
+  /* Print specific adjustments */
+  @media print {
+    .portfolio-prose {
+      color: #000;
+      line-height: 1.6;
+    }
+    .portfolio-prose h3, .portfolio-prose h4 {
+      color: #000;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+    .portfolio-prose p, .portfolio-prose ul, .portfolio-prose li {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      color: #333;
+    }
+    .portfolio-prose a::after {
+      content: " (" attr(href) ")";
+      font-size: 0.85em;
+      word-break: break-all;
+      color: #666;
+    }
+    /* Don't expand internal hash links */
+    .portfolio-prose a[href^="#"]::after, .portfolio-prose a[href^="/portfolio#"]::after {
+      content: none;
+    }
+  }
+</style>

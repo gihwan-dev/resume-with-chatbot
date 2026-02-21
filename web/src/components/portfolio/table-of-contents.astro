@@ -1,0 +1,26 @@
+---
+import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
+import { buildPortfolioHash } from "@/lib/resume-portfolio/hash"
+
+interface Props {
+  cases: PortfolioCaseContract[]
+}
+
+const { cases } = Astro.props
+---
+
+<nav class="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-6 print:hidden">
+  <h2 class="text-sm font-bold text-resume-text-heading uppercase tracking-wider mb-6">Contents</h2>
+  <ul class="space-y-6">
+    {cases.map((c) => (
+      <li>
+        <a 
+          href={buildPortfolioHash(c.caseId, "overview")} 
+          class="block text-sm font-semibold text-resume-text-heading hover:text-resume-primary transition-colors mb-2"
+        >
+          {c.title}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
