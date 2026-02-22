@@ -44,6 +44,32 @@ describe("projectStoryThreadSchema", () => {
     expect(result.errors).toHaveLength(0)
   })
 
+  it("유효 입력: comparison이 있으면 스키마 검증을 통과한다", () => {
+    const validWithComparison = {
+      ...VALID_STORY_THREAD,
+      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
+        index === 0
+          ? {
+              ...thread,
+              comparison: {
+                beforeLabel: "기존 구조",
+                afterLabel: "개선 구조",
+                before: ["분산 폴링 규칙 유지"],
+                after: ["중앙 Polling Manager 적용"],
+              },
+            }
+          : thread
+      ),
+    }
+
+    const parsed = projectStoryThreadSchema.safeParse(validWithComparison)
+    expect(parsed.success).toBe(true)
+
+    const result = validateProjectStoryThread(validWithComparison)
+    expect(result.isValid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+  })
+
   it("누락 입력: 필수 필드 누락을 missing으로 분류한다", () => {
     const missingImpacts = {
       ...VALID_STORY_THREAD,
@@ -93,6 +119,62 @@ describe("projectStoryThreadSchema", () => {
         expect.objectContaining({
           code: "empty_array",
           path: "storyThread.threads",
+        }),
+      ])
+    )
+  })
+
+  it("빈 배열: comparison.before가 비어 있으면 empty_array로 분류한다", () => {
+    const emptyComparisonBeforeInput = {
+      ...VALID_STORY_THREAD,
+      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
+        index === 0
+          ? {
+              ...thread,
+              comparison: {
+                before: [],
+                after: ["개선 후 상태"],
+              },
+            }
+          : thread
+      ),
+    }
+
+    const result = validateProjectStoryThread(emptyComparisonBeforeInput)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "empty_array",
+          path: "storyThread.threads[0].comparison.before",
+        }),
+      ])
+    )
+  })
+
+  it("빈 배열: comparison.after가 비어 있으면 empty_array로 분류한다", () => {
+    const emptyComparisonAfterInput = {
+      ...VALID_STORY_THREAD,
+      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
+        index === 0
+          ? {
+              ...thread,
+              comparison: {
+                before: ["개선 전 상태"],
+                after: [],
+              },
+            }
+          : thread
+      ),
+    }
+
+    const result = validateProjectStoryThread(emptyComparisonAfterInput)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "empty_array",
+          path: "storyThread.threads[0].comparison.after",
         }),
       ])
     )

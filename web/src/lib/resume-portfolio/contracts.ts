@@ -8,11 +8,19 @@ export interface ImpactItem {
   description: string
 }
 
+export interface StoryThreadComparison {
+  beforeLabel?: string
+  afterLabel?: string
+  before: string[]
+  after: string[]
+}
+
 export interface StoryThreadItem {
   issueTitle: string
   problems: string[]
   thoughtProcess: string
   actions: string[]
+  comparison?: StoryThreadComparison
   result: string
 }
 

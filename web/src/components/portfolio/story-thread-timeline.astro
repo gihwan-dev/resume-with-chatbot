@@ -1,4 +1,5 @@
 ---
+import CompareToggle from "@/components/portfolio/compare-toggle.astro"
 import type { StoryThreadItem } from "@/lib/resume-portfolio/contracts"
 
 interface Props {
@@ -45,6 +46,28 @@ const { threads } = Astro.props
               <li>{action}</li>
             ))}
           </ul>
+
+          {thread.comparison && (
+            <CompareToggle
+              beforeLabel={thread.comparison.beforeLabel}
+              afterLabel={thread.comparison.afterLabel}
+            >
+              <div slot="before">
+                <ul class="space-y-2 pl-5 text-sm leading-relaxed text-resume-text-main/80 marker:text-rose-500">
+                  {thread.comparison.before.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div slot="after">
+                <ul class="space-y-2 pl-5 text-sm leading-relaxed text-resume-text-main/90 marker:text-emerald-500">
+                  {thread.comparison.after.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            </CompareToggle>
+          )}
         </section>
 
         <section class="space-y-2">

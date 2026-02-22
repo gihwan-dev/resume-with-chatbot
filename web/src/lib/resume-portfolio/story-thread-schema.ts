@@ -1,5 +1,10 @@
 import { z } from "zod"
-import type { ImpactItem, ProjectStoryThread, StoryThreadItem } from "./contracts"
+import type {
+  ImpactItem,
+  ProjectStoryThread,
+  StoryThreadComparison,
+  StoryThreadItem,
+} from "./contracts"
 
 const nonEmptyText = z
   .string({
@@ -13,6 +18,23 @@ export const impactItemSchema: z.ZodType<ImpactItem> = z.object({
   value: nonEmptyText,
   label: nonEmptyText,
   description: nonEmptyText,
+})
+
+export const storyThreadComparisonSchema: z.ZodType<StoryThreadComparison> = z.object({
+  beforeLabel: nonEmptyText.optional(),
+  afterLabel: nonEmptyText.optional(),
+  before: z
+    .array(nonEmptyText, {
+      required_error: "comparison.before 필드가 누락되었습니다.",
+      invalid_type_error: "comparison.before는 문자열 배열이어야 합니다.",
+    })
+    .min(1, "comparison.before는 최소 1개 이상이어야 합니다."),
+  after: z
+    .array(nonEmptyText, {
+      required_error: "comparison.after 필드가 누락되었습니다.",
+      invalid_type_error: "comparison.after는 문자열 배열이어야 합니다.",
+    })
+    .min(1, "comparison.after는 최소 1개 이상이어야 합니다."),
 })
 
 export const storyThreadItemSchema: z.ZodType<StoryThreadItem> = z.object({
@@ -30,6 +52,7 @@ export const storyThreadItemSchema: z.ZodType<StoryThreadItem> = z.object({
       invalid_type_error: "actions는 문자열 배열이어야 합니다.",
     })
     .min(1, "actions는 최소 1개 이상이어야 합니다."),
+  comparison: storyThreadComparisonSchema.optional(),
   result: nonEmptyText,
 })
 
