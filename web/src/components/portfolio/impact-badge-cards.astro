@@ -1,0 +1,25 @@
+---
+import type { ImpactItem } from "@/lib/resume-portfolio/contracts"
+
+interface Props {
+  impacts: ImpactItem[]
+}
+
+const { impacts } = Astro.props
+---
+
+<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+  {impacts.map((impact) => (
+    <article class="rounded-xl border border-resume-primary/20 bg-resume-card-bg px-5 py-4 shadow-sm print:break-inside-avoid print:border-resume-border print:shadow-none">
+      <p class="text-3xl font-extrabold tracking-tight text-resume-primary sm:text-4xl">
+        {impact.value}
+      </p>
+      <p class="mt-2 text-sm font-semibold text-resume-text-heading">
+        {impact.label}
+      </p>
+      <p class="mt-2 text-sm leading-relaxed text-resume-text-main/80">
+        {impact.description}
+      </p>
+    </article>
+  ))}
+</div>

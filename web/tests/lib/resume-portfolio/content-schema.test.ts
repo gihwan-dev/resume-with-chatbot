@@ -43,7 +43,7 @@ describe("resume portfolio content schema", () => {
     expect(contracts.cases).toHaveLength(4)
 
     const firstSummaryBlock = contracts.summaryBlocks[0]
-    expect(firstSummaryBlock.ctaHref).toBe("/portfolio/exem-customer-dashboard#overview")
+    expect(firstSummaryBlock.ctaHref).toBe("/portfolio/exem-customer-dashboard#hook")
     expect(firstSummaryBlock.evidenceIds.length).toBeGreaterThan(0)
   })
 

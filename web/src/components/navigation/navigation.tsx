@@ -13,10 +13,9 @@ import {
 import { ThemeProvider } from "./theme-provider"
 
 const PORTFOLIO_SECTION_LABELS: Record<PortfolioSectionId, string> = {
-  overview: "개요",
-  problem: "문제",
-  decision: "해결 방안",
-  result: "결과",
+  hook: "핵심 임팩트",
+  context: "배경",
+  threads: "스토리 스레드",
   retrospective: "회고",
 }
 

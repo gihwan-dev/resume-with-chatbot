@@ -36,11 +36,11 @@
     - 누락된 사고 과정(전환 문장) 없는 상태가 됩니다.
 
 ## Phase 4. [PARALLEL:PG-1] 핵심 UI 컴포넌트 구축
-- [ ] **Impact Badge 카드 컴포넌트 구현 (상단 전용)**
+- [x] **Impact Badge 카드 컴포넌트 구현 (상단 전용)**
   - 목표: Hero 영역에서 핵심 성과를 즉시 인지할 수 있는 강조형 카드 UI를 구현합니다.
   - 검증: 카드가 수치, 레이블, 설명을 렌더링하며, 시각적 강조가 본문보다 우선 노출되도록 설계됩니다.
 
-- [ ] **Story Thread 끊김 없는 타임라인 컴포넌트 구현 (본문 전용)**
+- [x] **Story Thread 끊김 없는 타임라인 컴포넌트 구현 (본문 전용)**
   - 목표: 박스(Card) 형태를 배제하고, 여백과 타임라인 라인만으로 Problem-Thought-Action-Result를 물 흐르듯 읽히게 만듭니다.
   - 검증: 
     - 닫힌 테두리(박스) 없이 좌측 연결 라인만으로 서사의 연속성이 표현됩니다.
@@ -117,3 +117,8 @@
 - 완료 사항: 잔여 1건(`exem-dx-improvement`)에 Story Thread(`context`, `impacts`, `threads`, `lessonsLearned`) 전환을 완료.
 - 품질 기준: Impact/Result 수치는 기존 본문의 검증 가능한 수치만 재사용하고 신규 추정 수치는 추가하지 않음.
 - 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 4(핵심 UI 컴포넌트 구축)이며, 데이터 커버리지 4/4 기준으로 UI 통합 작업에 착수 가능.
+
+**[2026-02-22] Phase 4 완료 요약**:
+- 완료 사항: `Impact Badge` 카드와 `Story Thread` 타임라인 컴포넌트를 구현하고 상세 페이지를 `Hook -> Context -> Threads -> Retrospective` 구조로 즉시 전환.
+- 아키텍처 결정: canonical 해시를 `hook/context/threads/retrospective`로 전환하고 legacy 해시(`overview/problem/decision/result/retrospective`)는 자동 매핑으로 호환 유지.
+- 신규 해시 계약 선반영(Phase 5 일부 앞당김): TOC 활성 상태, 딥링크 정규화, 모바일 목차 이동, 인쇄 흐름 테스트를 새 섹션 계약 기준으로 갱신.

@@ -12,8 +12,8 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
-    defaultSectionId: "overview",
-    sections: ["overview", "problem", "decision", "result", "retrospective"],
+    defaultSectionId: "hook",
+    sections: ["hook", "context", "threads", "retrospective"],
     evidenceIds: ["ACH-20260206-001"],
   },
   {
@@ -27,8 +27,8 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
-    defaultSectionId: "overview",
-    sections: ["overview", "problem", "decision", "result", "retrospective"],
+    defaultSectionId: "hook",
+    sections: ["hook", "context", "threads", "retrospective"],
     evidenceIds: ["ACH-20260213-001"],
   },
   {
@@ -42,8 +42,8 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
-    defaultSectionId: "overview",
-    sections: ["overview", "problem", "decision", "result", "retrospective"],
+    defaultSectionId: "hook",
+    sections: ["hook", "context", "threads", "retrospective"],
     evidenceIds: ["ACH-20260211-001"],
   },
   {
@@ -57,8 +57,8 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
-    defaultSectionId: "overview",
-    sections: ["overview", "problem", "decision", "result", "retrospective"],
+    defaultSectionId: "hook",
+    sections: ["hook", "context", "threads", "retrospective"],
     evidenceIds: ["ACH-20260128-001"],
   },
 ]

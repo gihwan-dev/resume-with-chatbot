@@ -1,10 +1,4 @@
-export const PORTFOLIO_SECTION_IDS = [
-  "overview",
-  "problem",
-  "decision",
-  "result",
-  "retrospective",
-] as const
+export const PORTFOLIO_SECTION_IDS = ["hook", "context", "threads", "retrospective"] as const
 
 export type PortfolioSectionId = (typeof PORTFOLIO_SECTION_IDS)[number]
 

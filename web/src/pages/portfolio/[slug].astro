@@ -1,5 +1,5 @@
 ---
-import { type CollectionEntry, getCollection, render } from "astro:content"
+import { type CollectionEntry, getCollection } from "astro:content"
 import CaseStudySection from "@/components/portfolio/case-study-section.astro"
 import Layout from "@/layouts/Layout.astro"
 import type { PortfolioCaseContract, PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
@@ -22,7 +22,7 @@ export async function getStaticPaths() {
           portfolioCase,
           project,
           resumeItemId: mapping?.resumeItemId ?? null,
-          defaultSectionId: mapping?.defaultSectionId ?? "overview",
+          defaultSectionId: mapping?.defaultSectionId ?? "hook",
         },
       }
     })
@@ -44,8 +44,6 @@ if (!project) {
 }
 
 const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
-
-const { Content } = await render(project)
 ---
 
 <Layout title={`${portfolioCase.title} | 최기환 포트폴리오`}>
@@ -66,6 +64,13 @@ const { Content } = await render(project)
     >
       const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
       const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+      const LEGACY_SECTION_ALIAS_MAP = {
+        overview: "hook",
+        problem: "threads",
+        decision: "threads",
+        result: "threads",
+        retrospective: "retrospective",
+      }
       const sectionIdSet = new Set(allowedSectionIds)
       const expectedPathname = `/portfolio/${caseId}`
 
@@ -82,16 +87,32 @@ const { Content } = await render(project)
         }
       }
 
+      function normalizeSectionId(sectionId) {
+        if (!sectionId) return null
+        if (sectionIdSet.has(sectionId)) return sectionId
+
+        const legacyMappedSectionId = LEGACY_SECTION_ALIAS_MAP[sectionId]
+        if (legacyMappedSectionId && sectionIdSet.has(legacyMappedSectionId)) {
+          return legacyMappedSectionId
+        }
+
+        return null
+      }
+
       function normalizeSectionHash() {
         const currentSectionId = readHashSectionId()
         if (currentSectionId === null) return null
-        if (sectionIdSet.has(currentSectionId)) return currentSectionId
+
+        const normalizedSectionId = normalizeSectionId(currentSectionId)
+        const nextSectionId = normalizedSectionId ?? defaultSectionId
 
         const nextUrl = new URL(window.location.href)
-        nextUrl.hash = defaultSectionId
-        window.history.replaceState(window.history.state, "", nextUrl.toString())
+        if (currentSectionId !== nextSectionId) {
+          nextUrl.hash = nextSectionId
+          window.history.replaceState(window.history.state, "", nextUrl.toString())
+        }
 
-        return defaultSectionId
+        return nextSectionId
       }
 
       function scrollToSection(sectionId, behavior = "auto") {
@@ -222,12 +243,7 @@ const { Content } = await render(project)
           <hr class="mt-8 mb-12 border-resume-border" />
         </div>
 
-        <CaseStudySection 
-          portfolioCase={portfolioCase} 
-          project={project} 
-        >
-          <Content />
-        </CaseStudySection>
+        <CaseStudySection portfolioCase={portfolioCase} project={project} />
       </main>
     </div>
   </div>

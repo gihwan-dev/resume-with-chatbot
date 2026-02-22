@@ -1,0 +1,61 @@
+---
+import type { StoryThreadItem } from "@/lib/resume-portfolio/contracts"
+
+interface Props {
+  threads: StoryThreadItem[]
+}
+
+const { threads } = Astro.props
+---
+
+<ol class="space-y-14">
+  {threads.map((thread, index) => (
+    <li class="relative pl-10 print:break-inside-avoid">
+      <span class="absolute left-3 top-0 bottom-0 w-px bg-resume-border/80" aria-hidden="true" />
+      <span class="absolute left-0 top-1 inline-flex h-6 w-6 items-center justify-center rounded-full border border-resume-primary/40 bg-resume-bg text-xs font-bold text-resume-primary">
+        {index + 1}
+      </span>
+
+      <div class="space-y-5 pb-2">
+        <h3 class="text-xl font-bold leading-tight text-resume-text-heading">
+          {thread.issueTitle}
+        </h3>
+
+        <section class="space-y-2">
+          <h4 class="text-sm font-bold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+            Problem
+          </h4>
+          <ul class="space-y-2 pl-5 text-sm leading-relaxed text-resume-text-main/85 marker:text-rose-500">
+            {thread.problems.map((problem) => (
+              <li>{problem}</li>
+            ))}
+          </ul>
+        </section>
+
+        <blockquote class="border-l-4 border-resume-primary/40 bg-resume-highlight/70 px-4 py-3 text-sm leading-relaxed italic text-resume-text-heading/90">
+          {thread.thoughtProcess}
+        </blockquote>
+
+        <section class="space-y-2">
+          <h4 class="text-sm font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">
+            Action
+          </h4>
+          <ul class="space-y-2 pl-5 text-sm leading-relaxed text-resume-text-main/85 marker:text-sky-500">
+            {thread.actions.map((action) => (
+              <li>{action}</li>
+            ))}
+          </ul>
+        </section>
+
+        <section class="space-y-2">
+          <h4 class="text-sm font-bold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+            Result
+          </h4>
+          <p class="text-sm leading-relaxed text-resume-text-main/90">
+            {thread.result}
+          </p>
+        </section>
+      </div>
+    </li>
+  ))}
+</ol>
