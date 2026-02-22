@@ -82,17 +82,31 @@ const { experiences } = Astro.props as Props
                 >
                   <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
                   {project.summary && (
-                    <p class="mt-2 text-sm text-resume-text-main/85 leading-relaxed">{project.summary}</p>
+                    <p class="mt-2 text-sm font-semibold text-resume-text-main leading-relaxed">
+                      {project.summary}
+                    </p>
                   )}
 
                   {project.accomplishments && project.accomplishments.length > 0 && (
                     <ul class="resume-bullet-list mt-3 space-y-2">
-                      {project.accomplishments.slice(0, 2).map((accomplishment) => (
-                        <li class="pl-4 relative text-sm text-resume-text-main/90 leading-relaxed">
-                          <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-resume-primary/70" />
-                          <Markdown of={accomplishment} />
-                        </li>
-                      ))}
+                      {project.accomplishments.slice(0, 3).map((accomplishment) => {
+                        const isOutcome = accomplishment.trim().startsWith("→")
+                        return (
+                          <li
+                            class:list={[
+                              "relative text-sm leading-relaxed",
+                              isOutcome
+                                ? "pl-0 text-resume-primary font-medium"
+                                : "pl-4 text-resume-text-main/90",
+                            ]}
+                          >
+                            {!isOutcome && (
+                              <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-resume-primary/70" />
+                            )}
+                            <Markdown of={accomplishment} />
+                          </li>
+                        )
+                      })}
                     </ul>
                   )}
 

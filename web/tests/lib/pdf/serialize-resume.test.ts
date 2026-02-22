@@ -278,7 +278,7 @@ describe("serializeResumeData", () => {
     expect(mockGetObsidianBlogPosts).toHaveBeenCalledWith({ limit: 5 })
     expect(result.blogPosts).toEqual(blogPosts)
     expect(result.projects).toHaveLength(4)
-    expect(result.projects[0].summary).toContain("장애 인지 시간을 10초에서 3초로 단축")
+    expect(result.projects[0].summary).toContain("장애 인지 시간을 70% 단축")
     expect(result.projects[0].accomplishments.length).toBeGreaterThan(0)
     expect(result.projects[0].evidenceIds.length).toBeGreaterThan(0)
     expect(result.work).toHaveLength(2)
