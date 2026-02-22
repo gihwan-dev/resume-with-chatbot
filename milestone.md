@@ -28,7 +28,7 @@
     - Retrospective 문단이 배운 점 중심으로 정리됩니다.
 
 ## Phase 3. [PARALLEL:PG-1] 콘텐츠 마이그레이션 배치 B
-- [ ] **잔여 케이스 Story Thread 리라이팅 및 품질 정합화**
+- [x] **잔여 케이스 Story Thread 리라이팅 및 품질 정합화**
   - 목표: 나머지 프로젝트를 동일한 톤/깊이/형식으로 마이그레이션해 전체 일관성을 확보합니다.
   - 검증:
     - 잔여 케이스가 동일 스키마로 전환됩니다.
@@ -112,3 +112,8 @@
 - 발견된 이슈: 신규 수치 생성 없이 기존 본문의 검증 가능한 수치만 Impact로 구성해야 함.
 - 아키텍처 결정: `storyThread`는 frontmatter 데이터로만 추가하고, legacy 본문/섹션/딥링크 계약은 유지.
 - 다음 페이즈 영향: Phase 3에서 `exem-dx-improvement`를 동일 규칙으로 전환하고 톤/단위 정합화를 진행.
+
+**[2026-02-22] Phase 3 완료 요약**:
+- 완료 사항: 잔여 1건(`exem-dx-improvement`)에 Story Thread(`context`, `impacts`, `threads`, `lessonsLearned`) 전환을 완료.
+- 품질 기준: Impact/Result 수치는 기존 본문의 검증 가능한 수치만 재사용하고 신규 추정 수치는 추가하지 않음.
+- 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 4(핵심 UI 컴포넌트 구축)이며, 데이터 커버리지 4/4 기준으로 UI 통합 작업에 착수 가능.
