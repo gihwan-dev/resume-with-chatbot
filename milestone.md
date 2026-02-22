@@ -39,14 +39,14 @@
 
 ## Phase 3. [PARALLEL:PG-1] Hero + Core Strength 재작성
 
-- [ ] **Hero 정체성/신뢰 지표 재작성**
+- [x] **Hero 정체성/신뢰 지표 재작성**
   - 목표: 첫 화면 10초 내 정체성과 신뢰를 전달한다.
   - 검증:
     - 성능·아키텍처 FE 포지셔닝 문구가 반영된다.
     - 수치 지표 3~4개가 근거 기반으로 배치된다.
     - 요약 문장이 문제-해결-영향 관점으로 정리된다.
 
-- [ ] **Core Strength 4축 섹션 신설**
+- [x] **Core Strength 4축 섹션 신설**
   - 목표: 스택보다 능력 프레임이 먼저 읽히도록 구조를 바꾼다.
   - 검증:
     - 대규모 렌더링 아키텍처/성능 최적화/아키텍처 설계/DX 자동화 4축이 고정된다.
@@ -270,3 +270,53 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 - 완료 처리:
   - Phase 2의 두 체크박스를 `[x]`로 업데이트.
   - 다음 미완료 Phase는 `Phase 3. [PARALLEL:PG-1] Hero + Core Strength 재작성`.
+
+### 2026-02-22 — Phase 3 실행 및 완료
+
+- 구현 파일:
+  - `web/src/content/basics/profile.json`
+    - 포지셔닝 라벨을 `성능·아키텍처 Frontend Engineer`로 갱신
+    - Hero summary를 문제 정의/구조 전환/영향 관점으로 리라이팅
+    - 근거 기반 지표 4개(`10초→3초`, `DOM 90%`, `22ms→0.5ms`, `3분→5초`) 추가
+  - `web/src/content/skills/skills.json`
+    - `coreStrengths` 4축(대규모 렌더링 아키텍처/성능 최적화/아키텍처 설계/DX 자동화·협업) 추가
+  - `web/src/pages/_sections/hero-section.astro`
+    - `heroMetrics` optional 렌더링 추가
+    - Problem/Action/Result 요약 블록 추가
+  - `web/src/pages/_sections/core-strength-section.astro` 신규 생성
+    - Core Strength 4축 카드형 섹션 신설
+  - `web/src/pages/_sections/skills-section.astro`
+    - 섹션 제목/설명을 보조 정보 톤으로 조정
+  - `web/src/pages/index.astro`
+    - 섹션 순서를 `Hero -> Core Strength -> Experience -> Skills -> Projects -> Blog -> Certificates -> Awards`로 재배치
+    - `section_view` 대상 ID 집계 로직은 변경하지 않음(Phase 6 이관)
+  - `web/e2e/resume-hero-core-strength.spec.ts` 신규 생성
+    - Hero 지표 4개, Core Strength 4축, 섹션 순서(코어스트렝스/익스피리언스/스킬) 수용 테스트 추가
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과 (3회 게이트 확인, 0 error)
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/chat-utils.test.ts tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts` 통과 (4 files, 30 tests)
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts --project=chromium` 통과 (30 passed)
+    - 1차 실행 시 `http://localhost:4321 is already used`로 실패 후 포트 점유 프로세스 정리 후 재실행 통과
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/resume-hero-core-strength.spec.ts --project=chromium` 통과 (3 passed)
+
+- Phase 6 이관 항목:
+  - Navigation(`web/src/components/navigation/section-nav.tsx`) 항목 정합성 변경
+  - analytics `section_view` 집계 섹션 ID 재정렬
+
+- 완료 처리:
+  - Phase 3의 두 체크박스를 `[x]`로 업데이트.
+  - 다음 미완료 Phase는 `Phase 4. [PARALLEL:PG-1] Experience-Projects 통합 설계`.
+
+### 2026-02-22 — Phase 3 후속 조정 (사용자 피드백 반영)
+
+- 반영 내용:
+  - Hero 영역의 `Problem·Action·Result` 카드 제거
+  - Hero 영역의 `Key Metrics` 카드 UI 제거
+  - `web/e2e/resume-hero-core-strength.spec.ts`를 최신 요구사항 기준(카드 미노출)으로 갱신
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 통과
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/resume-hero-core-strength.spec.ts --project=chromium` 통과 (3 passed)

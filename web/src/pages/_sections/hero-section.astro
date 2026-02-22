@@ -1,12 +1,27 @@
 ---
-const { profile } = Astro.props
+interface ProfileLink {
+  network: string
+  username: string
+  url: string
+}
+
+interface ProfileData {
+  name?: string
+  label?: string
+  email?: string
+  url?: string
+  summary?: string
+  profiles?: ProfileLink[]
+}
+
+const { profile } = Astro.props as { profile?: ProfileData }
 ---
 
 <header
   id="profile"
-  class="mb-12 space-y-4"
+  class="mb-12 space-y-6"
 >
-  <div class="space-y-4">
+  <div class="space-y-2">
     <h1
       class="text-5xl font-heading font-bold tracking-tight text-resume-text-heading sm:text-6xl"
     >
@@ -45,23 +60,21 @@ const { profile } = Astro.props
           </a>
         )
       }
-      {
-        profile?.profiles.map((p: any, index: number) => (
-          <>
-            {(profile?.url || index > 0) && <span>•</span>}
-            <a
-              href={p.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="hover:text-resume-primary focus-visible:text-resume-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg rounded-sm transition-colors"
-              data-ga-event="contact_click"
-              data-ga-method={p.network.toLowerCase()}
-            >
-              {p.network}
-            </a>
-          </>
-        ))
-      }
+      {profile?.profiles?.map((p, index) => (
+        <>
+          {(profile?.url || index > 0) && <span>•</span>}
+          <a
+            href={p.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="hover:text-resume-primary focus-visible:text-resume-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-bg rounded-sm transition-colors"
+            data-ga-event="contact_click"
+            data-ga-method={p.network.toLowerCase()}
+          >
+            {p.network}
+          </a>
+        </>
+      ))}
     </div>
   </div>
 
