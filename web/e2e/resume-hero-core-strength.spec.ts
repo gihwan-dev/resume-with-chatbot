@@ -21,9 +21,9 @@ test.describe("Resume hero and core strength", () => {
     await expect(coreStrengthSection.locator("[data-core-strength-item]")).toHaveCount(4)
 
     await expect(coreStrengthSection).toContainText("대규모 렌더링 아키텍처")
-    await expect(coreStrengthSection).toContainText("성능 최적화")
-    await expect(coreStrengthSection).toContainText("아키텍처 설계")
-    await expect(coreStrengthSection).toContainText("DX 자동화/협업")
+    await expect(coreStrengthSection).toContainText("계측 기반 성능 개선 전략")
+    await expect(coreStrengthSection).toContainText("트레이드오프 중심 아키텍처 의사결정")
+    await expect(coreStrengthSection).toContainText("DX 자동화 및 생산성 인프라")
   })
 
   test("Core Strength는 Experience보다 앞에, Skills는 Experience 뒤에 배치된다", async ({
