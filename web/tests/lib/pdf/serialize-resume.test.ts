@@ -101,10 +101,8 @@ describe("serializeResumeData", () => {
                 ...(includeOptionalFields
                   ? {
                       storyThread: {
-                        context: "문제 배경",
-                        architectureSummary: "구조 전환으로 렌더링 병목을 해소했습니다.",
-                        measurementMethod: "React Profiler 동일 시나리오 30회 평균값 기준",
-                        impacts: [
+                        tldrSummary: "핵심 병목을 구조 전환으로 해결했습니다.",
+                        keyMetrics: [
                           {
                             value: "10초 -> 3초",
                             label: "장애 인지 시간 단축",
@@ -115,25 +113,39 @@ describe("serializeResumeData", () => {
                             label: "인터랙션 지연 개선",
                             description: "조작 중 지연을 완화했습니다.",
                           },
-                        ],
-                        threads: [
                           {
-                            issueTitle: "분산된 폴링 규칙",
-                            problems: ["정책 편차가 있었습니다."],
-                            thoughtProcess: "중앙화가 필요했습니다.",
-                            actions: ["Polling Manager 적용"],
-                            tradeOff: "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
-                            result: "운영 일관성을 확보했습니다.",
-                          },
-                          {
-                            issueTitle: "렌더링 경합",
-                            problems: ["리렌더링이 과도했습니다."],
-                            thoughtProcess: "렌더링 경계 재설계가 필요했습니다.",
-                            actions: ["구조 전환"],
-                            tradeOff: "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
-                            result: "성능 안정성을 확보했습니다.",
+                            value: "20%+",
+                            label: "DOM 감소",
+                            description: "렌더링 비용을 줄였습니다.",
                           },
                         ],
+                        coreApproach: "정책 통합과 구조 전환, 회귀 자동화를 결합 설계했습니다.",
+                        problemDefinition: "분산 정책과 화면 밀도 한계가 병목이었습니다.",
+                        problemPoints: ["정책 편차가 있었습니다.", "렌더 경합이 있었습니다."],
+                        decisions: [
+                          {
+                            title: "중앙 정책 통합",
+                            whyThisChoice: "운영 일관성이 필요했습니다.",
+                            alternative: "A안: 분산 유지 / B안: 통합",
+                            tradeOff: "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
+                          },
+                          {
+                            title: "그리드 전환",
+                            whyThisChoice: "대량 비교 속도가 중요했습니다.",
+                            alternative: "A안: 카드 유지 / B안: 그리드",
+                            tradeOff: "적응 비용은 늘지만 판단 속도가 빨라집니다.",
+                          },
+                        ],
+                        implementationHighlights: [
+                          "정책 통합을 설계했습니다.",
+                          "그리드 화면을 재설계했습니다.",
+                          "회귀 게이트를 표준화했습니다.",
+                        ],
+                        validationImpact: {
+                          measurementMethod: "React Profiler 동일 시나리오 30회 평균값 기준",
+                          metrics: ["인지 시간: 10초 -> 3초", "지연: 73~82% 감소"],
+                          operationalImpact: "운영 대응 속도가 빨라졌습니다.",
+                        },
                         lessonsLearned: "구조 개선과 검증 자동화는 함께 설계해야 합니다.",
                       },
                     }
@@ -154,42 +166,6 @@ describe("serializeResumeData", () => {
                 dateStart: new Date("2025-02-01"),
                 dateEnd: undefined,
                 priority: 2,
-                ...(includeOptionalFields
-                  ? {
-                      storyThread: {
-                        context: "문제 배경",
-                        impacts: [
-                          {
-                            value: "90%",
-                            label: "DOM 감소",
-                            description: "렌더링 부담을 낮췄습니다.",
-                          },
-                          {
-                            value: "22ms -> 0.5ms",
-                            label: "리사이즈 개선",
-                            description: "반응성을 높였습니다.",
-                          },
-                        ],
-                        threads: [
-                          {
-                            issueTitle: "table 구조 한계",
-                            problems: ["DOM이 과다했습니다."],
-                            thoughtProcess: "가상화가 필요했습니다.",
-                            actions: ["div 전환", "가상화 적용"],
-                            result: "DOM 부담이 감소했습니다.",
-                          },
-                          {
-                            issueTitle: "이벤트 오버헤드",
-                            problems: ["핸들러가 분산됐습니다."],
-                            thoughtProcess: "이벤트 위임이 필요했습니다.",
-                            actions: ["컨테이너 위임"],
-                            result: "오버헤드가 줄었습니다.",
-                          },
-                        ],
-                        lessonsLearned: "구조와 검증을 함께 설계해야 합니다.",
-                      },
-                    }
-                  : {}),
               },
               body: "project body",
             },
@@ -342,11 +318,16 @@ describe("serializeResumeData", () => {
     const dashboardProject = result.projects.find(
       (project) => project.resumeItemId === "project-exem-customer-dashboard"
     )
-    expect(dashboardProject?.architectureSummary).toBe("구조 전환으로 렌더링 병목을 해소했습니다.")
+    expect(dashboardProject?.architectureSummary).toBe(
+      "정책 통합과 구조 전환, 회귀 자동화를 결합 설계했습니다."
+    )
     expect(dashboardProject?.measurementMethod).toBe(
       "React Profiler 동일 시나리오 30회 평균값 기준"
     )
-    expect(dashboardProject?.tradeOffs).toEqual(["복잡도는 증가했지만 운영 일관성이 높아졌습니다."])
+    expect(dashboardProject?.tradeOffs).toEqual([
+      "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
+      "적응 비용은 늘지만 판단 속도가 빨라집니다.",
+    ])
 
     const dataGridProject = result.projects.find(
       (project) => project.resumeItemId === "project-exem-data-grid"

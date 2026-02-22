@@ -214,7 +214,7 @@ describe("validateResumePortfolioMapping", () => {
     const brokenSummaryBlocks = contracts.summaryBlocks.map((item) => ({ ...item }))
     brokenSummaryBlocks[0] = {
       ...brokenSummaryBlocks[0],
-      ctaHref: "/portfolio/exem-data-grid#hook",
+      ctaHref: "/portfolio/exem-data-grid#tldr",
     }
 
     const result = validateResumePortfolioMapping({
@@ -235,7 +235,7 @@ describe("validateResumePortfolioMapping", () => {
     const brokenSummaryBlocks = contracts.summaryBlocks.map((item) => ({ ...item }))
     brokenSummaryBlocks[0] = {
       ...brokenSummaryBlocks[0],
-      ctaHref: "/portfolio/exem-customer-dashboard#problem",
+      ctaHref: "/portfolio/exem-customer-dashboard#problem-definition",
     }
 
     const result = validateResumePortfolioMapping({

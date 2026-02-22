@@ -13,25 +13,25 @@ test.describe("Resume -> Portfolio -> Print flow", () => {
   test("이력서 CTA 이동부터 포트폴리오 인쇄 저장까지 단절 없이 진행된다", async ({ page }) => {
     const firstCta = page.getByRole("link", { name: "상세 케이스 스터디 보기" }).first()
 
-    await expect(firstCta).toHaveAttribute("href", "/portfolio/exem-customer-dashboard#hook")
+    await expect(firstCta).toHaveAttribute("href", "/portfolio/exem-customer-dashboard#tldr")
 
     await Promise.all([
-      page.waitForURL("**/portfolio/exem-customer-dashboard#hook"),
+      page.waitForURL("**/portfolio/exem-customer-dashboard#tldr"),
       firstCta.click(),
     ])
 
     await expect
       .poll(async () => page.evaluate(() => window.location.pathname))
       .toBe("/portfolio/exem-customer-dashboard")
-    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#hook")
+    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#tldr")
     await waitForUiReady(page)
 
-    const threadsLink = page.locator('.toc-link[data-section-id="threads"]')
-    await expect(threadsLink).toBeVisible()
-    await threadsLink.click()
+    const decisionsLink = page.locator('.toc-link[data-section-id="key-decisions"]')
+    await expect(decisionsLink).toBeVisible()
+    await decisionsLink.click()
 
-    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#threads")
-    await expect(threadsLink).toHaveAttribute("aria-current", "location")
+    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#key-decisions")
+    await expect(decisionsLink).toHaveAttribute("aria-current", "location")
 
     const desktopNavRoot = page.locator('[data-slot="desktop-nav-root"]')
     await expect(desktopNavRoot).toBeVisible()

@@ -85,19 +85,21 @@ test.describe("Accessibility keyboard flows", () => {
   })
 
   test("포트폴리오 상세 목차 내비게이션을 키보드로 이동할 수 있다", async ({ page }) => {
-    await page.goto("/portfolio/exem-data-grid#hook")
+    await page.goto("/portfolio/exem-data-grid#tldr")
     await waitForUiReady(page)
 
-    const contextLink = page.locator('.toc-link[data-section-id="context"]').first()
-    await contextLink.focus()
-    await contextLink.press("Enter")
+    const problemDefinitionLink = page
+      .locator('.toc-link[data-section-id="problem-definition"]')
+      .first()
+    await problemDefinitionLink.focus()
+    await problemDefinitionLink.press("Enter")
 
     await expect
       .poll(async () => page.evaluate(() => window.location.hash), {
         message: "URL hash should update after portfolio TOC keyboard navigation",
       })
-      .toBe("#context")
-    await expect(contextLink).toHaveAttribute("aria-current", "location")
+      .toBe("#problem-definition")
+    await expect(problemDefinitionLink).toHaveAttribute("aria-current", "location")
   })
 
   test("챗봇 모달은 키보드 열기/닫기 및 포커스 복귀를 지원한다", async ({ page }) => {
@@ -146,7 +148,7 @@ for (const theme of ["light", "dark"] as const) {
   })
 
   test(`axe: ${theme} 포트폴리오 상세 화면은 critical/serious 위반이 없다`, async ({ page }) => {
-    await preparePage(page, theme, "/portfolio/exem-data-grid#hook")
+    await preparePage(page, theme, "/portfolio/exem-data-grid#tldr")
     await expectNoCriticalOrSeriousViolations(page, `portfolio-detail:${theme}`)
   })
 }
@@ -178,7 +180,7 @@ test.describe("Mobile accessibility", () => {
   test("모바일 포트폴리오 목차 오픈 상태에서 axe critical/serious 위반이 없다", async ({
     page,
   }) => {
-    await preparePage(page, "light", "/portfolio/exem-data-grid#hook")
+    await preparePage(page, "light", "/portfolio/exem-data-grid#tldr")
     await openMobileSheet(page)
     await expectNoCriticalOrSeriousViolations(page, "mobile-portfolio-sheet-open:light")
   })
@@ -201,21 +203,21 @@ test.describe("Mobile accessibility", () => {
 
   test("포트폴리오 상세 모바일 메뉴에서 목차 링크 선택 후 메뉴가 닫힌다", async ({ page }) => {
     await preparePage(page, "light")
-    await page.goto("/portfolio/exem-data-grid#hook")
+    await page.goto("/portfolio/exem-data-grid#tldr")
     await waitForUiReady(page)
     await openMobileSheet(page)
 
-    const threadsLink = page
+    const keyDecisionsLink = page
       .locator(SHEET_CONTENT_SELECTOR)
-      .locator('.toc-link[data-section-id="threads"]')
-    await threadsLink.focus()
-    await threadsLink.press("Enter")
+      .locator('.toc-link[data-section-id="key-decisions"]')
+    await keyDecisionsLink.focus()
+    await keyDecisionsLink.press("Enter")
 
     await expect(page.locator(SHEET_CONTENT_SELECTOR)).toHaveCount(0)
     await expect
       .poll(async () => page.evaluate(() => window.location.hash), {
         message: "URL hash should update after mobile portfolio TOC navigation",
       })
-      .toBe("#threads")
+      .toBe("#key-decisions")
   })
 })

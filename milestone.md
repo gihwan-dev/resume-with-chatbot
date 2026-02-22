@@ -74,9 +74,9 @@
 - [x] **케이스 스터디 템플릿 일괄 적용**
   - 목표: 4개 프로젝트를 동일한 의사결정 중심 구조로 리라이팅한다.
   - 검증:
-    - `Context/Problem/Why Hard/Architecture Decision/Implementation/Result/Learned`가 4건 모두 반영된다.
-    - 각 케이스 상단에 `Architecture Summary`가 추가된다.
-    - 결과 문장에 수치 + 운영 영향이 함께 표기된다.
+    - `TL;DR/문제정의/핵심의사결정/구현전략/검증&결과/What I Learned`가 4건 모두 반영된다.
+    - 핵심 수치 3개와 코어 접근 방식이 TL;DR에서 즉시 스캔 가능하다.
+    - 결과 문장에 측정 방식 + 수치 + 운영 영향이 함께 표기된다.
 
 - [x] **문장 품질 규칙 적용**
   - 목표: 주도성/트레이드오프/측정 신뢰도를 시니어 기준으로 끌어올린다.
@@ -139,19 +139,19 @@
   - `skills.coreStrengths[]` optional
 
 2. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/resume-portfolio/contracts.ts`
-  - `ProjectStoryThread.architectureSummary?` optional
-  - `ProjectStoryThread.measurementMethod?` optional
-  - `StoryThreadItem.tradeOff?` optional
+  - `PORTFOLIO_SECTION_IDS`를 `tldr/problem-definition/key-decisions/implementation-highlights/validation-impact/learned`로 전환
+  - `ProjectStoryThread`를 `tldrSummary/keyMetrics/coreApproach/problemDefinition/problemPoints/decisions/implementationHighlights/validationImpact/lessonsLearned` 구조로 전환
+  - `DecisionItem` 및 `ValidationImpact` 타입 추가
 
 3. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/pdf/types.ts`
   - Hero/Core Strength/통합 Experience 대응 optional 직렬화 필드 확장
 
 4. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/pdf/serialize-resume.ts`
-  - 신규 필드 존재 시 우선 반영, 미존재 시 기존 데이터 파생 규칙 유지
+  - `coreApproach -> architectureSummary`, `validationImpact.measurementMethod -> measurementMethod`, `decisions[].tradeOff -> tradeOffs` 파생 규칙 적용
 
 5. 하위 호환 기본값
   - 신규 필드 미존재 시 기존 렌더링 유지
-  - 기존 해시 계약 `hook/context/threads/retrospective` 유지
+  - 기본 딥링크 해시를 `#tldr`로 전환하고 레거시 해시는 `invalid`와 동일하게 폴백 처리
 
 ---
 
@@ -164,7 +164,7 @@
   - 메인 섹션 순서, Experience 통합 노출, 앵커/스크롤 스파이 정합성 검증
 
 3. 포트폴리오 상세 테스트
-  - `Architecture Summary`, `trade-off`, `measurementMethod` 문구 노출 검증
+  - TL;DR/문제정의/핵심의사결정/구현전략/검증결과/What I Learned 6섹션 구조 검증
 
 4. AI 추천 질문 테스트
   - 4개 질문 노출, 클릭 시 append, 이벤트 유지 확인
@@ -181,7 +181,7 @@
 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck
 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint
 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts
-CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts --project=chromium
+CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/portfolio-prd-acceptance.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts --project=chromium
 ```
 
 ---
@@ -401,3 +401,40 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 - 완료 처리:
   - Phase 5의 두 체크박스를 `[x]`로 업데이트.
   - 다음 미완료 Phase는 `Phase 6. [SEQUENTIAL] 랜딩 섹션·내비게이션 정합성`.
+
+### 2026-02-22 — 케이스 스터디 V2 템플릿 일괄 전환
+
+- 변경 범위:
+  - 상세 케이스 4건의 `storyThread`를 V2 구조(`tldrSummary/keyMetrics/coreApproach/problemDefinition/problemPoints/decisions/implementationHighlights/validationImpact/lessonsLearned`)로 전환
+  - 포트폴리오 섹션 계약을 `tldr/problem-definition/key-decisions/implementation-highlights/validation-impact/learned`로 교체
+  - 딥링크 기본 앵커를 `#tldr`로 전환하고 레거시 해시는 canonical 변환 없이 기본 섹션으로 폴백
+
+- 구현 파일:
+  - `web/src/lib/resume-portfolio/contracts.ts`
+  - `web/src/lib/resume-portfolio/story-thread-schema.ts`
+  - `web/src/lib/resume-portfolio/content.ts`
+  - `web/src/lib/resume-portfolio/hash.ts`
+  - `web/src/pages/portfolio/[slug].astro`
+  - `web/src/components/portfolio/case-study-section.astro`
+  - `web/src/components/navigation/navigation.tsx`
+  - `web/src/lib/pdf/serialize-resume.ts`
+  - `web/src/content/projects/exem-customer-dashboard.md`
+  - `web/src/content/projects/exem-data-grid.mdx`
+  - `web/src/content/projects/exem-new-generation.md`
+  - `web/src/content/projects/exem-dx-improvement.md`
+  - `web/tests/lib/resume-portfolio/story-thread-schema.test.ts`
+  - `web/tests/lib/resume-portfolio/hash.test.ts`
+  - `web/tests/lib/resume-portfolio/content-schema.test.ts`
+  - `web/tests/lib/resume-portfolio/validation.test.ts`
+  - `web/tests/lib/pdf/serialize-resume.test.ts`
+  - `web/e2e/portfolio-deep-link.spec.ts`
+  - `web/e2e/portfolio-toc-and-print.spec.ts`
+  - `web/e2e/portfolio-prd-acceptance.spec.ts`
+  - `web/e2e/portfolio-before-after.spec.ts`
+  - `web/e2e/resume-portfolio-print-flow.spec.ts`
+  - `web/e2e/portfolio-resume-return-flow.spec.ts`
+  - `web/e2e/accessibility.spec.ts`
+
+- 문서 동기화:
+  - `docs/resume-hiring-optimization-direction-2026-02-22.md` 공통 템플릿을 V2 순서로 갱신
+  - `docs/resume-phase1-acceptance-criteria-30s-scan-2026-02-22.md` DQ-02 템플릿 기준을 V2 명칭으로 갱신

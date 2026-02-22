@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest"
 import { projectStoryThreadSchema, validateProjectStoryThread } from "@/lib/resume-portfolio"
 
 const VALID_STORY_THREAD = {
-  context: "레거시 폴링 구조와 고밀도 렌더링 경합 문제를 동시에 해결해야 했습니다.",
-  impacts: [
+  tldrSummary: "핵심 병목을 구조 전환으로 해결했습니다.",
+  keyMetrics: [
     {
       value: "10초 -> 3초",
       label: "장애 인지 시간 단축",
@@ -12,26 +12,47 @@ const VALID_STORY_THREAD = {
     {
       value: "73~82%",
       label: "인터랙션 지연 개선",
-      description: "조작 중 버벅임을 완화했습니다.",
-    },
-  ],
-  threads: [
-    {
-      issueTitle: "분산된 폴링 규칙",
-      problems: ["화면마다 폴링 제어 규칙이 달랐습니다."],
-      thoughtProcess: "폴링 정책을 중앙화해야 회귀와 편차를 줄일 수 있다고 판단했습니다.",
-      actions: ["Polling Manager 도입", "TanStack Query 전환"],
-      result: "네트워크 동작 일관성과 인터랙션 안정성을 확보했습니다.",
+      description: "조작 버벅임을 완화했습니다.",
     },
     {
-      issueTitle: "고밀도 렌더링 경합",
-      problems: ["DOM 과다 생성으로 렌더링 비용이 급증했습니다."],
-      thoughtProcess: "화면 구조를 재구성해야 성능 개선이 유지된다고 판단했습니다.",
-      actions: ["그리드 구조로 전환", "회귀 E2E 테스트 추가"],
-      result: "렌더링 부담과 회귀 위험을 함께 줄였습니다.",
+      value: "20%+",
+      label: "DOM 감소",
+      description: "렌더링 비용을 줄였습니다.",
     },
   ],
-  lessonsLearned: "구조 개선과 검증 자동화는 함께 설계해야 효과가 유지됩니다.",
+  coreApproach: "정책 통합과 화면 구조 전환, 회귀 자동화를 결합 설계했습니다.",
+  problemDefinition: "분산된 정책과 화면 밀도 한계가 운영 대응 속도를 떨어뜨렸습니다.",
+  problemPoints: [
+    "화면마다 정책이 달랐습니다.",
+    "인터랙션 중 리렌더가 겹쳤습니다.",
+    "수동 회귀 검증 비용이 높았습니다.",
+  ],
+  decisions: [
+    {
+      title: "중앙 정책 통합",
+      whyThisChoice: "운영 일관성을 확보해야 했습니다.",
+      alternative: "A안: 분산 유지 / B안: 통합",
+      tradeOff: "복잡도는 늘지만 재현성과 회귀 안정성이 높아집니다.",
+    },
+    {
+      title: "그리드 전환",
+      whyThisChoice: "대량 비교 속도가 핵심이었습니다.",
+      alternative: "A안: 카드 유지 / B안: 그리드",
+      tradeOff: "적응 비용이 늘지만 판단 속도가 빨라집니다.",
+    },
+  ],
+  implementationHighlights: [
+    "정책 통합 아키텍처를 정의했습니다.",
+    "고밀도 화면 동선을 재설계했습니다.",
+    "회귀 게이트를 릴리즈 표준으로 정착시켰습니다.",
+  ],
+  validationImpact: {
+    measurementMethod: "Profiler와 Performance API로 동일 시나리오를 30회 반복 측정했습니다.",
+    metrics: ["장애 인지 시간: 10초 -> 3초", "인터랙션 지연: 73~82% 감소"],
+    operationalImpact: "조작 중 멈춤 없이 대응 절차를 이어갈 수 있게 됐습니다.",
+  },
+  lessonsLearned:
+    "성능 개선은 단일 최적화로 유지되지 않습니다.\n구조와 검증 체계를 함께 설계해야 지속됩니다.",
 }
 
 describe("projectStoryThreadSchema", () => {
@@ -44,239 +65,170 @@ describe("projectStoryThreadSchema", () => {
     expect(result.errors).toHaveLength(0)
   })
 
-  it("유효 입력: comparison이 있으면 스키마 검증을 통과한다", () => {
-    const validWithComparison = {
-      ...VALID_STORY_THREAD,
-      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
-        index === 0
-          ? {
-              ...thread,
-              comparison: {
-                beforeLabel: "기존 구조",
-                afterLabel: "개선 구조",
-                before: ["분산 폴링 규칙 유지"],
-                after: ["중앙 Polling Manager 적용"],
-              },
-            }
-          : thread
-      ),
-    }
-
-    const parsed = projectStoryThreadSchema.safeParse(validWithComparison)
-    expect(parsed.success).toBe(true)
-
-    const result = validateProjectStoryThread(validWithComparison)
-    expect(result.isValid).toBe(true)
-    expect(result.errors).toHaveLength(0)
-  })
-
-  it("유효 입력: 신규 optional 필드가 있어도 스키마 검증을 통과한다", () => {
-    const validWithOptionalFields = {
-      ...VALID_STORY_THREAD,
-      architectureSummary: "구조 전환과 회귀 자동화로 성능 안정성을 확보했습니다.",
-      measurementMethod: "React Profiler 기준 동일 시나리오 30회 평균값으로 측정했습니다.",
-      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
-        index === 0
-          ? {
-              ...thread,
-              tradeOff: "개발 복잡도는 증가했지만 운영 안정성이 높아지는 방향을 선택했습니다.",
-            }
-          : thread
-      ),
-    }
-
-    const parsed = projectStoryThreadSchema.safeParse(validWithOptionalFields)
-    expect(parsed.success).toBe(true)
-
-    const result = validateProjectStoryThread(validWithOptionalFields)
-    expect(result.isValid).toBe(true)
-    expect(result.errors).toHaveLength(0)
-  })
-
   it("누락 입력: 필수 필드 누락을 missing으로 분류한다", () => {
-    const missingImpacts = {
+    const input = {
       ...VALID_STORY_THREAD,
-      impacts: undefined,
+      keyMetrics: undefined,
     }
 
-    const result = validateProjectStoryThread(missingImpacts)
+    const result = validateProjectStoryThread(input)
     expect(result.isValid).toBe(false)
     expect(result.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: "missing",
-          path: "storyThread.impacts",
+          path: "storyThread.keyMetrics",
         }),
       ])
     )
   })
 
   it("타입 불일치: 배열 필드 타입 오류를 type_mismatch로 분류한다", () => {
-    const invalidType = {
+    const input = {
       ...VALID_STORY_THREAD,
-      threads: "invalid-threads",
+      decisions: "invalid-decisions",
     }
 
-    const result = validateProjectStoryThread(invalidType)
+    const result = validateProjectStoryThread(input)
     expect(result.isValid).toBe(false)
     expect(result.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: "type_mismatch",
-          path: "storyThread.threads",
+          path: "storyThread.decisions",
         }),
       ])
     )
   })
 
-  it("빈 배열: 배열이 비어 있으면 empty_array로 분류한다", () => {
-    const emptyArrayInput = {
+  it("빈 배열: implementationHighlights가 비어 있으면 empty_array로 분류한다", () => {
+    const input = {
       ...VALID_STORY_THREAD,
-      threads: [],
+      implementationHighlights: [],
     }
 
-    const result = validateProjectStoryThread(emptyArrayInput)
+    const result = validateProjectStoryThread(input)
     expect(result.isValid).toBe(false)
     expect(result.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: "empty_array",
-          path: "storyThread.threads",
+          path: "storyThread.implementationHighlights",
         }),
       ])
     )
   })
 
-  it("빈 배열: comparison.before가 비어 있으면 empty_array로 분류한다", () => {
-    const emptyComparisonBeforeInput = {
+  it("제약 검증: keyMetrics는 정확히 3개여야 한다", () => {
+    const input = {
       ...VALID_STORY_THREAD,
-      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
-        index === 0
-          ? {
-              ...thread,
-              comparison: {
-                before: [],
-                after: ["개선 후 상태"],
-              },
-            }
-          : thread
-      ),
+      keyMetrics: VALID_STORY_THREAD.keyMetrics.slice(0, 2),
     }
 
-    const result = validateProjectStoryThread(emptyComparisonBeforeInput)
+    const result = validateProjectStoryThread(input)
     expect(result.isValid).toBe(false)
     expect(result.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          code: "empty_array",
-          path: "storyThread.threads[0].comparison.before",
+          code: "invalid_value",
+          path: "storyThread.keyMetrics",
         }),
       ])
     )
   })
 
-  it("빈 배열: comparison.after가 비어 있으면 empty_array로 분류한다", () => {
-    const emptyComparisonAfterInput = {
+  it("제약 검증: decisions는 2~3개여야 한다", () => {
+    const input = {
       ...VALID_STORY_THREAD,
-      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
-        index === 0
-          ? {
-              ...thread,
-              comparison: {
-                before: ["개선 전 상태"],
-                after: [],
-              },
-            }
-          : thread
-      ),
+      decisions: [VALID_STORY_THREAD.decisions[0]],
     }
 
-    const result = validateProjectStoryThread(emptyComparisonAfterInput)
+    const result = validateProjectStoryThread(input)
     expect(result.isValid).toBe(false)
     expect(result.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          code: "empty_array",
-          path: "storyThread.threads[0].comparison.after",
+          code: "invalid_value",
+          path: "storyThread.decisions",
         }),
       ])
     )
   })
 
-  it("빈 문자열: 문자열 제약 위반을 invalid_value로 분류한다", () => {
-    const emptyStringInput = {
+  it("제약 검증: implementationHighlights는 3~4개여야 한다", () => {
+    const input = {
       ...VALID_STORY_THREAD,
-      lessonsLearned: "   ",
+      implementationHighlights: VALID_STORY_THREAD.implementationHighlights.slice(0, 2),
     }
 
-    const result = validateProjectStoryThread(emptyStringInput)
+    const result = validateProjectStoryThread(input)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.implementationHighlights",
+        }),
+      ])
+    )
+  })
+
+  it("제약 검증: problemPoints는 3~4개여야 한다", () => {
+    const input = {
+      ...VALID_STORY_THREAD,
+      problemPoints: VALID_STORY_THREAD.problemPoints.slice(0, 2),
+    }
+
+    const result = validateProjectStoryThread(input)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.problemPoints",
+        }),
+      ])
+    )
+  })
+
+  it("제약 검증: validationImpact.metrics는 최대 3개여야 한다", () => {
+    const input = {
+      ...VALID_STORY_THREAD,
+      validationImpact: {
+        ...VALID_STORY_THREAD.validationImpact,
+        metrics: [
+          ...VALID_STORY_THREAD.validationImpact.metrics,
+          "DOM 감소: 20%+",
+          "추가 지표: 10%",
+        ],
+      },
+    }
+
+    const result = validateProjectStoryThread(input)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.validationImpact.metrics",
+        }),
+      ])
+    )
+  })
+
+  it("제약 검증: lessonsLearned는 최대 3줄까지 허용한다", () => {
+    const input = {
+      ...VALID_STORY_THREAD,
+      lessonsLearned: "1줄\n2줄\n3줄\n4줄",
+    }
+
+    const result = validateProjectStoryThread(input)
     expect(result.isValid).toBe(false)
     expect(result.errors).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           code: "invalid_value",
           path: "storyThread.lessonsLearned",
-        }),
-      ])
-    )
-  })
-
-  it("빈 문자열: architectureSummary가 비어 있으면 invalid_value로 분류한다", () => {
-    const emptyArchitectureSummaryInput = {
-      ...VALID_STORY_THREAD,
-      architectureSummary: "   ",
-    }
-
-    const result = validateProjectStoryThread(emptyArchitectureSummaryInput)
-    expect(result.isValid).toBe(false)
-    expect(result.errors).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "invalid_value",
-          path: "storyThread.architectureSummary",
-        }),
-      ])
-    )
-  })
-
-  it("빈 문자열: measurementMethod가 비어 있으면 invalid_value로 분류한다", () => {
-    const emptyMeasurementMethodInput = {
-      ...VALID_STORY_THREAD,
-      measurementMethod: "   ",
-    }
-
-    const result = validateProjectStoryThread(emptyMeasurementMethodInput)
-    expect(result.isValid).toBe(false)
-    expect(result.errors).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "invalid_value",
-          path: "storyThread.measurementMethod",
-        }),
-      ])
-    )
-  })
-
-  it("빈 문자열: tradeOff가 비어 있으면 invalid_value로 분류한다", () => {
-    const emptyTradeOffInput = {
-      ...VALID_STORY_THREAD,
-      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
-        index === 0
-          ? {
-              ...thread,
-              tradeOff: "   ",
-            }
-          : thread
-      ),
-    }
-
-    const result = validateProjectStoryThread(emptyTradeOffInput)
-    expect(result.isValid).toBe(false)
-    expect(result.errors).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          code: "invalid_value",
-          path: "storyThread.threads[0].tradeOff",
         }),
       ])
     )

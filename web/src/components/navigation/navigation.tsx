@@ -13,10 +13,12 @@ import {
 import { ThemeProvider } from "./theme-provider"
 
 const PORTFOLIO_SECTION_LABELS: Record<PortfolioSectionId, string> = {
-  hook: "핵심 임팩트",
-  context: "배경",
-  threads: "스토리 스레드",
-  retrospective: "회고",
+  tldr: "TL;DR",
+  "problem-definition": "문제 정의",
+  "key-decisions": "핵심 의사결정",
+  "implementation-highlights": "구현 전략",
+  "validation-impact": "검증 및 결과",
+  learned: "회고",
 }
 
 const DEFAULT_PORTFOLIO_SECTION_ITEMS: readonly SectionNavItem[] = PORTFOLIO_SECTION_IDS.map(

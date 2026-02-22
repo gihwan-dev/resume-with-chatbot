@@ -27,9 +27,9 @@ test.describe("Resume -> Portfolio -> Resume return flow", () => {
     const expectedScrollY = Math.round(await page.evaluate(() => window.scrollY))
 
     const firstCta = page.getByRole("link", { name: "상세 케이스 스터디 보기" }).first()
-    await expect(firstCta).toHaveAttribute("href", /\/portfolio\/[a-z0-9-]+#hook$/)
+    await expect(firstCta).toHaveAttribute("href", /\/portfolio\/[a-z0-9-]+#tldr$/)
 
-    await Promise.all([page.waitForURL("**/portfolio/*#hook"), firstCta.click()])
+    await Promise.all([page.waitForURL("**/portfolio/*#tldr"), firstCta.click()])
     await waitForUiReady(page)
 
     const backToResumeLink = page.locator("#back-to-resume-link")

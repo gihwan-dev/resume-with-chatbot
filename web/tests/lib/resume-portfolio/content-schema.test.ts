@@ -43,7 +43,7 @@ describe("resume portfolio content schema", () => {
     expect(contracts.cases).toHaveLength(4)
 
     const firstSummaryBlock = contracts.summaryBlocks[0]
-    expect(firstSummaryBlock.ctaHref).toBe("/portfolio/exem-customer-dashboard#hook")
+    expect(firstSummaryBlock.ctaHref).toBe("/portfolio/exem-customer-dashboard#tldr")
     expect(firstSummaryBlock.evidenceIds.length).toBeGreaterThan(0)
   })
 
@@ -88,8 +88,8 @@ describe("resume portfolio content schema", () => {
         data: {
           ...project.data,
           storyThread: {
-            context: "문제 배경",
-            impacts: [
+            tldrSummary: "핵심 병목을 구조 전환으로 해결했습니다.",
+            keyMetrics: [
               {
                 value: "10초 -> 3초",
                 label: "인지 속도 개선",
@@ -100,23 +100,43 @@ describe("resume portfolio content schema", () => {
                 label: "지연 개선",
                 description: "상호작용 품질이 개선됐습니다.",
               },
-            ],
-            threads: [
               {
-                issueTitle: "분산 폴링",
-                problems: ["정책 편차가 있었습니다."],
-                thoughtProcess: "정책 통합이 필요했습니다.",
-                actions: ["Polling Manager 적용"],
-                result: "운영 일관성을 확보했습니다.",
-              },
-              {
-                issueTitle: "렌더 경합",
-                problems: ["DOM 과다 생성이 발생했습니다."],
-                thoughtProcess: "화면 구조를 재설계했습니다.",
-                actions: ["그리드 구조 전환"],
-                result: "렌더링 부담을 줄였습니다.",
+                value: "20%+",
+                label: "DOM 감소",
+                description: "렌더링 비용을 줄였습니다.",
               },
             ],
+            coreApproach: "정책 통합, 구조 전환, 회귀 자동화를 결합 설계했습니다.",
+            problemDefinition: "분산 정책과 화면 밀도 한계가 동시에 병목이었습니다.",
+            problemPoints: [
+              "정책 편차가 있었습니다.",
+              "렌더 경합이 있었습니다.",
+              "수동 검증 비용이 컸습니다.",
+            ],
+            decisions: [
+              {
+                title: "중앙 정책 통합",
+                whyThisChoice: "운영 일관성 확보가 우선이었습니다.",
+                alternative: "A안: 분산 유지 / B안: 통합",
+                tradeOff: "설계 복잡도는 늘지만 회귀 안정성이 높아집니다.",
+              },
+              {
+                title: "그리드 전환",
+                whyThisChoice: "대량 비교 속도가 핵심이었습니다.",
+                alternative: "A안: 카드 유지 / B안: 그리드",
+                tradeOff: "적응 비용은 늘지만 판단 속도가 빨라집니다.",
+              },
+            ],
+            implementationHighlights: [
+              "정책 통합을 설계했습니다.",
+              "그리드 화면을 재설계했습니다.",
+              "회귀 게이트를 표준화했습니다.",
+            ],
+            validationImpact: {
+              measurementMethod: "Profiler 동일 시나리오 30회 평균값",
+              metrics: ["인지 시간 10초 -> 3초", "지연 73~82% 감소"],
+              operationalImpact: "운영 대응 흐름이 빨라졌습니다.",
+            },
             lessonsLearned: "구조와 검증 자동화를 함께 설계해야 합니다.",
           },
         },

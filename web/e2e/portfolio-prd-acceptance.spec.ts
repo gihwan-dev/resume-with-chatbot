@@ -11,7 +11,7 @@ test.describe("Portfolio PRD acceptance", () => {
     await mockApiRoutes(page)
   })
 
-  test("모든 포트폴리오 케이스가 PRD 핵심 구조를 충족한다", async ({ page }) => {
+  test("모든 포트폴리오 케이스가 V3 템플릿 핵심 구조를 충족한다", async ({ page }) => {
     await page.goto("/portfolio")
     await waitForUiReady(page)
 
@@ -34,65 +34,89 @@ test.describe("Portfolio PRD acceptance", () => {
       await page.goto(href)
       await waitForUiReady(page)
 
-      const hookSection = page.locator('[data-portfolio-section="hook"]')
-      await expect(hookSection).toBeVisible()
-      await expect(hookSection.locator("[data-hook-title]")).toBeVisible()
-      await expect(hookSection.locator("[data-hook-summary]")).toBeVisible()
+      const tldrSection = page.locator('[data-portfolio-section="tldr"]')
+      await expect(tldrSection).toBeVisible()
+      await expect(tldrSection.locator("[data-tldr-title]")).toBeVisible()
+      await expect(tldrSection.locator("[data-tldr-summary]")).toBeVisible()
+      await expect(tldrSection.locator("[data-core-approach]")).toBeVisible()
+      const techItemCount = await tldrSection.locator("[data-tldr-tech-item]").count()
+      expect(techItemCount).toBeGreaterThan(0)
+      await expect(tldrSection.locator("[data-impact-item]")).toHaveCount(3)
 
-      const architectureSummary = hookSection.locator("[data-architecture-summary]")
-      await expect(architectureSummary).toBeVisible()
-      await expect(architectureSummary.locator("[data-architecture-summary-item]")).toHaveCount(4)
+      const tldrBounds = await tldrSection.boundingBox()
+      const viewport = page.viewportSize()
+      expect(tldrBounds).not.toBeNull()
+      expect(viewport).not.toBeNull()
+      if (tldrBounds && viewport) {
+        expect(tldrBounds.y + tldrBounds.height).toBeLessThanOrEqual(viewport.height + 120)
+      }
 
-      const measurementMethod = hookSection.locator("[data-measurement-method]")
+      const problemDefinitionSection = page.locator('[data-portfolio-section="problem-definition"]')
+      await expect(problemDefinitionSection).toBeVisible()
+      const problemPointCount = await problemDefinitionSection
+        .locator("[data-problem-point-item]")
+        .count()
+      expect(problemPointCount).toBeGreaterThanOrEqual(3)
+      expect(problemPointCount).toBeLessThanOrEqual(4)
+
+      const decisionsSection = page.locator('[data-portfolio-section="key-decisions"]')
+      await expect(decisionsSection).toBeVisible()
+      const decisionCount = await decisionsSection.locator("[data-decision-item]").count()
+      expect(decisionCount).toBeGreaterThanOrEqual(2)
+      expect(decisionCount).toBeLessThanOrEqual(3)
+
+      await expect(decisionsSection.locator("[data-decision-primary-item]")).toHaveCount(1)
+      await expect(decisionsSection.locator("[data-decision-secondary-item]")).toHaveCount(
+        decisionCount - 1
+      )
+      expect(await decisionsSection.locator("[data-decision-why]").count()).toBe(decisionCount)
+      expect(await decisionsSection.locator("[data-decision-tradeoff]").count()).toBe(decisionCount)
+
+      const beforeCount = await decisionsSection.locator("[data-decision-before]").count()
+      const afterCount = await decisionsSection.locator("[data-decision-after]").count()
+      const fallbackCount = await decisionsSection
+        .locator("[data-decision-alternative-fallback]")
+        .count()
+      expect(beforeCount).toBe(afterCount)
+      expect(beforeCount + fallbackCount).toBe(1)
+      await expect(decisionsSection.locator("[data-decision-choice-summary]")).toHaveCount(
+        decisionCount - 1
+      )
+
+      const implementationSection = page.locator(
+        '[data-portfolio-section="implementation-highlights"]'
+      )
+      await expect(implementationSection).toBeVisible()
+      const implementationCount = await implementationSection
+        .locator("[data-implementation-highlight-item]")
+        .count()
+      expect(implementationCount).toBeGreaterThanOrEqual(3)
+      expect(implementationCount).toBeLessThanOrEqual(4)
+
+      const validationSection = page.locator('[data-portfolio-section="validation-impact"]')
+      await expect(validationSection).toBeVisible()
+      const measurementSection = validationSection.locator("[data-measurement-method-section]")
+      await expect(measurementSection).toBeVisible()
+      const measurementToggle = measurementSection.locator("[data-measurement-toggle]")
+      await expect(measurementToggle).toBeVisible()
+      await measurementToggle.click()
+      const measurementMethod = validationSection.locator("[data-measurement-method]")
       await expect(measurementMethod).toBeVisible()
       await expect(measurementMethod).not.toHaveText(/^\s*$/)
 
-      const impactCount = await page.locator("[data-impact-item]").count()
-      expect(impactCount).toBeGreaterThanOrEqual(2)
-      expect(impactCount).toBeLessThanOrEqual(3)
+      const validationMetricCount = await validationSection
+        .locator("[data-validation-metric-item]")
+        .count()
+      expect(validationMetricCount).toBeGreaterThanOrEqual(2)
+      expect(validationMetricCount).toBeLessThanOrEqual(3)
+      await expect(validationSection.locator("[data-operational-impact]")).toBeVisible()
 
-      const contextText = page.locator("[data-context-text]")
-      await expect(contextText).toBeVisible()
-      await expect(contextText).not.toHaveText(/^\s*$/)
-
-      const threadCount = await page.locator("[data-thread-item]").count()
-      expect(threadCount).toBeGreaterThanOrEqual(2)
-      expect(threadCount).toBeLessThanOrEqual(3)
-
-      expect(await page.locator("[data-thread-problem-list]").count()).toBe(threadCount)
-      expect(await page.locator("[data-thread-why-hard-list]").count()).toBe(threadCount)
-      expect(await page.locator("[data-thread-thought-process]").count()).toBe(threadCount)
-      expect(await page.locator("[data-thread-architecture-decision]").count()).toBe(threadCount)
-      expect(await page.locator("[data-thread-action-list]").count()).toBe(threadCount)
-      expect(await page.locator("[data-thread-result-text]").count()).toBe(threadCount)
-
-      const comparisonCount = await page.locator("[data-compare-toggle]").count()
-      expect(comparisonCount).toBeGreaterThanOrEqual(1)
-
-      const tradeOffs = page.locator("[data-thread-tradeoff]")
-      const tradeOffCount = await tradeOffs.count()
-      expect(tradeOffCount).toBeGreaterThanOrEqual(1)
-      const tradeOffTexts = await tradeOffs.allTextContents()
-      expect(tradeOffTexts.every((text) => text.trim().length > 0)).toBe(true)
-
-      await expect(page.locator("[data-thread-problem-section] h4").first()).toContainText(
-        "Problem"
-      )
-      await expect(page.locator("[data-thread-why-hard-section] h4").first()).toContainText(
-        "Why It Was Hard"
-      )
-      await expect(
-        page.locator("[data-thread-architecture-decision-section] h4").first()
-      ).toContainText("Architecture Decision")
-      await expect(page.locator("[data-thread-action-section] h4").first()).toContainText(
-        "Implementation Strategy"
-      )
-      await expect(page.locator("[data-thread-result-section] h4").first()).toContainText("Result")
-
-      const retrospectiveText = page.locator("[data-retrospective-text]")
-      await expect(retrospectiveText).toBeVisible()
-      await expect(retrospectiveText).not.toHaveText(/^\s*$/)
-      await expect(page.locator("[data-retrospective-title]")).toContainText("What I Learned")
+      const learnedSection = page.locator('[data-portfolio-section="learned"]')
+      await expect(learnedSection).toBeVisible()
+      const learnedText = learnedSection.locator("[data-learned-text]")
+      await expect(learnedText).toBeVisible()
+      await expect(learnedText).not.toHaveText(/^\s*$/)
+      await expect(learnedSection.locator("[data-learned-title]")).toContainText("What I Learned")
     }
   })
 })

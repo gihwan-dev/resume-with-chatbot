@@ -13,11 +13,11 @@ function toOptionalText(value: string | undefined): string | undefined {
   return normalized ? normalized : undefined
 }
 
-function extractTradeOffs(threads: { tradeOff?: string }[] | undefined): string[] | undefined {
-  if (!threads || threads.length === 0) return undefined
+function extractTradeOffs(decisions: { tradeOff: string }[] | undefined): string[] | undefined {
+  if (!decisions || decisions.length === 0) return undefined
 
   const uniqueTradeOffs = [
-    ...new Set(threads.map((thread) => toOptionalText(thread.tradeOff))),
+    ...new Set(decisions.map((decision) => toOptionalText(decision.tradeOff))),
   ].filter((tradeOff): tradeOff is string => Boolean(tradeOff))
 
   return uniqueTradeOffs.length > 0 ? uniqueTradeOffs : undefined
@@ -108,9 +108,9 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
         technologies: summaryBlock.technologies,
         accomplishments: summaryBlock.accomplishments,
         evidenceIds: summaryBlock.evidenceIds,
-        architectureSummary: toOptionalText(storyThread?.architectureSummary),
-        measurementMethod: toOptionalText(storyThread?.measurementMethod),
-        tradeOffs: extractTradeOffs(storyThread?.threads),
+        architectureSummary: toOptionalText(storyThread?.coreApproach),
+        measurementMethod: toOptionalText(storyThread?.validationImpact?.measurementMethod),
+        tradeOffs: extractTradeOffs(storyThread?.decisions),
         ctaLabel: summaryBlock.ctaLabel,
         ctaHref: summaryBlock.ctaHref,
       }

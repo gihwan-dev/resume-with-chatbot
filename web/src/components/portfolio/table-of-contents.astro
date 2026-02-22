@@ -9,11 +9,12 @@ interface Props {
 const { portfolioCase } = Astro.props
 
 const SECTION_LABELS: Record<string, string> = {
-  overview: "개요",
-  problem: "문제",
-  decision: "해결 방안",
-  result: "결과",
-  retrospective: "회고",
+  tldr: "TL;DR",
+  "problem-definition": "문제 정의",
+  "key-decisions": "핵심 의사결정",
+  "implementation-highlights": "구현 전략",
+  "validation-impact": "검증 및 결과",
+  learned: "What I Learned",
 }
 
 // Ensure we only show sections defined in the contract for this case

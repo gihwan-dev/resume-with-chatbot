@@ -98,14 +98,12 @@
 
 모든 대표 케이스는 아래 순서로 작성한다.
 
-1. Context
-2. Problem
-3. Why It Was Hard
-4. Architecture Decision (A vs B, Trade-off)
-5. Implementation Strategy
-6. Result (Metric + Impact + Measurement)
-7. What I Learned
-8. Architecture Summary (상단 요약 4줄)
+1. TL;DR (한 화면 요약)
+2. 문제 정의 (Why This Was Hard 통합)
+3. 핵심 의사결정 (2~3개, A vs B + Trade-off)
+4. 구현 전략 (Implementation Highlights)
+5. 검증 및 결과 (Validation & Impact)
+6. What I Learned
 
 ### 5.1 고객 특화 대시보드 (`exem-customer-dashboard`)
 

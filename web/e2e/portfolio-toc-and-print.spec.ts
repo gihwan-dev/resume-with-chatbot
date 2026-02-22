@@ -3,7 +3,6 @@ import { mockApiRoutes } from "./fixtures/mock-api"
 import { waitForUiReady } from "./fixtures/ui-ready"
 
 const MOBILE_VIEWPORT = { width: 390, height: 844 }
-const DESKTOP_VIEWPORT = { width: 1280, height: 900 }
 
 const hasAvoidRule = (value: string | null | undefined): boolean => {
   if (!value) return false
@@ -21,10 +20,10 @@ test.describe("Portfolio TOC behavior", () => {
   })
 
   test("목차 링크 대상 섹션 id가 모두 존재한다", async ({ page }) => {
-    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#hook")
+    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#tldr")
 
     const links = page.locator(".toc-link")
-    await expect(links).toHaveCount(4)
+    await expect(links).toHaveCount(6)
 
     const sectionIds = await links.evaluateAll((elements) =>
       elements
@@ -37,37 +36,35 @@ test.describe("Portfolio TOC behavior", () => {
     }
   })
 
-  test("레거시 딥링크 진입과 목차 클릭 시 active/hash가 동기화된다", async ({ page }) => {
+  test("레거시 딥링크 진입 시 기본 섹션으로 폴백하고 목차 active가 동기화된다", async ({
+    page,
+  }) => {
     await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#problem")
 
-    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#threads")
+    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#tldr")
     await expect
       .poll(async () =>
         page.locator('.toc-link[aria-current="location"]').getAttribute("data-section-id")
       )
-      .toBe("threads")
-
-    const retrospectiveLink = page.locator('.toc-link[data-section-id="retrospective"]')
-    await retrospectiveLink.click()
-
-    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#retrospective")
-    await expect(retrospectiveLink).toHaveAttribute("aria-current", "location")
+      .toBe("tldr")
   })
 
   test("포트폴리오 목차를 키보드로 이동해도 active/hash가 동기화된다", async ({ page }) => {
-    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#hook")
+    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#tldr")
 
-    const contextLink = page.locator('.toc-link[data-section-id="context"]')
-    await contextLink.focus()
-    await contextLink.press("Enter")
+    const problemDefinitionLink = page.locator('.toc-link[data-section-id="problem-definition"]')
+    await problemDefinitionLink.focus()
+    await problemDefinitionLink.press("Enter")
 
-    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#context")
-    await expect(contextLink).toHaveAttribute("aria-current", "location")
+    await expect
+      .poll(async () => page.evaluate(() => window.location.hash))
+      .toBe("#problem-definition")
+    await expect(problemDefinitionLink).toHaveAttribute("aria-current", "location")
   })
 
   test("모바일 메뉴에서도 포트폴리오 목차가 노출되고 선택 후 메뉴가 닫힌다", async ({ page }) => {
     await page.setViewportSize(MOBILE_VIEWPORT)
-    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#hook")
+    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#tldr")
 
     const menuButton = page.getByRole("button", { name: /open menu/i })
     await expect(menuButton).toBeVisible()
@@ -77,21 +74,28 @@ test.describe("Portfolio TOC behavior", () => {
     }).toPass({ timeout: 10_000 })
 
     const sheet = page.locator('[data-slot="sheet-content"]')
-    const threadsLink = sheet.locator('.toc-link[data-section-id="threads"]')
+    const keyDecisionsLink = sheet.locator('.toc-link[data-section-id="key-decisions"]')
 
-    await expect(threadsLink).toBeVisible()
-    await threadsLink.click()
+    await expect(keyDecisionsLink).toBeVisible()
+    await keyDecisionsLink.click()
 
     await expect(sheet).toHaveCount(0)
-    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#threads")
+    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#key-decisions")
   })
 
   test("모바일에서 수평 오버플로 없이 섹션 순서가 유지된다", async ({ page }) => {
     await page.setViewportSize(MOBILE_VIEWPORT)
-    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#hook")
+    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#tldr")
 
     const metrics = await page.evaluate(() => {
-      const sections = ["hook", "context", "threads", "retrospective"]
+      const sections = [
+        "tldr",
+        "problem-definition",
+        "key-decisions",
+        "implementation-highlights",
+        "validation-impact",
+        "learned",
+      ]
         .map((sectionId) => document.getElementById(sectionId))
         .filter((section): section is HTMLElement => section instanceof HTMLElement)
 
@@ -107,44 +111,13 @@ test.describe("Portfolio TOC behavior", () => {
       }
     })
 
-    expect(metrics.sectionCount).toBe(4)
+    expect(metrics.sectionCount).toBe(6)
     expect(metrics.hasHorizontalOverflow).toBe(false)
     expect(metrics.ordered).toBe(true)
   })
 
-  test("데스크톱에서 첫 스레드 라인과 마커 정렬이 유지된다", async ({ page }) => {
-    await page.setViewportSize(DESKTOP_VIEWPORT)
-    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#threads")
-
-    const alignment = await page.evaluate(() => {
-      const threadItem = document.querySelector<HTMLElement>("[data-thread-item]")
-      const line = threadItem?.querySelector<HTMLElement>("[data-thread-line]")
-      const marker = threadItem?.querySelector<HTMLElement>("[data-thread-marker]")
-
-      if (!threadItem || !line || !marker) {
-        return null
-      }
-
-      const lineRect = line.getBoundingClientRect()
-      const markerRect = marker.getBoundingClientRect()
-
-      const lineCenterX = lineRect.left + lineRect.width / 2
-      const markerCenterX = markerRect.left + markerRect.width / 2
-      const markerCenterY = markerRect.top + markerRect.height / 2
-
-      return {
-        xDiff: Math.abs(lineCenterX - markerCenterX),
-        yConnected: lineRect.top <= markerCenterY && lineRect.bottom >= markerCenterY,
-      }
-    })
-
-    expect(alignment).not.toBeNull()
-    expect(alignment?.xDiff ?? 999).toBeLessThan(2.5)
-    expect(alignment?.yConnected ?? false).toBe(true)
-  })
-
   test("인쇄 미디어에서는 웹 전용 UI가 숨김 처리된다", async ({ page }) => {
-    await gotoPortfolioDetail(page, "/portfolio/exem-customer-dashboard#hook")
+    await gotoPortfolioDetail(page, "/portfolio/exem-customer-dashboard#tldr")
 
     const desktopNavRoot = page.locator('[data-slot="desktop-nav-root"]')
     await expect(desktopNavRoot).toBeVisible()
@@ -157,7 +130,7 @@ test.describe("Portfolio TOC behavior", () => {
     await page.addInitScript(() => {
       localStorage.setItem("theme", "dark")
     })
-    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#hook")
+    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#tldr")
 
     const desktopNavRoot = page.locator('[data-slot="desktop-nav-root"]')
     const chatAnchor = page.locator(".aui-modal-anchor")
@@ -190,17 +163,19 @@ test.describe("Portfolio TOC behavior", () => {
   })
 
   test("인쇄 미디어에서도 핵심 섹션 타이틀이 유지된다", async ({ page }) => {
-    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#hook")
+    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#tldr")
     await page.emulateMedia({ media: "print" })
 
-    await expect(page.locator("#hook h1")).toBeVisible()
-    await expect(page.locator("#context h2")).toContainText("Context")
-    await expect(page.locator("#threads h2")).toContainText("Story Threads")
-    await expect(page.locator("#retrospective h2")).toContainText("What I Learned")
+    await expect(page.locator("#tldr h1")).toBeVisible()
+    await expect(page.locator("#problem-definition h2")).toContainText("문제 정의")
+    await expect(page.locator("#key-decisions h2")).toContainText("핵심 의사결정")
+    await expect(page.locator("#implementation-highlights h2")).toContainText("구현 전략")
+    await expect(page.locator("#validation-impact h2")).toContainText("검증 및 결과")
+    await expect(page.locator("#learned h2")).toContainText("What I Learned")
   })
 
-  test("인쇄 미디어에서는 주요 스레드 블록이 페이지 분할 방지 규칙을 따른다", async ({ page }) => {
-    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#hook")
+  test("인쇄 미디어에서는 주요 블록이 페이지 분할 방지 규칙을 따른다", async ({ page }) => {
+    await gotoPortfolioDetail(page, "/portfolio/exem-data-grid#tldr")
     await page.emulateMedia({ media: "print" })
 
     const styleMap = await page.evaluate<Record<
@@ -208,11 +183,13 @@ test.describe("Portfolio TOC behavior", () => {
       { breakInside: string; pageBreakInside: string }
     > | null>(() => {
       const targets = {
-        hook: document.getElementById("hook"),
-        context: document.getElementById("context"),
-        threads: document.getElementById("threads"),
-        retrospective: document.getElementById("retrospective"),
-        firstThreadItem: document.querySelector("#threads ol > li"),
+        tldr: document.getElementById("tldr"),
+        problemDefinition: document.getElementById("problem-definition"),
+        keyDecisions: document.getElementById("key-decisions"),
+        implementationHighlights: document.getElementById("implementation-highlights"),
+        validationImpact: document.getElementById("validation-impact"),
+        learned: document.getElementById("learned"),
+        firstDecisionItem: document.querySelector("#key-decisions ol > li"),
       }
 
       const resultEntries = Object.entries(targets).map(([key, element]) => {
@@ -233,11 +210,13 @@ test.describe("Portfolio TOC behavior", () => {
     expect(styleMap).not.toBeNull()
 
     for (const selector of [
-      "hook",
-      "context",
-      "threads",
-      "retrospective",
-      "firstThreadItem",
+      "tldr",
+      "problemDefinition",
+      "keyDecisions",
+      "implementationHighlights",
+      "validationImpact",
+      "learned",
+      "firstDecisionItem",
     ] as const) {
       const styleEntry = styleMap?.[selector]
       expect(styleEntry, `${selector} selector style is required`).toBeTruthy()
