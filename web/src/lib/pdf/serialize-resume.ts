@@ -1,6 +1,10 @@
 import { getCollection } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
-import { buildCompanyProjectsByCompanyId } from "@/lib/experience/company-projects"
+import {
+  buildCompanyProjectsByCompanyId,
+  type CompanyProjectSource,
+} from "@/lib/experience/company-projects"
+import { resolveProjectCompanyId, resolveWorkCompanyId } from "@/lib/experience/company-id"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import type { SerializedResumeData } from "./types"
 
@@ -22,9 +26,30 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
   const sortedWork = [...work].sort(
     (a, b) => b.data.dateStart.getTime() - a.data.dateStart.getTime()
   )
+  const workWithCompanyId = sortedWork.map((entry) => ({
+    entry,
+    companyId: resolveWorkCompanyId(entry),
+  }))
+  const knownCompanyIds = workWithCompanyId.map((item) => item.companyId)
+  const normalizedProjects: CompanyProjectSource[] = projects.flatMap((project) => {
+    const companyId = resolveProjectCompanyId(project, knownCompanyIds)
+    if (!companyId) return []
+
+    return [
+      {
+        id: project.id,
+        data: {
+          companyId,
+          title: project.data.title,
+          priority: project.data.priority,
+          dateStart: project.data.dateStart,
+        },
+      },
+    ]
+  })
 
   const { summaryBlocks } = buildResumePortfolioContracts(projects)
-  const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(projects)
+  const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(normalizedProjects)
 
   const sortedAwards = [...awards].sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
 
@@ -37,7 +62,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       summary: profile.summary,
       profiles: profile.profiles,
     },
-    work: sortedWork.map((w) => ({
+    work: workWithCompanyId.map(({ entry: w, companyId }) => ({
       company: w.data.company,
       role: w.data.role,
       dateStart: w.data.dateStart.toISOString(),
@@ -45,7 +70,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       isCurrent: w.data.isCurrent,
       location: w.data.location,
       summary: w.data.summary,
-      projectTitles: (companyProjectsByCompanyId.get(w.data.companyId) ?? []).map(
+      projectTitles: (companyProjectsByCompanyId.get(companyId) ?? []).map(
         (project) => project.title
       ),
     })),

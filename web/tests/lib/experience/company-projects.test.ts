@@ -100,4 +100,24 @@ describe("buildCompanyProjectsByCompanyId", () => {
     })
     expect(exemProjects[1]?.href).toBeUndefined()
   })
+
+  it("companyId가 없는 프로젝트는 그룹에서 제외한다", () => {
+    const grouped = buildCompanyProjectsByCompanyId([
+      ...MOCK_PROJECTS,
+      {
+        id: "project-without-company-id",
+        data: {
+          title: "Orphan Project",
+          priority: 1,
+          dateStart: new Date("2025-01-01"),
+        },
+      },
+    ])
+
+    const allProjectIds = Array.from(grouped.values())
+      .flat()
+      .map((project) => project.projectId)
+
+    expect(allProjectIds).not.toContain("project-without-company-id")
+  })
 })

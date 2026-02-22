@@ -2,7 +2,11 @@
 import { getCollection, render } from "astro:content"
 import { Separator } from "@/components/ui/separator"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
-import { buildCompanyProjectsByCompanyId } from "@/lib/experience/company-projects"
+import {
+  buildCompanyProjectsByCompanyId,
+  type CompanyProjectSource,
+} from "@/lib/experience/company-projects"
+import { resolveProjectCompanyId, resolveWorkCompanyId } from "@/lib/experience/company-id"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
@@ -27,6 +31,11 @@ const awards = await getCollection("awards")
 
 // Sort by date (descending)
 const sortedWork = [...work].sort((a, b) => b.data.dateStart.valueOf() - a.data.dateStart.valueOf())
+const workWithCompanyId = sortedWork.map((entry) => ({
+  entry,
+  companyId: resolveWorkCompanyId(entry),
+}))
+const knownCompanyIds = workWithCompanyId.map((item) => item.companyId)
 
 const sortedAwards = awards.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
 const contracts = buildResumePortfolioContracts(projects)
@@ -43,10 +52,29 @@ for (const mapping of mappings) {
   hrefByProjectId.set(mapping.portfolioCaseId, href)
 }
 
-const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(projects, { hrefByProjectId })
-const experienceEntries = sortedWork.map((entry) => ({
+const normalizedProjects: CompanyProjectSource[] = projects.flatMap((project) => {
+  const companyId = resolveProjectCompanyId(project, knownCompanyIds)
+  if (!companyId) return []
+
+  return [
+    {
+      id: project.id,
+      data: {
+        companyId,
+        title: project.data.title,
+        priority: project.data.priority,
+        dateStart: project.data.dateStart,
+      },
+    },
+  ]
+})
+
+const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(normalizedProjects, {
+  hrefByProjectId,
+})
+const experienceEntries = workWithCompanyId.map(({ entry, companyId }) => ({
   data: entry.data,
-  projects: companyProjectsByCompanyId.get(entry.data.companyId) ?? [],
+  projects: companyProjectsByCompanyId.get(companyId) ?? [],
 }))
 
 const awardsWithContent = await Promise.all(

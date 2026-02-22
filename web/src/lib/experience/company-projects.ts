@@ -1,7 +1,7 @@
 export interface CompanyProjectSource {
   id: string
   data: {
-    companyId: string
+    companyId?: string
     title: string
     priority: number
     dateStart: Date
@@ -39,12 +39,15 @@ export function buildCompanyProjectsByCompanyId(
   const grouped = new Map<string, CompanyProjectSource[]>()
 
   for (const project of projects) {
-    const companyProjects = grouped.get(project.data.companyId)
+    const companyId = project.data.companyId
+    if (!companyId) continue
+
+    const companyProjects = grouped.get(companyId)
     if (companyProjects) {
       companyProjects.push(project)
       continue
     }
-    grouped.set(project.data.companyId, [project])
+    grouped.set(companyId, [project])
   }
 
   const mapped = new Map<string, CompanyProjectItem[]>()
