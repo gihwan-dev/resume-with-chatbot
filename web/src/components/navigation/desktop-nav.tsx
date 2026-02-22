@@ -18,7 +18,7 @@ export function DesktopNav({
 }: DesktopNavProps) {
   return (
     <div
-      className="fixed left-1/2 top-1/2 -translate-y-1/2 translate-x-[calc(448px+2rem)] z-[var(--layer-nav)] print:hidden"
+      className="fixed top-1/2 right-4 -translate-y-1/2 z-[var(--layer-nav)] print:hidden 2xl:right-auto 2xl:left-1/2 2xl:translate-x-[calc(448px+2rem)]"
       data-slot="desktop-nav-root"
     >
       <div className="bg-resume-card-bg border border-resume-border rounded-xl shadow-resume-shadow p-4 flex flex-col gap-4 transition-colors duration-100">

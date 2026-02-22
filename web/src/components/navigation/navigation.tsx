@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { NAVIGATION_READY_EVENT } from "@/lib/layer-events"
 import { PORTFOLIO_SECTION_IDS, type PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
 import { DesktopNav } from "./desktop-nav"
@@ -63,6 +63,8 @@ function isSameSectionSet(left: readonly SectionNavItem[], right: readonly Secti
 }
 
 export function Navigation() {
+  const mobileWrapperRef = useRef<HTMLDivElement>(null)
+  const desktopWrapperRef = useRef<HTMLDivElement>(null)
   const [navigationState, setNavigationState] = useState<NavigationState>(() => {
     if (typeof window === "undefined") {
       return {
@@ -134,6 +136,76 @@ export function Navigation() {
     }
   }, [])
 
+  useEffect(() => {
+    const desktopRootSelector = '[data-slot="desktop-nav-root"]'
+    const mobileRootSelector = '[data-slot="mobile-nav-root"]'
+
+    const setVisible = (element: HTMLElement | null, visible: boolean) => {
+      if (!element) {
+        return
+      }
+
+      element.style.setProperty("display", visible ? "block" : "none", "important")
+      element.style.setProperty("visibility", visible ? "visible" : "hidden", "important")
+      element.style.setProperty("opacity", visible ? "1" : "0", "important")
+    }
+
+    const clearGuard = (element: HTMLElement | null) => {
+      if (!element) {
+        return
+      }
+
+      element.style.removeProperty("display")
+      element.style.removeProperty("visibility")
+      element.style.removeProperty("opacity")
+    }
+
+    const applyVisibilityGuard = () => {
+      const isDesktop = window.matchMedia("(min-width: 1024px)").matches
+      const desktopRoot = document.querySelector<HTMLElement>(desktopRootSelector)
+      const mobileRoot = document.querySelector<HTMLElement>(mobileRootSelector)
+
+      setVisible(desktopWrapperRef.current, isDesktop)
+      setVisible(mobileWrapperRef.current, !isDesktop)
+      setVisible(desktopRoot, isDesktop)
+      setVisible(mobileRoot, !isDesktop)
+    }
+
+    const clearVisibilityGuard = () => {
+      clearGuard(desktopWrapperRef.current)
+      clearGuard(mobileWrapperRef.current)
+      clearGuard(document.querySelector<HTMLElement>(desktopRootSelector))
+      clearGuard(document.querySelector<HTMLElement>(mobileRootSelector))
+    }
+
+    const printMediaQuery = window.matchMedia("print")
+    const handleResize = () => {
+      if (printMediaQuery.matches) {
+        return
+      }
+
+      applyVisibilityGuard()
+    }
+    const handlePrintMediaChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        clearVisibilityGuard()
+        return
+      }
+
+      applyVisibilityGuard()
+    }
+
+    applyVisibilityGuard()
+    window.addEventListener("resize", handleResize)
+    printMediaQuery.addEventListener("change", handlePrintMediaChange)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      printMediaQuery.removeEventListener("change", handlePrintMediaChange)
+      clearVisibilityGuard()
+    }
+  }, [])
+
   const isPortfolioDetailMode = navigationState.mode === "portfolio-detail"
   const sectionVariant: SectionNavVariant = isPortfolioDetailMode ? "toc" : "default"
   const desktopAriaLabel = isPortfolioDetailMode
@@ -145,7 +217,7 @@ export function Navigation() {
 
   return (
     <ThemeProvider>
-      <div className="xl:hidden">
+      <div ref={mobileWrapperRef} className="lg:hidden">
         <MobileNav
           sections={navigationState.sections}
           ariaLabel={mobileAriaLabel}
@@ -153,7 +225,7 @@ export function Navigation() {
           sectionVariant={sectionVariant}
         />
       </div>
-      <div className="hidden xl:block">
+      <div ref={desktopWrapperRef} className="hidden lg:block">
         <DesktopNav
           sections={navigationState.sections}
           ariaLabel={desktopAriaLabel}
