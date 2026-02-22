@@ -15,7 +15,6 @@ import CertificateSection from "./_sections/certificate-section.astro"
 import CoreStrengthSection from "./_sections/core-strength-section.astro"
 import ExperienceSection from "./_sections/experience-section.astro"
 import HeroSection from "./_sections/hero-section.astro"
-import ProjectSection from "./_sections/project-section.astro"
 import SkillsSection from "./_sections/skills-section.astro"
 
 const basics = await getCollection("basics")
@@ -43,15 +42,20 @@ const sortedAwards = awards.sort((a, b) => b.data.date.valueOf() - a.data.date.v
 const contracts = buildResumePortfolioContracts(projects)
 const { summaryBlocks, mappings } = contracts
 
-const ctaHrefByResumeItemId = new Map(
-  summaryBlocks.map((summaryBlock) => [summaryBlock.resumeItemId, summaryBlock.ctaHref])
+const summaryBlockByResumeItemId = new Map(
+  summaryBlocks.map((summaryBlock) => [summaryBlock.resumeItemId, summaryBlock])
 )
+const summaryBlockByProjectId = new Map<string, (typeof summaryBlocks)[number]>()
 const hrefByProjectId = new Map<string, string>()
 
 for (const mapping of mappings) {
-  const href = ctaHrefByResumeItemId.get(mapping.resumeItemId)
-  if (!href) continue
-  hrefByProjectId.set(mapping.portfolioCaseId, href)
+  const summaryBlock = summaryBlockByResumeItemId.get(mapping.resumeItemId)
+  if (!summaryBlock) continue
+
+  summaryBlockByProjectId.set(mapping.portfolioCaseId, summaryBlock)
+  if (!summaryBlock.ctaHref) continue
+
+  hrefByProjectId.set(mapping.portfolioCaseId, summaryBlock.ctaHref)
 }
 
 const normalizedProjects: CompanyProjectSource[] = projects.flatMap((project) => {
@@ -76,7 +80,18 @@ const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(normalizedPro
 })
 const experienceEntries = workWithCompanyId.map(({ entry, companyId }) => ({
   data: entry.data,
-  projects: companyProjectsByCompanyId.get(companyId) ?? [],
+  projects: (companyProjectsByCompanyId.get(companyId) ?? []).map((project) => {
+    const summaryBlock = summaryBlockByProjectId.get(project.projectId)
+
+    return {
+      projectId: project.projectId,
+      title: project.title,
+      href: project.href,
+      summary: summaryBlock?.summary,
+      accomplishments: summaryBlock?.accomplishments,
+      ctaLabel: summaryBlock?.ctaLabel,
+    }
+  }),
 }))
 
 const awardsWithContent = await Promise.all(
@@ -129,10 +144,6 @@ const awardsWithContent = await Promise.all(
     <Separator className="my-12" />
 
     {skillsData && <SkillsSection skills={skillsData} />}
-
-    <Separator className="my-12" />
-
-    <ProjectSection projects={summaryBlocks} />
 
     <Separator className="my-12" />
 
@@ -194,7 +205,7 @@ const awardsWithContent = await Promise.all(
 
     // 섹션 뷰 추적: Intersection Observer
     const sections = document.querySelectorAll<HTMLElement>(
-      "#profile, #skills, #experience, #projects, #blog, #certificates, #awards"
+      "#profile, #skills, #experience, #blog, #certificates, #awards"
     )
     const viewed = new Set<string>()
 

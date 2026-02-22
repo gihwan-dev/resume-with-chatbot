@@ -55,14 +55,14 @@
 
 ## Phase 4. [PARALLEL:PG-1] Experience-Projects 통합 설계
 
-- [ ] **Experience 중심 케이스 통합**
+- [x] **Experience 중심 케이스 통합**
   - 목표: Experience/Projects 이원 구조의 중복 인상을 제거한다.
   - 검증:
     - 대표 프로젝트 4건이 Experience 컨텍스트 안에서 연결된다.
     - 스캔 동선이 "회사 경험 -> 대표 케이스" 단일 경로로 단순화된다.
     - 링크/CTA가 상세 포트폴리오와 일관되게 유지된다.
 
-- [ ] **Technical Writing 섹션 재정의**
+- [x] **Technical Writing 섹션 재정의**
   - 목표: 블로그를 "사고 수준 증명" 섹션으로 격상한다.
   - 검증:
     - 설계 의사결정 중심 소개문이 추가된다.
@@ -320,3 +320,46 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
   - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과
   - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 통과
   - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/resume-hero-core-strength.spec.ts --project=chromium` 통과 (3 passed)
+
+### 2026-02-22 — Phase 4 실행 및 완료
+
+- 실행 방식 (Layer):
+  - Layer 1: `technical-writing-curation` 유틸/테스트 추가 + Experience 카드 UI 확장
+  - Layer 2: index 데이터 주입/Projects 섹션 제거 + Technical Writing 섹션 재정의 + nav/analytics 정합 반영
+  - Layer 3: 접근성/복귀 플로우 E2E 기대값 갱신 및 회귀 검증
+
+- 구현 파일:
+  - `web/src/lib/blog/technical-writing-curation.ts` 신규
+    - 대표 글 + 최신 글 큐레이션(`대표 1 + 최신 4`) 규칙 추가
+    - 제목/요약 키워드 점수 기반 대표 글 선택 + 0점 fallback(최신 글)
+  - `web/tests/lib/blog/technical-writing-curation.test.ts` 신규
+    - 대표 글 점수 선택, 중복 제거, fallback, 5개 미만 시나리오 검증 추가
+  - `web/src/pages/_sections/experience-section.astro`
+    - Experience 내부에 대표 케이스 카드(제목/요약/핵심 불렛/CTA) 통합 렌더링
+    - 기존 CTA(`상세 케이스 스터디 보기`) 및 `project_portfolio_click` 이벤트 유지
+    - 프로젝트가 없는 경력은 highlights fallback 유지
+  - `web/src/pages/index.astro`
+    - `summaryBlocks + mappings` 기반 케이스 데이터를 ExperienceSection에 주입
+    - 분리된 `ProjectSection` 렌더 제거
+    - analytics `section_view` 관찰 대상에서 `#projects` 제거
+  - `web/src/pages/_sections/blog-section.astro`
+    - 섹션 타이틀/설명을 `Technical Writing` 관점으로 재정의
+    - 대표 1개 카드 + 최신 4개 리스트 구성(중복 제외), `id="blog"` 유지
+    - 기존 Blog 링크 동작 및 `blog_post_click`, `blog_all_posts_click` 이벤트 유지
+  - `web/src/components/navigation/section-nav.tsx`
+    - Resume 네비에서 `projects` 항목 제거
+    - `blog` 라벨을 `Technical Writing`으로 변경
+  - `web/e2e/accessibility.spec.ts`
+    - 키보드 섹션 내비게이션 기대값을 `Technical Writing`/`#blog`로 갱신
+  - `web/e2e/portfolio-resume-return-flow.spec.ts`
+    - 스크롤 기준 섹션을 `#projects` -> `#experience`로 갱신
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과 (0 error, 0 warning, hint 2개)
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/blog/technical-writing-curation.test.ts tests/lib/experience/company-projects.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts` 통과 (4 files, 22 tests)
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/accessibility.spec.ts e2e/portfolio-resume-return-flow.spec.ts e2e/portfolio-deep-link.spec.ts e2e/resume-portfolio-print-flow.spec.ts --project=chromium` 통과 (21 passed)
+
+- 완료 처리:
+  - Phase 4의 두 체크박스를 `[x]`로 업데이트.
+  - 다음 미완료 Phase는 `Phase 5. [PARALLEL:PG-1] 프로젝트 4건 리라이팅`.

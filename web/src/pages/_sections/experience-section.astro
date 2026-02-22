@@ -1,5 +1,14 @@
 ---
-import type { CompanyProjectItem } from "@/lib/experience/company-projects"
+import { Markdown } from "@astropub/md"
+
+interface ExperienceCaseItem {
+  projectId: string
+  title: string
+  href?: string
+  summary?: string
+  accomplishments?: string[]
+  ctaLabel?: string
+}
 
 interface ExperienceEntry {
   data: {
@@ -10,7 +19,7 @@ interface ExperienceEntry {
     isCurrent: boolean
     highlights?: string[]
   }
-  projects: CompanyProjectItem[]
+  projects: ExperienceCaseItem[]
 }
 
 interface Props {
@@ -66,22 +75,57 @@ const { experiences } = Astro.props as Props
           </div>
 
           {entry.projects.length > 0 ? (
-            <ul class="list-disc pl-5 space-y-1 text-resume-text-main/90">
-              {entry.projects.map((project: CompanyProjectItem) => (
-                <li>
-                  {project.href ? (
-                    <a
-                      href={project.href}
-                      class="text-resume-primary transition-colors hover:text-resume-primary/80 hover:underline underline-offset-2"
-                    >
-                      {project.title}
-                    </a>
-                  ) : (
-                    <span>{project.title}</span>
+            <div class="space-y-4">
+              {entry.projects.map((project) => (
+                <article
+                  class="bg-resume-card-bg rounded-sm border border-resume-border p-5 transition-all duration-300 hover:border-resume-primary/50 hover:bg-resume-highlight/30"
+                >
+                  <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
+                  {project.summary && (
+                    <p class="mt-2 text-sm text-resume-text-main/85 leading-relaxed">{project.summary}</p>
                   )}
-                </li>
+
+                  {project.accomplishments && project.accomplishments.length > 0 && (
+                    <ul class="resume-bullet-list mt-3 space-y-2">
+                      {project.accomplishments.slice(0, 2).map((accomplishment) => (
+                        <li class="pl-4 relative text-sm text-resume-text-main/90 leading-relaxed">
+                          <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-resume-primary/70" />
+                          <Markdown of={accomplishment} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {project.href && (
+                    <div class="pt-3">
+                      <a
+                        href={project.href}
+                        class="inline-flex items-center text-sm font-semibold text-resume-primary hover:text-resume-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm group/btn"
+                        data-ga-event="project_portfolio_click"
+                        data-ga-project={project.title}
+                      >
+                        {project.ctaLabel ?? "상세 케이스 스터디 보기"}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          class="ml-1.5 h-4 w-4 transition-transform group-hover/btn:translate-x-1"
+                        >
+                          <path d="M5 12h14" />
+                          <path d="m12 5 7 7-7 7" />
+                        </svg>
+                      </a>
+                    </div>
+                  )}
+                </article>
               ))}
-            </ul>
+            </div>
           ) : (
             entry.data.highlights &&
             entry.data.highlights.length > 0 && (

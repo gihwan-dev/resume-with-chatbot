@@ -73,15 +73,15 @@ test.describe("Accessibility keyboard flows", () => {
   })
 
   test("데스크톱 섹션 내비게이션을 키보드로 이동할 수 있다", async ({ page }) => {
-    const projectsLink = page.getByRole("link", { name: "Projects" }).first()
-    await projectsLink.focus()
-    await projectsLink.press("Enter")
+    const technicalWritingLink = page.getByRole("link", { name: "Technical Writing" }).first()
+    await technicalWritingLink.focus()
+    await technicalWritingLink.press("Enter")
 
     await expect
       .poll(async () => page.evaluate(() => window.location.hash), {
         message: "URL hash should update after section navigation",
       })
-      .toBe("#projects")
+      .toBe("#blog")
   })
 
   test("포트폴리오 상세 목차 내비게이션을 키보드로 이동할 수 있다", async ({ page }) => {
@@ -187,16 +187,16 @@ test.describe("Mobile accessibility", () => {
     await preparePage(page, "light")
     await openMobileSheet(page)
 
-    const projectsLink = page.getByRole("link", { name: "Projects" }).first()
-    await projectsLink.focus()
-    await projectsLink.press("Enter")
+    const technicalWritingLink = page.getByRole("link", { name: "Technical Writing" }).first()
+    await technicalWritingLink.focus()
+    await technicalWritingLink.press("Enter")
 
     await expect(page.locator(SHEET_CONTENT_SELECTOR)).toHaveCount(0)
     await expect
       .poll(async () => page.evaluate(() => window.location.hash), {
         message: "URL hash should update after mobile section navigation",
       })
-      .toBe("#projects")
+      .toBe("#blog")
   })
 
   test("포트폴리오 상세 모바일 메뉴에서 목차 링크 선택 후 메뉴가 닫힌다", async ({ page }) => {

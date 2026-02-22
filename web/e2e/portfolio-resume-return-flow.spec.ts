@@ -13,10 +13,10 @@ test.describe("Resume -> Portfolio -> Resume return flow", () => {
 
   test("상세 진입 후 이력서로 돌아가면 스크롤 위치가 복원된다", async ({ page }) => {
     await page.evaluate(() => {
-      const projectsSection = document.getElementById("projects")
-      if (!projectsSection) return
+      const experienceSection = document.getElementById("experience")
+      if (!experienceSection) return
 
-      const offsetTop = projectsSection.getBoundingClientRect().top + window.scrollY
+      const offsetTop = experienceSection.getBoundingClientRect().top + window.scrollY
       window.scrollTo(0, Math.max(0, offsetTop - 120))
     })
 
