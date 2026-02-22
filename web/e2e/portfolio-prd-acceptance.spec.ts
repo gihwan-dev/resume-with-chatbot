@@ -39,6 +39,14 @@ test.describe("Portfolio PRD acceptance", () => {
       await expect(hookSection.locator("[data-hook-title]")).toBeVisible()
       await expect(hookSection.locator("[data-hook-summary]")).toBeVisible()
 
+      const architectureSummary = hookSection.locator("[data-architecture-summary]")
+      await expect(architectureSummary).toBeVisible()
+      await expect(architectureSummary.locator("[data-architecture-summary-item]")).toHaveCount(4)
+
+      const measurementMethod = hookSection.locator("[data-measurement-method]")
+      await expect(measurementMethod).toBeVisible()
+      await expect(measurementMethod).not.toHaveText(/^\s*$/)
+
       const impactCount = await page.locator("[data-impact-item]").count()
       expect(impactCount).toBeGreaterThanOrEqual(2)
       expect(impactCount).toBeLessThanOrEqual(3)
@@ -52,16 +60,39 @@ test.describe("Portfolio PRD acceptance", () => {
       expect(threadCount).toBeLessThanOrEqual(3)
 
       expect(await page.locator("[data-thread-problem-list]").count()).toBe(threadCount)
+      expect(await page.locator("[data-thread-why-hard-list]").count()).toBe(threadCount)
       expect(await page.locator("[data-thread-thought-process]").count()).toBe(threadCount)
+      expect(await page.locator("[data-thread-architecture-decision]").count()).toBe(threadCount)
       expect(await page.locator("[data-thread-action-list]").count()).toBe(threadCount)
       expect(await page.locator("[data-thread-result-text]").count()).toBe(threadCount)
 
       const comparisonCount = await page.locator("[data-compare-toggle]").count()
       expect(comparisonCount).toBeGreaterThanOrEqual(1)
 
+      const tradeOffs = page.locator("[data-thread-tradeoff]")
+      const tradeOffCount = await tradeOffs.count()
+      expect(tradeOffCount).toBeGreaterThanOrEqual(1)
+      const tradeOffTexts = await tradeOffs.allTextContents()
+      expect(tradeOffTexts.every((text) => text.trim().length > 0)).toBe(true)
+
+      await expect(page.locator("[data-thread-problem-section] h4").first()).toContainText(
+        "Problem"
+      )
+      await expect(page.locator("[data-thread-why-hard-section] h4").first()).toContainText(
+        "Why It Was Hard"
+      )
+      await expect(
+        page.locator("[data-thread-architecture-decision-section] h4").first()
+      ).toContainText("Architecture Decision")
+      await expect(page.locator("[data-thread-action-section] h4").first()).toContainText(
+        "Implementation Strategy"
+      )
+      await expect(page.locator("[data-thread-result-section] h4").first()).toContainText("Result")
+
       const retrospectiveText = page.locator("[data-retrospective-text]")
       await expect(retrospectiveText).toBeVisible()
       await expect(retrospectiveText).not.toHaveText(/^\s*$/)
+      await expect(page.locator("[data-retrospective-title]")).toContainText("What I Learned")
     }
   })
 })

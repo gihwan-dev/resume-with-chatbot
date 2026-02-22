@@ -146,7 +146,7 @@ test.describe("Portfolio Before/After toggle", () => {
     })
 
     expect(layoutState).not.toBeNull()
-    expect(layoutState?.actionHeading).toBe("Action")
+    expect(layoutState?.actionHeading).toBe("Implementation Strategy")
     expect(layoutState?.rootOverflowX).toBe("hidden")
     expect(layoutState?.rootOverflowY).toBe("hidden")
     expect(layoutState?.afterPanelClientWidth ?? 0).toBeGreaterThan(0)

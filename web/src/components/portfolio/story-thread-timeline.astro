@@ -37,9 +37,22 @@ const { threads } = Astro.props
           <h4 class="text-xs font-bold uppercase tracking-wide text-rose-700 dark:text-rose-300 sm:text-sm print:text-rose-700">
             Problem
           </h4>
+          <p
+            class="break-words text-sm leading-relaxed text-resume-text-main/90 print:text-slate-800"
+            data-thread-problem-title
+          >
+            {thread.issueTitle}
+          </p>
+        </section>
+
+        <section class="space-y-2" data-thread-why-hard-section>
+          <h4 class="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-300 sm:text-sm print:text-amber-700">
+            Why It Was Hard
+          </h4>
           <ul
             class="space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/85 marker:text-rose-500 print:text-slate-800"
             data-thread-problem-list
+            data-thread-why-hard-list
           >
             {thread.problems.map((problem) => (
               <li>{problem}</li>
@@ -47,16 +60,30 @@ const { threads } = Astro.props
           </ul>
         </section>
 
-        <blockquote
-          class="break-words border-l-4 border-resume-primary/40 bg-resume-highlight/70 px-3 py-3 text-sm leading-relaxed italic text-resume-text-heading/90 sm:px-4 print:border-slate-400 print:bg-slate-100/40 print:text-slate-800"
-          data-thread-thought-process
-        >
-          {thread.thoughtProcess}
-        </blockquote>
+        <section class="space-y-2" data-thread-architecture-decision-section>
+          <h4 class="text-xs font-bold uppercase tracking-wide text-violet-700 dark:text-violet-300 sm:text-sm print:text-violet-700">
+            Architecture Decision (Trade-off)
+          </h4>
+          <blockquote
+            class="break-words border-l-4 border-resume-primary/40 bg-resume-highlight/70 px-3 py-3 text-sm leading-relaxed italic text-resume-text-heading/90 sm:px-4 print:border-slate-400 print:bg-slate-100/40 print:text-slate-800"
+            data-thread-thought-process
+            data-thread-architecture-decision
+          >
+            {thread.thoughtProcess}
+          </blockquote>
+          {thread.tradeOff && (
+            <p
+              class="break-words rounded-lg border border-resume-primary/20 bg-resume-card-bg px-3 py-3 text-sm leading-relaxed text-resume-text-main/90 print:border-slate-300 print:bg-white print:text-slate-800"
+              data-thread-tradeoff
+            >
+              {thread.tradeOff}
+            </p>
+          )}
+        </section>
 
         <section class="space-y-2" data-thread-action-section>
           <h4 class="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300 sm:text-sm print:text-sky-700">
-            Action
+            Implementation Strategy
           </h4>
           <ul
             class="space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/85 marker:text-sky-500 print:text-slate-800"

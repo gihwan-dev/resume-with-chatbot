@@ -71,14 +71,14 @@
 
 ## Phase 5. [PARALLEL:PG-1] 프로젝트 4건 리라이팅
 
-- [ ] **케이스 스터디 템플릿 일괄 적용**
+- [x] **케이스 스터디 템플릿 일괄 적용**
   - 목표: 4개 프로젝트를 동일한 의사결정 중심 구조로 리라이팅한다.
   - 검증:
     - `Context/Problem/Why Hard/Architecture Decision/Implementation/Result/Learned`가 4건 모두 반영된다.
     - 각 케이스 상단에 `Architecture Summary`가 추가된다.
     - 결과 문장에 수치 + 운영 영향이 함께 표기된다.
 
-- [ ] **문장 품질 규칙 적용**
+- [x] **문장 품질 규칙 적용**
   - 목표: 주도성/트레이드오프/측정 신뢰도를 시니어 기준으로 끌어올린다.
   - 검증:
     - 핵심 액션 문장에 `설계·제안·주도` 표현이 반영된다.
@@ -363,3 +363,41 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 - 완료 처리:
   - Phase 4의 두 체크박스를 `[x]`로 업데이트.
   - 다음 미완료 Phase는 `Phase 5. [PARALLEL:PG-1] 프로젝트 4건 리라이팅`.
+
+### 2026-02-22 — Phase 5 실행 및 완료
+
+- 실행 방식 (Layer):
+  - Layer 1-A: 4개 프로젝트 콘텐츠(`storyThread + 본문 템플릿`)와 Experience 요약 계약(`resume-portfolio/content`) 동시 리라이팅
+  - Layer 1-B: 포트폴리오 상세 UI에 `Architecture Summary`, `Measurement Method`, `Trade-off` 노출 추가
+  - Layer 2: 포트폴리오 PRD 수용 E2E를 템플릿 요소 검증(Problem/Why Hard/Decision/Implementation/Result/Learned)으로 확장
+  - Layer 3: typecheck/lint/vitest/playwright 품질 게이트 실행
+
+- 구현 파일:
+  - `web/src/content/projects/exem-customer-dashboard.md`
+  - `web/src/content/projects/exem-data-grid.mdx`
+  - `web/src/content/projects/exem-new-generation.md`
+  - `web/src/content/projects/exem-dx-improvement.md`
+  - `web/src/lib/resume-portfolio/content.ts`
+  - `web/src/components/portfolio/case-study-section.astro`
+  - `web/src/components/portfolio/story-thread-timeline.astro`
+  - `web/e2e/portfolio-prd-acceptance.spec.ts`
+  - `web/e2e/portfolio-before-after.spec.ts`
+  - `web/e2e/portfolio-toc-and-print.spec.ts`
+
+- 핵심 반영:
+  - 4개 케이스 모두 `architectureSummary`(4줄), `measurementMethod`(도구+반복+기준), `threads[].tradeOff`를 채움
+  - 액션 문장에 `설계/제안/주도/정의/표준화` 동사를 반영하고 결과 문장을 수치+운영 영향 중심으로 리라이팅
+  - 본문을 `Architecture Summary -> Context -> Problem -> Why It Was Hard -> Architecture Decision -> Implementation Strategy -> Result -> What I Learned` 템플릿으로 통일
+  - 상세 페이지 `hook` 섹션에 `Architecture Summary`/`Measurement Method`를 optional 노출하고, `threads`에 `Architecture Decision (Trade-off)`/`Implementation Strategy` 표현을 명시
+  - 상세 마지막 섹션 헤딩을 `What I Learned`로 정렬(섹션 ID `retrospective`는 유지)
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과 (0 error, 0 warning, hint 2개)
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 1차 포맷 오류(`e2e/portfolio-prd-acceptance.spec.ts`) 수정 후 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts` 1차 기대값 불일치 수정 후 통과 (3 files, 27 tests)
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-prd-acceptance.spec.ts e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/portfolio-before-after.spec.ts --project=chromium` 통과 (20 passed)
+    - 1차 실행: `http://localhost:4321 is already used` 실패, 포트 점유 프로세스 종료 후 재실행 통과
+
+- 완료 처리:
+  - Phase 5의 두 체크박스를 `[x]`로 업데이트.
+  - 다음 미완료 Phase는 `Phase 6. [SEQUENTIAL] 랜딩 섹션·내비게이션 정합성`.

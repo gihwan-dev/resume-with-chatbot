@@ -196,7 +196,7 @@ test.describe("Portfolio TOC behavior", () => {
     await expect(page.locator("#hook h1")).toBeVisible()
     await expect(page.locator("#context h2")).toContainText("Context")
     await expect(page.locator("#threads h2")).toContainText("Story Threads")
-    await expect(page.locator("#retrospective h2")).toContainText("Retrospective")
+    await expect(page.locator("#retrospective h2")).toContainText("What I Learned")
   })
 
   test("인쇄 미디어에서는 주요 스레드 블록이 페이지 분할 방지 규칙을 따른다", async ({ page }) => {

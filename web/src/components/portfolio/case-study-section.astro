@@ -17,6 +17,13 @@ const storyThread = project.data.storyThread
 if (!storyThread) {
   throw new Error(`storyThread is required for caseId: ${portfolioCase.caseId}`)
 }
+
+const architectureSummaryLines = storyThread.architectureSummary
+  ? storyThread.architectureSummary
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+  : []
 ---
 
 <article
@@ -62,6 +69,39 @@ if (!storyThread) {
     )}
 
     <ImpactBadgeCards impacts={storyThread.impacts} />
+
+    {architectureSummaryLines.length > 0 && (
+      <section
+        class="space-y-3 rounded-xl border border-resume-border/80 bg-resume-card-bg/70 p-4 sm:p-5 print:border-slate-300 print:bg-white"
+        data-architecture-summary
+      >
+        <h2 class="text-sm font-bold uppercase tracking-wide text-resume-text-heading print:text-slate-900">
+          Architecture Summary
+        </h2>
+        <ul class="space-y-2 pl-5 text-sm leading-relaxed text-resume-text-main/90 marker:text-resume-primary print:text-slate-800">
+          {architectureSummaryLines.map((line) => (
+            <li data-architecture-summary-item>{line}</li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {storyThread.measurementMethod && (
+      <section
+        class="space-y-2 rounded-xl border border-resume-primary/20 bg-resume-highlight/40 px-4 py-3 sm:px-5 print:border-slate-300 print:bg-slate-100/40"
+        data-measurement-method-section
+      >
+        <h2 class="text-sm font-bold uppercase tracking-wide text-resume-text-heading print:text-slate-900">
+          Measurement Method
+        </h2>
+        <p
+          class="break-words text-sm leading-relaxed text-resume-text-main/90 print:text-slate-800"
+          data-measurement-method
+        >
+          {storyThread.measurementMethod}
+        </p>
+      </section>
+    )}
   </section>
 
   <section
@@ -106,7 +146,7 @@ if (!storyThread) {
       class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
       data-retrospective-title
     >
-      Retrospective
+      What I Learned
     </h2>
     <p
       class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
