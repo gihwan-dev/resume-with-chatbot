@@ -73,6 +73,16 @@ test.describe("Accessibility keyboard flows", () => {
   })
 
   test("데스크톱 섹션 내비게이션을 키보드로 이동할 수 있다", async ({ page }) => {
+    const coreStrengthLink = page.getByRole("link", { name: "Core Strength" }).first()
+    await coreStrengthLink.focus()
+    await coreStrengthLink.press("Enter")
+
+    await expect
+      .poll(async () => page.evaluate(() => window.location.hash), {
+        message: "URL hash should update after core strength navigation",
+      })
+      .toBe("#core-strength")
+
     const technicalWritingLink = page.getByRole("link", { name: "Technical Writing" }).first()
     await technicalWritingLink.focus()
     await technicalWritingLink.press("Enter")
@@ -189,6 +199,18 @@ test.describe("Mobile accessibility", () => {
     await preparePage(page, "light")
     await openMobileSheet(page)
 
+    const coreStrengthLink = page.getByRole("link", { name: "Core Strength" }).first()
+    await coreStrengthLink.focus()
+    await coreStrengthLink.press("Enter")
+
+    await expect(page.locator(SHEET_CONTENT_SELECTOR)).toHaveCount(0)
+    await expect
+      .poll(async () => page.evaluate(() => window.location.hash), {
+        message: "URL hash should update after mobile core strength navigation",
+      })
+      .toBe("#core-strength")
+
+    await openMobileSheet(page)
     const technicalWritingLink = page.getByRole("link", { name: "Technical Writing" }).first()
     await technicalWritingLink.focus()
     await technicalWritingLink.press("Enter")

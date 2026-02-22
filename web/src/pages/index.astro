@@ -143,11 +143,11 @@ const awardsWithContent = await Promise.all(
 
     <Separator className="my-12" />
 
-    {skillsData && <SkillsSection skills={skillsData} />}
+    <BlogSection posts={blogPosts} />
 
     <Separator className="my-12" />
 
-    <BlogSection posts={blogPosts} />
+    <AwardSection awards={awardsWithContent} />
 
     <Separator className="my-12" />
 
@@ -155,7 +155,7 @@ const awardsWithContent = await Promise.all(
 
     <Separator className="my-12" />
 
-    <AwardSection awards={awardsWithContent} />
+    {skillsData && <SkillsSection skills={skillsData} />}
   </main>
 </Layout>
 
@@ -205,7 +205,7 @@ const awardsWithContent = await Promise.all(
 
     // 섹션 뷰 추적: Intersection Observer
     const sections = document.querySelectorAll<HTMLElement>(
-      "#profile, #skills, #experience, #blog, #certificates, #awards"
+      "#profile, #core-strength, #experience, #blog, #awards, #certificates"
     )
     const viewed = new Set<string>()
 

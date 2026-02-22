@@ -27,6 +27,7 @@ const DEFAULT_PORTFOLIO_SECTION_ITEMS: readonly SectionNavItem[] = PORTFOLIO_SEC
     label: PORTFOLIO_SECTION_LABELS[sectionId],
   })
 )
+const DEFAULT_RESUME_SECTION_ITEMS: readonly SectionNavItem[] = RESUME_SECTION_NAV_ITEMS
 
 type NavigationMode = "resume" | "portfolio-detail"
 
@@ -47,6 +48,14 @@ function getPortfolioSectionsFromDocument() {
   return visibleSections.length > 0 ? visibleSections : DEFAULT_PORTFOLIO_SECTION_ITEMS
 }
 
+function getResumeSectionsFromDocument() {
+  const visibleSections = DEFAULT_RESUME_SECTION_ITEMS.filter((section) =>
+    Boolean(document.getElementById(section.id))
+  )
+
+  return visibleSections.length > 0 ? visibleSections : DEFAULT_RESUME_SECTION_ITEMS
+}
+
 function isSameSectionSet(left: readonly SectionNavItem[], right: readonly SectionNavItem[]) {
   if (left.length !== right.length) return false
 
@@ -55,10 +64,17 @@ function isSameSectionSet(left: readonly SectionNavItem[], right: readonly Secti
 
 export function Navigation() {
   const [navigationState, setNavigationState] = useState<NavigationState>(() => {
-    if (typeof window === "undefined" || !isPortfolioDetailPathname(window.location.pathname)) {
+    if (typeof window === "undefined") {
       return {
         mode: "resume",
-        sections: RESUME_SECTION_NAV_ITEMS,
+        sections: DEFAULT_RESUME_SECTION_ITEMS,
+      }
+    }
+
+    if (!isPortfolioDetailPathname(window.location.pathname)) {
+      return {
+        mode: "resume",
+        sections: getResumeSectionsFromDocument(),
       }
     }
 
@@ -93,7 +109,7 @@ export function Navigation() {
           }
         : {
             mode: "resume",
-            sections: RESUME_SECTION_NAV_ITEMS,
+            sections: getResumeSectionsFromDocument(),
           }
 
       setNavigationState((currentState) => {

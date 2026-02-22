@@ -87,7 +87,7 @@
 
 ## Phase 6. [SEQUENTIAL] 랜딩 섹션·내비게이션 정합성
 
-- [ ] **메인 섹션 순서 및 앵커 재정렬**
+- [x] **메인 섹션 순서 및 앵커 재정렬**
   - 목표: 목표 정보 구조(Hero -> Core Strength -> Experience -> Technical Writing -> Awards & Certificates -> AI Assistant)를 실제 화면에 반영한다.
   - 검증:
     - 섹션 ID 및 내비게이션 활성 상태가 새 순서와 일치한다.
@@ -438,3 +438,41 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 - 문서 동기화:
   - `docs/resume-hiring-optimization-direction-2026-02-22.md` 공통 템플릿을 V2 순서로 갱신
   - `docs/resume-phase1-acceptance-criteria-30s-scan-2026-02-22.md` DQ-02 템플릿 기준을 V2 명칭으로 갱신
+
+### 2026-02-22 — Phase 6 실행 및 완료
+
+- 실행 방식 (Layer):
+  - Layer 1: `index.astro` 섹션 렌더 순서 및 `section_view` 관찰 대상 ID를 목표 구조로 정렬
+  - Layer 2: Resume nav 계약(`section-nav`)과 Resume DOM 기반 nav 필터(`navigation`)를 동기화
+  - Layer 3: 접근성/섹션 순서/analytics E2E 테스트를 보강하고 회귀 검증
+  - Layer 4: typecheck/lint/vitest/playwright 품질 게이트 실행 후 milestone 완료 처리
+
+- 구현 파일:
+  - `web/src/pages/index.astro`
+  - `web/src/components/navigation/section-nav.tsx`
+  - `web/src/components/navigation/navigation.tsx`
+  - `web/e2e/accessibility.spec.ts`
+  - `web/e2e/resume-hero-core-strength.spec.ts`
+  - `web/e2e/resume-section-view-analytics.spec.ts` (신규)
+
+- 핵심 반영:
+  - 랜딩 섹션 순서를 `profile -> core-strength -> experience -> blog -> awards -> certificates -> skills`로 재배치
+  - `section_view` 관찰 대상을 `#profile, #core-strength, #experience, #blog, #awards, #certificates`로 동기화 (`skills` 제외)
+  - Resume 내비게이션 순서를 `profile -> core-strength -> experience -> blog -> awards -> certificates`로 고정
+  - Resume 모드에서 DOM에 실제 존재하는 섹션만 nav 대상으로 사용하는 필터를 추가해 scroll spy/해시 정합성 강화
+  - 접근성 E2E에서 데스크톱/모바일 `Core Strength -> Technical Writing` 해시 이동 경로를 검증
+  - 신규 E2E로 `section_view` 이벤트 집계에서 `skills` 제외와 새 섹션 ID 집합을 검증
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과 (0 error, 0 warning, hint 2개)
+    - 1차 실행 실패: `e2e/resume-section-view-analytics.spec.ts`의 `window.gtag` 파라미터 타입 불일치
+    - 조치: `params` 타입을 `string | number | boolean | undefined` 호환 형태로 수정 후 재실행 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 통과
+    - 1차 실행 실패: `e2e/resume-section-view-analytics.spec.ts` 포맷 불일치
+    - 조치: biome 제안 포맷으로 정렬 후 재실행 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:run` 통과 (19 files, 188 tests)
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/accessibility.spec.ts e2e/resume-hero-core-strength.spec.ts e2e/resume-section-view-analytics.spec.ts e2e/portfolio-resume-return-flow.spec.ts --project=chromium` 통과 (20 passed)
+
+- 완료 처리:
+  - Phase 6 체크박스를 `[x]`로 업데이트.
+  - 다음 미완료 Phase는 `Phase 7. [PARALLEL:PG-2] AI 추천 질문 개편`.

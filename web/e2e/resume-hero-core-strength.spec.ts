@@ -26,7 +26,7 @@ test.describe("Resume hero and core strength", () => {
     await expect(coreStrengthSection).toContainText("DX 자동화 및 생산성 인프라")
   })
 
-  test("Core Strength는 Experience보다 앞에, Skills는 Experience 뒤에 배치된다", async ({
+  test("섹션 순서가 core-strength -> experience -> blog -> awards -> certificates -> skills를 따른다", async ({
     page,
   }) => {
     const offsets = await page.evaluate(() => {
@@ -39,14 +39,23 @@ test.describe("Resume hero and core strength", () => {
       return {
         coreStrength: byId("core-strength"),
         experience: byId("experience"),
+        blog: byId("blog"),
+        awards: byId("awards"),
+        certificates: byId("certificates"),
         skills: byId("skills"),
       }
     })
 
     expect(offsets.coreStrength).not.toBeNull()
     expect(offsets.experience).not.toBeNull()
+    expect(offsets.blog).not.toBeNull()
+    expect(offsets.awards).not.toBeNull()
+    expect(offsets.certificates).not.toBeNull()
     expect(offsets.skills).not.toBeNull()
     expect((offsets.coreStrength ?? 0) < (offsets.experience ?? 0)).toBe(true)
-    expect((offsets.experience ?? 0) < (offsets.skills ?? 0)).toBe(true)
+    expect((offsets.experience ?? 0) < (offsets.blog ?? 0)).toBe(true)
+    expect((offsets.blog ?? 0) < (offsets.awards ?? 0)).toBe(true)
+    expect((offsets.awards ?? 0) < (offsets.certificates ?? 0)).toBe(true)
+    expect((offsets.certificates ?? 0) < (offsets.skills ?? 0)).toBe(true)
   })
 })
