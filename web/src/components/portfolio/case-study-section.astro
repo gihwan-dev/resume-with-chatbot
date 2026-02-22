@@ -22,13 +22,60 @@ function toDecisionNarrative(decision: StoryDecision) {
   return `${decision.whyThisChoice} ${decision.alternative} ${decision.tradeOff}`
 }
 
-const coreHighlights = storyThread.implementationHighlights.slice(0, 2)
-const supportingHighlights = storyThread.implementationHighlights.slice(2)
-const decisions = storyThread.decisions
-
 function toChoiceSummary(decision: StoryDecision) {
   return decision.alternative
 }
+
+function toValidationRow(metric: string) {
+  const [label, ...valueParts] = metric.split(":")
+  if (valueParts.length === 0) {
+    return {
+      label: "지표",
+      value: metric.trim(),
+    }
+  }
+
+  return {
+    label: label.trim(),
+    value: valueParts.join(":").trim(),
+  }
+}
+
+function toOperationalLines(text: string) {
+  const lines = text
+    .split(/(?<=[.!?])\s+/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+
+  if (lines.length === 0) {
+    return [text.trim()]
+  }
+
+  return lines.slice(0, 2)
+}
+
+function toLearnedLines(text: string) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+
+  if (lines.length === 0) {
+    return [text.trim()]
+  }
+
+  return lines.slice(0, 2)
+}
+
+const featuredHighlights = storyThread.implementationHighlights.slice(0, 3)
+const supportingHighlights = storyThread.implementationHighlights.slice(3)
+const decisions = storyThread.decisions
+const topProblemPoints = storyThread.problemPoints.slice(0, 3)
+const visibleTechStack = project.data.techStack?.slice(0, 3) ?? []
+const hiddenTechStack = project.data.techStack?.slice(3) ?? []
+const validationRows = storyThread.validationImpact.metrics.map(toValidationRow)
+const operationalImpactLines = toOperationalLines(storyThread.validationImpact.operationalImpact)
+const learnedLines = toLearnedLines(storyThread.lessonsLearned)
 ---
 
 <article
@@ -53,7 +100,7 @@ function toChoiceSummary(decision: StoryDecision) {
       </h1>
     </div>
 
-    <section class="space-y-6" data-tldr-card>
+    <section class="space-y-5" data-tldr-card>
       <p
         class="break-words text-base leading-relaxed text-resume-text-main sm:text-[17px] print:text-slate-800"
         data-tldr-summary
@@ -74,16 +121,39 @@ function toChoiceSummary(decision: StoryDecision) {
     </section>
 
     {project.data.techStack && project.data.techStack.length > 0 && (
-      <div class="flex flex-wrap gap-1.5 sm:gap-2" data-tldr-tech-stack>
-        {project.data.techStack.map((tech) => (
-          <Badge
-            variant="outline"
-            className="bg-resume-card-bg/85 border-resume-border/70 px-2 py-0.5 text-[11px] font-normal text-resume-text-main/85"
-            data-tldr-tech-item
-          >
-            {tech}
-          </Badge>
-        ))}
+      <div class="space-y-2.5" data-tldr-tech-stack>
+        <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-resume-text-muted">
+          Core Stack
+        </p>
+        <div class="flex flex-wrap gap-1.5 sm:gap-2">
+          {visibleTechStack.map((tech) => (
+            <Badge
+              variant="outline"
+              className="bg-resume-card-bg/85 border-resume-border/70 px-2 py-0.5 text-[11px] font-normal text-resume-text-main/85"
+              data-tldr-tech-item
+            >
+              {tech}
+            </Badge>
+          ))}
+        </div>
+        {hiddenTechStack.length > 0 && (
+          <details class="group/stack w-fit">
+            <summary class="list-none cursor-pointer text-xs font-medium text-resume-text-muted transition-colors hover:text-resume-text-heading">
+              + {hiddenTechStack.length} more
+            </summary>
+            <div class="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
+              {hiddenTechStack.map((tech) => (
+                <Badge
+                  variant="outline"
+                  className="bg-resume-card-bg/80 border-resume-border/65 px-2 py-0.5 text-[11px] font-normal text-resume-text-main/80"
+                  data-tldr-tech-item
+                >
+                  {tech}
+                </Badge>
+              ))}
+            </div>
+          </details>
+        )}
       </div>
     )}
   </section>
@@ -100,10 +170,10 @@ function toChoiceSummary(decision: StoryDecision) {
       문제 정의
     </h2>
     <ul
-      class="space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/90 marker:text-rose-500 print:text-slate-800"
+      class="list-outside list-disc space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/90 marker:text-rose-500 print:text-slate-800"
       data-problem-points
     >
-      {storyThread.problemPoints.map((point) => (
+      {topProblemPoints.map((point) => (
         <li data-problem-point-item>{point}</li>
       ))}
     </ul>
@@ -120,66 +190,73 @@ function toChoiceSummary(decision: StoryDecision) {
     >
       핵심 의사결정
     </h2>
-    <ol class="space-y-5 sm:space-y-6" data-decision-list>
+    <ol class="space-y-3.5 sm:space-y-4" data-decision-list>
       {decisions.map((decision, index) => (
-        index === 0 ? (
-          <li
-            class="space-y-2.5 print:break-inside-avoid"
-            data-decision-item
-            data-decision-primary-item
-            data-decision-index={index}
+        <li
+          class="print:break-inside-avoid"
+          data-decision-item
+          data-decision-primary-item={index === 0 ? "true" : undefined}
+          data-decision-secondary-item={index > 0 ? "true" : undefined}
+          data-decision-index={index}
+        >
+          <details
+            open={index === 0}
+            class="group/decision rounded-lg border border-resume-border/45 bg-resume-bg/40 px-4 py-3 sm:px-5"
           >
-            <h3
-              class="break-words text-lg font-bold leading-snug text-resume-text-heading sm:text-xl print:text-slate-900"
-              data-decision-title
-            >
-              {decision.title}
-            </h3>
-            <p
-              class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
-              data-decision-why
-            >
-              {toDecisionNarrative(decision)}
-            </p>
+            <summary class="list-none cursor-pointer">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 space-y-1">
+                  <h3
+                    class="break-words leading-snug text-resume-text-heading print:text-slate-900"
+                    class:list={[
+                      index === 0
+                        ? "text-lg font-bold sm:text-xl"
+                        : "text-sm font-semibold sm:text-base",
+                    ]}
+                    data-decision-title
+                  >
+                    {decision.title}
+                  </h3>
+                  {index === 0 ? (
+                    <p class="text-xs text-resume-text-muted">
+                      우선 확인할 핵심 의사결정
+                    </p>
+                  ) : (
+                    <p class="break-words text-xs leading-relaxed text-resume-text-muted">
+                      {decision.alternative}
+                    </p>
+                  )}
+                </div>
+                <span class="mt-0.5 shrink-0 text-sm font-semibold text-resume-text-muted" aria-hidden>
+                  <span class="group-open/decision:hidden">+</span>
+                  <span class="hidden group-open/decision:inline">-</span>
+                </span>
+              </div>
+            </summary>
 
-            <p class="sr-only" data-decision-alternative-fallback>
-              {decision.alternative}
-            </p>
+            <div class="mt-3 space-y-2 border-t border-resume-border/30 pt-3">
+              <p
+                class="break-words text-sm leading-relaxed text-resume-text-main/90 sm:text-[15px] print:text-slate-800"
+                data-decision-why
+              >
+                {toDecisionNarrative(decision)}
+              </p>
+            </div>
 
-            <p class="sr-only" data-decision-alternative>
-              {decision.alternative}
-            </p>
+            {index === 0 ? (
+              <p class="sr-only" data-decision-alternative-fallback>
+                {decision.alternative}
+              </p>
+            ) : (
+              <p class="sr-only" data-decision-choice-summary>{toChoiceSummary(decision)}</p>
+            )}
 
-            <p class="sr-only" data-decision-tradeoff>
-              {decision.tradeOff}
-            </p>
-          </li>
-        ) : (
-          <li
-            class="space-y-2.5 print:break-inside-avoid"
-            data-decision-item
-            data-decision-secondary-item
-            data-decision-index={index}
-          >
-            <h3
-              class="break-words text-sm font-semibold leading-snug text-resume-text-heading sm:text-base print:text-slate-900"
-              data-decision-title
-            >
-              {decision.title}
-            </h3>
-            <p
-              class="break-words text-sm leading-relaxed text-resume-text-main/90 print:text-slate-800"
-              data-decision-why
-            >
-              {toDecisionNarrative(decision)}
-            </p>
-            <p class="sr-only" data-decision-choice-summary>{toChoiceSummary(decision)}</p>
             <p class="sr-only" data-decision-alternative>
               {decision.alternative}
             </p>
             <p class="sr-only" data-decision-tradeoff>{decision.tradeOff}</p>
-          </li>
-        )
+          </details>
+        </li>
       ))}
     </ol>
   </section>
@@ -195,16 +272,16 @@ function toChoiceSummary(decision: StoryDecision) {
     >
       구현 전략
     </h2>
-    <div class="space-y-6" data-implementation-groups>
+    <div class="space-y-4" data-implementation-groups>
       <section class="space-y-2">
         <h3 class="text-xs font-semibold uppercase tracking-wide text-resume-text-muted print:text-slate-700">
-          핵심
+          Top 3 Highlights
         </h3>
         <ul
-          class="space-y-2 break-words pl-4 text-sm leading-relaxed text-resume-text-main/90 marker:text-sky-500 print:text-slate-800"
+          class="list-outside list-disc space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/90 marker:text-sky-500 print:text-slate-800"
           data-implementation-highlights-list
         >
-          {coreHighlights.map((item) => (
+          {featuredHighlights.map((item) => (
             <li data-implementation-highlight-item data-implementation-tier="core">
               {item}
             </li>
@@ -213,18 +290,18 @@ function toChoiceSummary(decision: StoryDecision) {
       </section>
 
       {supportingHighlights.length > 0 && (
-        <section class="space-y-2">
-          <h3 class="text-xs font-semibold uppercase tracking-wide text-resume-text-muted print:text-slate-700">
-            보강
-          </h3>
-          <ul class="space-y-2 break-words pl-4 text-sm leading-relaxed text-resume-text-main/90 marker:text-cyan-500 print:text-slate-800">
+        <details class="group/implementation w-fit max-w-full">
+          <summary class="list-none cursor-pointer text-xs font-medium uppercase tracking-wide text-resume-text-muted transition-colors hover:text-resume-text-heading">
+            보강 항목 {supportingHighlights.length}개 보기
+          </summary>
+          <ul class="mt-2 list-outside list-disc space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/85 marker:text-cyan-500 print:text-slate-800">
             {supportingHighlights.map((item) => (
               <li data-implementation-highlight-item data-implementation-tier="supporting">
                 {item}
               </li>
             ))}
           </ul>
-        </section>
+        </details>
       )}
     </div>
   </section>
@@ -240,34 +317,61 @@ function toChoiceSummary(decision: StoryDecision) {
     >
       검증 및 결과
     </h2>
-    <section
-      class="space-y-2"
-      data-measurement-method-section
-    >
-      <h3 class="text-sm font-bold uppercase tracking-wide text-resume-text-heading print:text-slate-900">
-        측정 방식
-      </h3>
-      <p
-        class="break-words text-sm leading-relaxed text-resume-text-main/90 print:text-slate-800"
-        data-measurement-method
-      >
-        {storyThread.validationImpact.measurementMethod}
-      </p>
-    </section>
-    <ul
-      class="space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/85 marker:text-emerald-500 print:text-slate-800"
-      data-validation-metrics-list
-    >
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-left" data-validation-result-table>
+        <tbody>
+          {validationRows.map((row) => (
+            <tr class="border-b border-resume-border/35 last:border-b-0">
+              <th class="w-2/5 py-2 pr-3 text-xs font-semibold uppercase tracking-wide text-resume-text-muted sm:w-1/3">
+                {row.label}
+              </th>
+              <td class="py-2 text-sm font-medium text-resume-text-heading print:text-slate-900">
+                {row.value}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="sr-only" data-validation-metrics-list>
       {storyThread.validationImpact.metrics.map((metric) => (
         <li data-validation-metric-item>{metric}</li>
       ))}
     </ul>
+
     <p
       class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
       data-operational-impact
     >
-      {storyThread.validationImpact.operationalImpact}
+      {operationalImpactLines.map((line) => (
+        <span class="block">{line}</span>
+      ))}
     </p>
+
+    <details
+      class="group/measurement rounded-md border border-resume-border/45 px-3 py-2"
+      data-measurement-method-section
+    >
+      <summary
+        class="list-none cursor-pointer text-xs font-semibold uppercase tracking-wide text-resume-text-muted transition-colors hover:text-resume-text-heading"
+        data-measurement-toggle
+      >
+        <span class="inline-flex items-center gap-2">
+          Measurement
+          <span aria-hidden>
+            <span class="group-open/measurement:hidden">+</span>
+            <span class="hidden group-open/measurement:inline">-</span>
+          </span>
+        </span>
+      </summary>
+      <p
+        class="mt-2 break-words text-sm leading-relaxed text-resume-text-main/90 print:text-slate-800"
+        data-measurement-method
+      >
+        {storyThread.validationImpact.measurementMethod}
+      </p>
+    </details>
   </section>
 
   <section
@@ -281,12 +385,14 @@ function toChoiceSummary(decision: StoryDecision) {
     >
       What I Learned
     </h2>
-    <p
-      class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
+    <ul
+      class="list-outside list-disc space-y-2 break-words pl-5 text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
       data-learned-text
     >
-      {storyThread.lessonsLearned}
-    </p>
+      {learnedLines.map((line) => (
+        <li>{line}</li>
+      ))}
+    </ul>
   </section>
 
 </article>
