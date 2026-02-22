@@ -2,11 +2,11 @@
 import { getCollection, render } from "astro:content"
 import { Separator } from "@/components/ui/separator"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
+import { resolveProjectCompanyId, resolveWorkCompanyId } from "@/lib/experience/company-id"
 import {
   buildCompanyProjectsByCompanyId,
   type CompanyProjectSource,
 } from "@/lib/experience/company-projects"
-import { resolveProjectCompanyId, resolveWorkCompanyId } from "@/lib/experience/company-id"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"

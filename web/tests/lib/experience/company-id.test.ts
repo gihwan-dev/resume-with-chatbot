@@ -28,9 +28,7 @@ describe("resolveWorkCompanyId", () => {
 
 describe("inferCompanyIdFromProjectId", () => {
   it("project id prefix로 회사 ID를 추론한다", () => {
-    expect(inferCompanyIdFromProjectId("exem-customer-dashboard", ["exem", "kmong"])).toBe(
-      "exem"
-    )
+    expect(inferCompanyIdFromProjectId("exem-customer-dashboard", ["exem", "kmong"])).toBe("exem")
   })
 
   it("여러 prefix가 매칭되면 가장 긴 회사 ID를 우선한다", () => {

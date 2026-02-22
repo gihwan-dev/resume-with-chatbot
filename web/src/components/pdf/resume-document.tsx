@@ -81,9 +81,9 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
             </Text>
           </View>
           <Text style={styles.itemSubtitle}>{w.company}</Text>
-          {w.projectTitles.length > 0 && (
+          {(w.projectTitles.length > 0 || w.highlights.length > 0) && (
             <View style={styles.experienceProjectList}>
-              {w.projectTitles.map((projectTitle) => (
+              {(w.projectTitles.length > 0 ? w.projectTitles : w.highlights).map((projectTitle) => (
                 <View key={`${w.company}-${projectTitle}`} style={styles.experienceProjectRow}>
                   <Text style={styles.experienceProjectBullet}>•</Text>
                   <Text style={styles.experienceProjectText}>{projectTitle}</Text>

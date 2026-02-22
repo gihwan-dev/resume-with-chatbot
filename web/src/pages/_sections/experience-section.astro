@@ -8,6 +8,7 @@ interface ExperienceEntry {
     dateStart: Date
     dateEnd?: Date
     isCurrent: boolean
+    highlights?: string[]
   }
   projects: CompanyProjectItem[]
 }
@@ -28,7 +29,7 @@ const { experiences } = Astro.props as Props
   </h2>
   <div>
     {
-      experiences.map((entry: any, index: number) => (
+      experiences.map((entry: ExperienceEntry, index: number) => (
         <div class="relative pl-8 pb-12 last:pb-0">
           <div
             class:list={[
@@ -64,7 +65,7 @@ const { experiences } = Astro.props as Props
             </span>
           </div>
 
-          {entry.projects.length > 0 && (
+          {entry.projects.length > 0 ? (
             <ul class="list-disc pl-5 space-y-1 text-resume-text-main/90">
               {entry.projects.map((project: CompanyProjectItem) => (
                 <li>
@@ -81,6 +82,15 @@ const { experiences } = Astro.props as Props
                 </li>
               ))}
             </ul>
+          ) : (
+            entry.data.highlights &&
+            entry.data.highlights.length > 0 && (
+              <ul class="list-disc pl-5 space-y-1 text-resume-text-main/90">
+                {entry.data.highlights.map((highlight) => (
+                  <li>{highlight}</li>
+                ))}
+              </ul>
+            )
           )}
         </div>
       ))

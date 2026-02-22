@@ -16,6 +16,7 @@ export interface SerializedWork {
   location?: string
   summary: string
   projectTitles: string[]
+  highlights: string[]
 }
 
 export interface SerializedProject {

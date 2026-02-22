@@ -36,6 +36,7 @@ const work = defineCollection({
     isCurrent: z.boolean().default(false),
     location: z.string().optional(),
     summary: z.string(),
+    highlights: z.array(z.string().min(1)).optional(),
   }),
 })
 

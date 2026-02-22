@@ -1,10 +1,10 @@
 import { getCollection } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
+import { resolveProjectCompanyId, resolveWorkCompanyId } from "@/lib/experience/company-id"
 import {
   buildCompanyProjectsByCompanyId,
   type CompanyProjectSource,
 } from "@/lib/experience/company-projects"
-import { resolveProjectCompanyId, resolveWorkCompanyId } from "@/lib/experience/company-id"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import type { SerializedResumeData } from "./types"
 
@@ -73,6 +73,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       projectTitles: (companyProjectsByCompanyId.get(companyId) ?? []).map(
         (project) => project.title
       ),
+      highlights: w.data.highlights ?? [],
     })),
     projects: summaryBlocks.map((summaryBlock) => ({
       resumeItemId: summaryBlock.resumeItemId,

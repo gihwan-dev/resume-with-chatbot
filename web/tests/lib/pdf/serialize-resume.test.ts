@@ -46,6 +46,7 @@ describe("serializeResumeData", () => {
                 isCurrent: true,
                 location: "Seoul",
                 summary: "work summary",
+                highlights: [],
               },
             },
             {
@@ -58,6 +59,10 @@ describe("serializeResumeData", () => {
                 isCurrent: false,
                 location: undefined,
                 summary: "freelance summary",
+                highlights: [
+                  "총 12건의 프로젝트에서 요구사항 정의부터 배포까지 전 과정을 단독 수행",
+                  "5점 만점 리뷰 9건 확보",
+                ],
               },
             },
           ] as never
@@ -173,5 +178,9 @@ describe("serializeResumeData", () => {
       "개발 생산성 향상 및 자동화 인프라 구축",
     ])
     expect(result.work[1].projectTitles).toEqual([])
+    expect(result.work[1].highlights).toEqual([
+      "총 12건의 프로젝트에서 요구사항 정의부터 배포까지 전 과정을 단독 수행",
+      "5점 만점 리뷰 9건 확보",
+    ])
   })
 })
