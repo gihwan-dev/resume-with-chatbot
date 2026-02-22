@@ -108,10 +108,10 @@ function selectOutcomeBullets(accomplishments: string[]): string[] {
                   )}
 
                   {project.href && (
-                    <div class="pt-3">
+                    <div class="pt-5">
                       <a
                         href={project.href}
-                        class="inline-flex items-center text-sm font-semibold text-resume-primary hover:text-resume-secondary transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm group/btn"
+                        class="group/btn inline-flex items-center gap-1.5 rounded-sm text-sm font-semibold text-resume-text-muted transition-colors duration-200 hover:text-resume-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-card-bg"
                         data-ga-event="project_portfolio_click"
                         data-ga-project={project.title}
                       >
@@ -126,7 +126,7 @@ function selectOutcomeBullets(accomplishments: string[]): string[] {
                           stroke-width="2"
                           stroke-linecap="round"
                           stroke-linejoin="round"
-                          class="ml-1.5 h-4 w-4 transition-transform group-hover/btn:translate-x-1"
+                          class="h-4 w-4 opacity-80 transition-opacity duration-200 group-hover/btn:opacity-100"
                         >
                           <path d="M5 12h14" />
                           <path d="m12 5 7 7-7 7" />
