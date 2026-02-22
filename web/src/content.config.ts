@@ -1,5 +1,6 @@
 import { defineCollection, z } from "astro:content"
 import { glob } from "astro/loaders"
+import { projectStoryThreadSchema } from "./lib/resume-portfolio/story-thread-schema"
 
 const basics = defineCollection({
   loader: glob({ pattern: "profile.json", base: "./src/content/basics" }),
@@ -77,6 +78,7 @@ const projects = defineCollection({
     dateEnd: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
     priority: z.number(),
+    storyThread: projectStoryThreadSchema.optional(),
   }),
 })
 

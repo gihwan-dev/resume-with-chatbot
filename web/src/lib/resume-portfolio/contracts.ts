@@ -8,6 +8,27 @@ export const PORTFOLIO_SECTION_IDS = [
 
 export type PortfolioSectionId = (typeof PORTFOLIO_SECTION_IDS)[number]
 
+export interface ImpactItem {
+  value: string
+  label: string
+  description: string
+}
+
+export interface StoryThreadItem {
+  issueTitle: string
+  problems: string[]
+  thoughtProcess: string
+  actions: string[]
+  result: string
+}
+
+export interface ProjectStoryThread {
+  context: string
+  impacts: ImpactItem[]
+  threads: StoryThreadItem[]
+  lessonsLearned: string
+}
+
 export interface PortfolioAnchor {
   caseId: string
   sectionId: PortfolioSectionId

@@ -78,4 +78,55 @@ describe("resume portfolio content schema", () => {
       "Evidence IDs are required for hasPortfolio=true"
     )
   })
+
+  it("점진 도입: storyThread 유무가 혼합되어도 기존 계약 파생은 유지된다", () => {
+    const mixedProjects = MOCK_PROJECTS.map((project, index) => {
+      if (index !== 0) return project
+
+      return {
+        ...project,
+        data: {
+          ...project.data,
+          storyThread: {
+            context: "문제 배경",
+            impacts: [
+              {
+                value: "10초 -> 3초",
+                label: "인지 속도 개선",
+                description: "운영 대응이 빨라졌습니다.",
+              },
+              {
+                value: "73~82%",
+                label: "지연 개선",
+                description: "상호작용 품질이 개선됐습니다.",
+              },
+            ],
+            threads: [
+              {
+                issueTitle: "분산 폴링",
+                problems: ["정책 편차가 있었습니다."],
+                thoughtProcess: "정책 통합이 필요했습니다.",
+                actions: ["Polling Manager 적용"],
+                result: "운영 일관성을 확보했습니다.",
+              },
+              {
+                issueTitle: "렌더 경합",
+                problems: ["DOM 과다 생성이 발생했습니다."],
+                thoughtProcess: "화면 구조를 재설계했습니다.",
+                actions: ["그리드 구조 전환"],
+                result: "렌더링 부담을 줄였습니다.",
+              },
+            ],
+            lessonsLearned: "구조와 검증 자동화를 함께 설계해야 합니다.",
+          },
+        },
+      }
+    })
+
+    const contracts = buildResumePortfolioContracts(mixedProjects)
+    expect(contracts.resumeItems).toHaveLength(4)
+    expect(contracts.summaryBlocks).toHaveLength(4)
+    expect(contracts.mappings).toHaveLength(4)
+    expect(contracts.cases).toHaveLength(4)
+  })
 })
