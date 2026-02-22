@@ -70,14 +70,14 @@
     - 키보드 및 스크린리더 접근이 가능합니다.
 
 ## Phase 7. [PARALLEL:PG-2] 반응형 및 인쇄 최적화
-- [ ] **모바일/데스크톱 반응형 완성**
+- [x] **모바일/데스크톱 반응형 완성**
   - 목표: 빠른 스캔 사용자를 위해 화면 크기별 정보 우선순위와 가독성을 최적화합니다.
   - 검증:
     - 모바일에서 Hero→Thread 순서와 간격이 읽기 친화적으로 유지됩니다.
     - 데스크톱에서 타임라인/본문 정렬이 안정적으로 유지됩니다.
     - 줄바꿈/카드 높이 차이에도 시각적 균형이 유지됩니다.
 
-- [ ] **`@media print` 인쇄 품질 개선**
+- [x] **`@media print` 인쇄 품질 개선**
   - 목표: PDF 출력 시 타임라인 라인과 배경 표현이 깔끔하게 보이도록 최적화합니다.
   - 검증:
     - 인쇄물에서 텍스트 대비와 섹션 경계가 명확합니다.
@@ -128,3 +128,9 @@
 - 접근성/구현 결정: `CompareToggle`을 탭 패턴(`tablist/tab/tabpanel`)으로 리팩터링하고 키보드 탐색(`Arrow`, `Home/End`, `Enter/Space`) 및 ARIA 연결(`aria-controls`, `aria-labelledby`)을 적용.
 - 검증 결과: `pnpm -C web run typecheck`, `pnpm -C web run lint`, `pnpm -C web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/hash.test.ts tests/lib/resume-portfolio/validation.test.ts`, `pnpm -C web exec playwright test e2e/portfolio-before-after.spec.ts e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts --project=chromium` 모두 통과.
 - 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 7(반응형 및 인쇄 최적화)이며, 새 비교 블록이 포함된 Story Thread를 기준으로 모바일/프린트 균형 조정이 필요.
+
+**[2026-02-22] Phase 7 완료 요약**:
+- 완료 사항: 상세 페이지 반응형을 모바일 우선으로 조정(Impact grid 1/2/3열, 타임라인 라인/마커 정렬 안정화, 섹션 타이포/간격/줄바꿈 보정)하고, `@media print` 기반 인쇄 품질 개선(라이트 토큰 강제, 보조 UI 숨김, 스레드/비교 블록 대비 및 분할 안정화)을 완료.
+- 테스트/검증 결정: `portfolio-toc-and-print` 시나리오에 모바일 수평 오버플로 및 섹션 순서, 데스크톱 타임라인 정렬, 다크 테마 상태 인쇄 라이트 규칙/보조 UI 숨김 검증을 추가.
+- 검증 결과: `pnpm -C web run typecheck`, `pnpm -C web run lint`, `CI=1 pnpm -C web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/portfolio-toc-and-print.spec.ts --project=chromium` 통과.
+- 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 8(품질 검증 및 완료 기준 충족)이며, 회귀 테스트/접근성 점검과 PRD 수용 기준 최종 확인으로 진행.

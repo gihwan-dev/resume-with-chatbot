@@ -19,16 +19,16 @@ if (!storyThread) {
 }
 ---
 
-<article class="mb-24 scroll-mt-24 group/case relative space-y-16">
-  <section id="hook" class="scroll-mt-24 space-y-8 print:break-inside-avoid">
-    <div class="space-y-5">
+<article class="group/case relative mb-20 min-w-0 scroll-mt-24 space-y-12 sm:mb-24 sm:space-y-14 lg:space-y-16">
+  <section id="hook" class="scroll-mt-24 space-y-6 print:break-inside-avoid sm:space-y-8">
+    <div class="space-y-4 sm:space-y-5">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-resume-primary">
         Case Study
       </p>
-      <h1 class="text-3xl sm:text-4xl font-extrabold text-resume-text-heading tracking-tight leading-tight">
+      <h1 class="break-words text-2xl font-extrabold leading-tight tracking-tight text-resume-text-heading sm:text-4xl print:text-slate-900">
         {portfolioCase.title}
       </h1>
-      <p class="text-lg leading-relaxed text-resume-text-main/85">
+      <p class="break-words text-base leading-relaxed text-resume-text-main/85 sm:text-lg print:text-slate-800">
         {project.data.description}
       </p>
     </div>
@@ -49,21 +49,21 @@ if (!storyThread) {
     <ImpactBadgeCards impacts={storyThread.impacts} />
   </section>
 
-  <section id="context" class="scroll-mt-24 space-y-4 print:break-inside-avoid">
-    <h2 class="text-2xl font-bold text-resume-text-heading tracking-tight">Context</h2>
-    <p class="text-base leading-relaxed text-resume-text-main/90">
+  <section id="context" class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4">
+    <h2 class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900">Context</h2>
+    <p class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800">
       {storyThread.context}
     </p>
   </section>
 
-  <section id="threads" class="scroll-mt-24 space-y-6 print:break-inside-avoid">
-    <h2 class="text-2xl font-bold text-resume-text-heading tracking-tight">Story Threads</h2>
+  <section id="threads" class="scroll-mt-24 space-y-5 print:break-inside-avoid sm:space-y-6">
+    <h2 class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900">Story Threads</h2>
     <StoryThreadTimeline threads={storyThread.threads} />
   </section>
 
-  <section id="retrospective" class="scroll-mt-24 space-y-4 print:break-inside-avoid">
-    <h2 class="text-2xl font-bold text-resume-text-heading tracking-tight">Retrospective</h2>
-    <p class="text-base leading-relaxed text-resume-text-main/90">
+  <section id="retrospective" class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4">
+    <h2 class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900">Retrospective</h2>
+    <p class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800">
       {storyThread.lessonsLearned}
     </p>
   </section>

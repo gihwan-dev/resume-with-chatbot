@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test"
 import { mockApiRoutes } from "./fixtures/mock-api"
+import { waitForUiReady } from "./fixtures/ui-ready"
 
 test.describe("Resume -> Portfolio -> Print flow", () => {
   test.beforeEach(async ({ page }) => {
     await mockApiRoutes(page)
     await page.goto("/")
+    await waitForUiReady(page)
     await expect(page.getByRole("link", { name: "상세 케이스 스터디 보기" }).first()).toBeVisible()
   })
 
@@ -22,6 +24,7 @@ test.describe("Resume -> Portfolio -> Print flow", () => {
       .poll(async () => page.evaluate(() => window.location.pathname))
       .toBe("/portfolio/exem-customer-dashboard")
     await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#hook")
+    await waitForUiReady(page)
 
     const threadsLink = page.locator('.toc-link[data-section-id="threads"]')
     await expect(threadsLink).toBeVisible()
