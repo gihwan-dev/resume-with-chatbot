@@ -1,9 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content"
 import ImpactBadgeCards from "@/components/portfolio/impact-badge-cards.astro"
-import StoryThreadTimeline from "@/components/portfolio/story-thread-timeline.astro"
 import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
 import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
 
 interface Props {
@@ -18,12 +16,19 @@ if (!storyThread) {
   throw new Error(`storyThread is required for caseId: ${portfolioCase.caseId}`)
 }
 
-const architectureSummaryLines = storyThread.architectureSummary
-  ? storyThread.architectureSummary
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0)
-  : []
+type StoryDecision = NonNullable<typeof storyThread>["decisions"][number]
+
+function toDecisionNarrative(decision: StoryDecision) {
+  return `${decision.whyThisChoice} ${decision.alternative} ${decision.tradeOff}`
+}
+
+const coreHighlights = storyThread.implementationHighlights.slice(0, 2)
+const supportingHighlights = storyThread.implementationHighlights.slice(2)
+const decisions = storyThread.decisions
+
+function toChoiceSummary(decision: StoryDecision) {
+  return decision.alternative
+}
 ---
 
 <article
@@ -32,129 +37,256 @@ const architectureSummaryLines = storyThread.architectureSummary
   data-case-id={portfolioCase.caseId}
 >
   <section
-    id="hook"
-    class="scroll-mt-24 space-y-6 print:break-inside-avoid sm:space-y-8"
-    data-portfolio-section="hook"
+    id="tldr"
+    class="scroll-mt-24 space-y-6 print:break-inside-avoid sm:space-y-7"
+    data-portfolio-section="tldr"
   >
-    <div class="space-y-4 sm:space-y-5">
-      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-resume-primary">
+    <div class="space-y-3">
+      <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-resume-primary/85">
         Case Study
       </p>
       <h1
-        class="break-words text-2xl font-extrabold leading-tight tracking-tight text-resume-text-heading sm:text-4xl print:text-slate-900"
-        data-hook-title
+        class="break-words text-3xl font-extrabold leading-tight tracking-tight text-resume-text-heading sm:text-4xl print:text-slate-900"
+        data-tldr-title
       >
         {portfolioCase.title}
       </h1>
-      <p
-        class="break-words text-base leading-relaxed text-resume-text-main/85 sm:text-lg print:text-slate-800"
-        data-hook-summary
-      >
-        {project.data.description}
-      </p>
     </div>
 
+    <section class="space-y-6" data-tldr-card>
+      <p
+        class="break-words text-base leading-relaxed text-resume-text-main sm:text-[17px] print:text-slate-800"
+        data-tldr-summary
+        data-tldr-description
+      >
+        {storyThread.tldrSummary}
+      </p>
+
+      <ImpactBadgeCards impacts={storyThread.keyMetrics} />
+
+      <p
+        class="break-words text-sm leading-relaxed text-resume-text-main/90 sm:text-[15px] print:text-slate-800"
+        data-core-approach
+      >
+        <span class="font-semibold text-resume-text-heading print:text-slate-900">핵심 접근:</span>
+        {storyThread.coreApproach}
+      </p>
+    </section>
+
     {project.data.techStack && project.data.techStack.length > 0 && (
-      <div class="flex flex-wrap gap-2" data-hook-tech-stack>
+      <div class="flex flex-wrap gap-1.5 sm:gap-2" data-tldr-tech-stack>
         {project.data.techStack.map((tech) => (
           <Badge
             variant="outline"
-            className="text-sm font-normal bg-resume-card-bg text-resume-text-main border-resume-border"
-            data-hook-tech-item
+            className="bg-resume-card-bg/85 border-resume-border/70 px-2 py-0.5 text-[11px] font-normal text-resume-text-main/85"
+            data-tldr-tech-item
           >
             {tech}
           </Badge>
         ))}
       </div>
     )}
-
-    <ImpactBadgeCards impacts={storyThread.impacts} />
-
-    {architectureSummaryLines.length > 0 && (
-      <section
-        class="space-y-3 rounded-xl border border-resume-border/80 bg-resume-card-bg/70 p-4 sm:p-5 print:border-slate-300 print:bg-white"
-        data-architecture-summary
-      >
-        <h2 class="text-sm font-bold uppercase tracking-wide text-resume-text-heading print:text-slate-900">
-          Architecture Summary
-        </h2>
-        <ul class="space-y-2 pl-5 text-sm leading-relaxed text-resume-text-main/90 marker:text-resume-primary print:text-slate-800">
-          {architectureSummaryLines.map((line) => (
-            <li data-architecture-summary-item>{line}</li>
-          ))}
-        </ul>
-      </section>
-    )}
-
-    {storyThread.measurementMethod && (
-      <section
-        class="space-y-2 rounded-xl border border-resume-primary/20 bg-resume-highlight/40 px-4 py-3 sm:px-5 print:border-slate-300 print:bg-slate-100/40"
-        data-measurement-method-section
-      >
-        <h2 class="text-sm font-bold uppercase tracking-wide text-resume-text-heading print:text-slate-900">
-          Measurement Method
-        </h2>
-        <p
-          class="break-words text-sm leading-relaxed text-resume-text-main/90 print:text-slate-800"
-          data-measurement-method
-        >
-          {storyThread.measurementMethod}
-        </p>
-      </section>
-    )}
   </section>
 
   <section
-    id="context"
-    class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4"
-    data-portfolio-section="context"
+    id="problem-definition"
+    class="scroll-mt-24 space-y-4 print:break-inside-avoid sm:space-y-5"
+    data-portfolio-section="problem-definition"
   >
     <h2
       class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
-      data-context-title
+      data-problem-definition-title
     >
-      Context
+      문제 정의
     </h2>
+    <ul
+      class="space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/90 marker:text-rose-500 print:text-slate-800"
+      data-problem-points
+    >
+      {storyThread.problemPoints.map((point) => (
+        <li data-problem-point-item>{point}</li>
+      ))}
+    </ul>
+  </section>
+
+  <section
+    id="key-decisions"
+    class="scroll-mt-24 space-y-5 print:break-inside-avoid sm:space-y-6"
+    data-portfolio-section="key-decisions"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-key-decisions-title
+    >
+      핵심 의사결정
+    </h2>
+    <ol class="space-y-5 sm:space-y-6" data-decision-list>
+      {decisions.map((decision, index) => (
+        index === 0 ? (
+          <li
+            class="space-y-2.5 print:break-inside-avoid"
+            data-decision-item
+            data-decision-primary-item
+            data-decision-index={index}
+          >
+            <h3
+              class="break-words text-lg font-bold leading-snug text-resume-text-heading sm:text-xl print:text-slate-900"
+              data-decision-title
+            >
+              {decision.title}
+            </h3>
+            <p
+              class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
+              data-decision-why
+            >
+              {toDecisionNarrative(decision)}
+            </p>
+
+            <p class="sr-only" data-decision-alternative-fallback>
+              {decision.alternative}
+            </p>
+
+            <p class="sr-only" data-decision-alternative>
+              {decision.alternative}
+            </p>
+
+            <p class="sr-only" data-decision-tradeoff>
+              {decision.tradeOff}
+            </p>
+          </li>
+        ) : (
+          <li
+            class="space-y-2.5 print:break-inside-avoid"
+            data-decision-item
+            data-decision-secondary-item
+            data-decision-index={index}
+          >
+            <h3
+              class="break-words text-sm font-semibold leading-snug text-resume-text-heading sm:text-base print:text-slate-900"
+              data-decision-title
+            >
+              {decision.title}
+            </h3>
+            <p
+              class="break-words text-sm leading-relaxed text-resume-text-main/90 print:text-slate-800"
+              data-decision-why
+            >
+              {toDecisionNarrative(decision)}
+            </p>
+            <p class="sr-only" data-decision-choice-summary>{toChoiceSummary(decision)}</p>
+            <p class="sr-only" data-decision-alternative>
+              {decision.alternative}
+            </p>
+            <p class="sr-only" data-decision-tradeoff>{decision.tradeOff}</p>
+          </li>
+        )
+      ))}
+    </ol>
+  </section>
+
+  <section
+    id="implementation-highlights"
+    class="scroll-mt-24 space-y-4 print:break-inside-avoid sm:space-y-5"
+    data-portfolio-section="implementation-highlights"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-implementation-highlights-title
+    >
+      구현 전략
+    </h2>
+    <div class="space-y-6" data-implementation-groups>
+      <section class="space-y-2">
+        <h3 class="text-xs font-semibold uppercase tracking-wide text-resume-text-muted print:text-slate-700">
+          핵심
+        </h3>
+        <ul
+          class="space-y-2 break-words pl-4 text-sm leading-relaxed text-resume-text-main/90 marker:text-sky-500 print:text-slate-800"
+          data-implementation-highlights-list
+        >
+          {coreHighlights.map((item) => (
+            <li data-implementation-highlight-item data-implementation-tier="core">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {supportingHighlights.length > 0 && (
+        <section class="space-y-2">
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-resume-text-muted print:text-slate-700">
+            보강
+          </h3>
+          <ul class="space-y-2 break-words pl-4 text-sm leading-relaxed text-resume-text-main/90 marker:text-cyan-500 print:text-slate-800">
+            {supportingHighlights.map((item) => (
+              <li data-implementation-highlight-item data-implementation-tier="supporting">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  </section>
+
+  <section
+    id="validation-impact"
+    class="scroll-mt-24 space-y-4 print:break-inside-avoid sm:space-y-5"
+    data-portfolio-section="validation-impact"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-validation-impact-title
+    >
+      검증 및 결과
+    </h2>
+    <section
+      class="space-y-2"
+      data-measurement-method-section
+    >
+      <h3 class="text-sm font-bold uppercase tracking-wide text-resume-text-heading print:text-slate-900">
+        측정 방식
+      </h3>
+      <p
+        class="break-words text-sm leading-relaxed text-resume-text-main/90 print:text-slate-800"
+        data-measurement-method
+      >
+        {storyThread.validationImpact.measurementMethod}
+      </p>
+    </section>
+    <ul
+      class="space-y-2 break-words pl-5 text-sm leading-relaxed text-resume-text-main/85 marker:text-emerald-500 print:text-slate-800"
+      data-validation-metrics-list
+    >
+      {storyThread.validationImpact.metrics.map((metric) => (
+        <li data-validation-metric-item>{metric}</li>
+      ))}
+    </ul>
     <p
       class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
-      data-context-text
+      data-operational-impact
     >
-      {storyThread.context}
+      {storyThread.validationImpact.operationalImpact}
     </p>
   </section>
 
   <section
-    id="threads"
-    class="scroll-mt-24 space-y-5 print:break-inside-avoid sm:space-y-6"
-    data-portfolio-section="threads"
-  >
-    <h2
-      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
-      data-threads-title
-    >
-      Story Threads
-    </h2>
-    <StoryThreadTimeline threads={storyThread.threads} />
-  </section>
-
-  <section
-    id="retrospective"
+    id="learned"
     class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4"
-    data-portfolio-section="retrospective"
+    data-portfolio-section="learned"
   >
     <h2
       class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
-      data-retrospective-title
+      data-learned-title
     >
       What I Learned
     </h2>
     <p
       class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
-      data-retrospective-text
+      data-learned-text
     >
       {storyThread.lessonsLearned}
     </p>
   </section>
 
-  <Separator className="mt-10 print:hidden" />
 </article>
