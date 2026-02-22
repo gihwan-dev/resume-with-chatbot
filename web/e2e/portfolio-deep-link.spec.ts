@@ -1,5 +1,31 @@
-import { expect, test } from "@playwright/test"
+import { expect, type Page, test } from "@playwright/test"
 import { mockApiRoutes } from "./fixtures/mock-api"
+
+const HYDRATION_MISMATCH_PATTERN = /Hydration failed|hydration mismatch/i
+
+function trackHydrationIssues(page: Page) {
+  const issues: string[] = []
+
+  page.on("console", (message) => {
+    if (message.type() !== "error") {
+      return
+    }
+
+    const text = message.text()
+    if (HYDRATION_MISMATCH_PATTERN.test(text)) {
+      issues.push(text)
+    }
+  })
+
+  page.on("pageerror", (error) => {
+    const text = error.message
+    if (HYDRATION_MISMATCH_PATTERN.test(text)) {
+      issues.push(text)
+    }
+  })
+
+  return issues
+}
 
 test.describe("Portfolio deep link routing", () => {
   test.beforeEach(async ({ page }) => {
@@ -54,5 +80,20 @@ test.describe("Portfolio deep link routing", () => {
     await expect
       .poll(async () => page.evaluate(() => window.location.pathname))
       .toBe("/portfolio/exem-data-grid")
+  })
+
+  test("상세 케이스 진입 시 hydration mismatch가 발생하지 않는다", async ({ page }) => {
+    const hydrationIssues = trackHydrationIssues(page)
+
+    await page.goto("/")
+
+    const firstCta = page.getByRole("link", { name: "상세 케이스 스터디 보기" }).first()
+    await Promise.all([
+      page.waitForURL("**/portfolio/exem-customer-dashboard#tldr"),
+      firstCta.click(),
+    ])
+    await page.waitForTimeout(250)
+
+    expect(hydrationIssues).toEqual([])
   })
 })

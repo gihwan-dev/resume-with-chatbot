@@ -36,8 +36,26 @@ interface NavigationState {
   sections: readonly SectionNavItem[]
 }
 
+interface NavigationProps {
+  initialPathname?: string
+}
+
 function isPortfolioDetailPathname(pathname: string) {
   return /^\/portfolio\/[^/]+\/?$/.test(pathname)
+}
+
+function getInitialNavigationState(pathname: string): NavigationState {
+  if (isPortfolioDetailPathname(pathname)) {
+    return {
+      mode: "portfolio-detail",
+      sections: DEFAULT_PORTFOLIO_SECTION_ITEMS,
+    }
+  }
+
+  return {
+    mode: "resume",
+    sections: DEFAULT_RESUME_SECTION_ITEMS,
+  }
 }
 
 function getPortfolioSectionsFromDocument() {
@@ -62,29 +80,12 @@ function isSameSectionSet(left: readonly SectionNavItem[], right: readonly Secti
   return left.every((section, index) => section.id === right[index]?.id)
 }
 
-export function Navigation() {
+export function Navigation({ initialPathname = "/" }: NavigationProps) {
   const mobileWrapperRef = useRef<HTMLDivElement>(null)
   const desktopWrapperRef = useRef<HTMLDivElement>(null)
-  const [navigationState, setNavigationState] = useState<NavigationState>(() => {
-    if (typeof window === "undefined") {
-      return {
-        mode: "resume",
-        sections: DEFAULT_RESUME_SECTION_ITEMS,
-      }
-    }
-
-    if (!isPortfolioDetailPathname(window.location.pathname)) {
-      return {
-        mode: "resume",
-        sections: getResumeSectionsFromDocument(),
-      }
-    }
-
-    return {
-      mode: "portfolio-detail",
-      sections: getPortfolioSectionsFromDocument(),
-    }
-  })
+  const [navigationState, setNavigationState] = useState<NavigationState>(() =>
+    getInitialNavigationState(initialPathname)
+  )
 
   useEffect(() => {
     const resumeWindow = window as Window & {
