@@ -2,6 +2,7 @@
 import { getCollection, render } from "astro:content"
 import { Separator } from "@/components/ui/separator"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
+import { buildCompanyProjectsByCompanyId } from "@/lib/experience/company-projects"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
@@ -25,15 +26,28 @@ const certificates = await getCollection("certificates")
 const awards = await getCollection("awards")
 
 // Sort by date (descending)
-const sortedWork = work.sort((a, b) => b.data.dateStart.valueOf() - a.data.dateStart.valueOf())
+const sortedWork = [...work].sort((a, b) => b.data.dateStart.valueOf() - a.data.dateStart.valueOf())
 
 const sortedAwards = awards.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-const workWithContent = await Promise.all(
-  sortedWork.map(async (entry) => {
-    const { Content } = await render(entry)
-    return { ...entry, Content }
-  })
+const contracts = buildResumePortfolioContracts(projects)
+const { summaryBlocks, mappings } = contracts
+
+const ctaHrefByResumeItemId = new Map(
+  summaryBlocks.map((summaryBlock) => [summaryBlock.resumeItemId, summaryBlock.ctaHref])
 )
+const hrefByProjectId = new Map<string, string>()
+
+for (const mapping of mappings) {
+  const href = ctaHrefByResumeItemId.get(mapping.resumeItemId)
+  if (!href) continue
+  hrefByProjectId.set(mapping.portfolioCaseId, href)
+}
+
+const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(projects, { hrefByProjectId })
+const experienceEntries = sortedWork.map((entry) => ({
+  data: entry.data,
+  projects: companyProjectsByCompanyId.get(entry.data.companyId) ?? [],
+}))
 
 const awardsWithContent = await Promise.all(
   sortedAwards.map(async (entry) => {
@@ -41,8 +55,6 @@ const awardsWithContent = await Promise.all(
     return { ...entry, Content }
   })
 )
-
-const { summaryBlocks } = buildResumePortfolioContracts(projects)
 ---
 
 <Layout title={`${profile?.name} | AI와 함께하는 개발자 이력서`}>
@@ -82,7 +94,7 @@ const { summaryBlocks } = buildResumePortfolioContracts(projects)
 
     <Separator className="my-12" />
 
-    <ExperienceSection experiences={workWithContent} />
+    <ExperienceSection experiences={experienceEntries} />
 
     <Separator className="my-12" />
 

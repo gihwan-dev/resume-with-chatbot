@@ -2,6 +2,10 @@ import { defineCollection, z } from "astro:content"
 import { glob } from "astro/loaders"
 import { projectStoryThreadSchema } from "./lib/resume-portfolio/story-thread-schema"
 
+const companyIdSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "companyId must be kebab-case")
+
 const basics = defineCollection({
   loader: glob({ pattern: "profile.json", base: "./src/content/basics" }),
   schema: z.object({
@@ -23,6 +27,7 @@ const basics = defineCollection({
 const work = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/work" }),
   schema: z.object({
+    companyId: companyIdSchema,
     company: z.string(),
     role: z.string(),
     dateStart: z.coerce.date(),
@@ -68,6 +73,7 @@ const awards = defineCollection({
 const projects = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/projects" }),
   schema: z.object({
+    companyId: companyIdSchema,
     title: z.string(),
     company: z.string().optional(), // Link to work history
     description: z.string(),

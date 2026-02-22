@@ -1,4 +1,5 @@
 ---
+companyId: "kmong"
 company: "크몽"
 role: "프리랜서 개발자"
 dateStart: 2023-06-01

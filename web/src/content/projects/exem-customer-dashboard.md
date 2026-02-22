@@ -1,4 +1,5 @@
 ---
+companyId: "exem"
 title: "고객 특화 DB 모니터링 대시보드 개발"
 company: "Exem"
 description: "고객별 모니터링 요구를 단일 제품 구조에서 수용하도록 대시보드 아키텍처를 재설계하고 장애 인지 속도를 70% 개선"

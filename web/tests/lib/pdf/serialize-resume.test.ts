@@ -38,6 +38,7 @@ describe("serializeResumeData", () => {
           return [
             {
               data: {
+                companyId: "exem",
                 company: "Exem",
                 role: "Frontend Engineer",
                 dateStart: new Date("2024-11-01"),
@@ -47,12 +48,25 @@ describe("serializeResumeData", () => {
                 summary: "work summary",
               },
             },
+            {
+              data: {
+                companyId: "kmong",
+                company: "Kmong",
+                role: "Freelancer",
+                dateStart: new Date("2023-06-01"),
+                dateEnd: new Date("2023-12-01"),
+                isCurrent: false,
+                location: undefined,
+                summary: "freelance summary",
+              },
+            },
           ] as never
         case "projects":
           return [
             {
               id: "exem-customer-dashboard",
               data: {
+                companyId: "exem",
                 title: "고객 특화 DB 모니터링 대시보드 개발",
                 company: "Exem",
                 description: "project summary",
@@ -68,6 +82,7 @@ describe("serializeResumeData", () => {
             {
               id: "exem-data-grid",
               data: {
+                companyId: "exem",
                 title: "데이터 그리드 개발",
                 company: "Exem",
                 description: "project summary",
@@ -83,6 +98,7 @@ describe("serializeResumeData", () => {
             {
               id: "exem-new-generation",
               data: {
+                companyId: "exem",
                 title: "차세대 데이터베이스 성능 모니터링 제품 개발",
                 company: "Exem",
                 description: "project summary",
@@ -98,6 +114,7 @@ describe("serializeResumeData", () => {
             {
               id: "exem-dx-improvement",
               data: {
+                companyId: "exem",
                 title: "개발 생산성 향상 및 자동화 인프라 구축",
                 company: "Exem",
                 description: "project summary",
@@ -148,6 +165,13 @@ describe("serializeResumeData", () => {
     expect(result.projects[0].summary).toContain("장애 인지 시간을 10초에서 3초로 단축")
     expect(result.projects[0].accomplishments.length).toBeGreaterThan(0)
     expect(result.projects[0].evidenceIds.length).toBeGreaterThan(0)
-    expect(result.work).toHaveLength(1)
+    expect(result.work).toHaveLength(2)
+    expect(result.work[0].projectTitles).toEqual([
+      "고객 특화 DB 모니터링 대시보드 개발",
+      "데이터 그리드 개발",
+      "차세대 데이터베이스 성능 모니터링 제품 개발",
+      "개발 생산성 향상 및 자동화 인프라 구축",
+    ])
+    expect(result.work[1].projectTitles).toEqual([])
   })
 })

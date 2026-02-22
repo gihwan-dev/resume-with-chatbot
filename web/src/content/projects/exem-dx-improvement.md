@@ -1,4 +1,5 @@
 ---
+companyId: "exem"
 title: "개발 생산성 향상 및 자동화 인프라 구축"
 company: "Exem"
 description: "레거시·폐쇄망 제약 환경에서 개발 생산성과 리뷰 효율을 높이기 위한 자동화 인프라를 구축"

@@ -75,13 +75,22 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
       {work.map((w) => (
         <View key={`${w.company}-${w.dateStart}`} style={styles.itemSeparator} wrap={false}>
           <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle}>{w.company}</Text>
+            <Text style={styles.itemTitle}>{w.role}</Text>
             <Text style={styles.itemDate}>
               {formatDateRange(w.dateStart, w.dateEnd, w.isCurrent)}
             </Text>
           </View>
-          <Text style={styles.itemSubtitle}>{w.role}</Text>
-          <Text style={styles.itemSummary}>{w.summary}</Text>
+          <Text style={styles.itemSubtitle}>{w.company}</Text>
+          {w.projectTitles.length > 0 && (
+            <View style={styles.experienceProjectList}>
+              {w.projectTitles.map((projectTitle) => (
+                <View key={`${w.company}-${projectTitle}`} style={styles.experienceProjectRow}>
+                  <Text style={styles.experienceProjectBullet}>•</Text>
+                  <Text style={styles.experienceProjectText}>{projectTitle}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       ))}
     </View>

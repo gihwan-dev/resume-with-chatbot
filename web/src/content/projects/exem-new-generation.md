@@ -1,4 +1,5 @@
 ---
+companyId: "exem"
 title: "차세대 데이터베이스 성능 모니터링 제품 개발"
 company: "Exem"
 description: "5종 시각화 차트의 도메인 기반 폼 아키텍처, Zustand 스토어 지역화, i18n 타입 자동 생성을 통해 확장성과 운영 안정성을 확보"
