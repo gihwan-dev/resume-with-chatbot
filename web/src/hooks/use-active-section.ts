@@ -2,42 +2,52 @@
 
 import { useEffect, useRef, useState } from "react"
 
-export type SectionId = "profile" | "experience" | "projects" | "blog" | "certificates" | "awards"
+const SCROLL_EDGE_THRESHOLD_PX = 10
 
-const SECTION_IDS: SectionId[] = [
-  "profile",
-  "experience",
-  "projects",
-  "blog",
-  "certificates",
-  "awards",
-]
+function readHashSectionId() {
+  if (!window.location.hash) return null
 
-export function useActiveSection(): SectionId | null {
-  const [activeSection, setActiveSection] = useState<SectionId | null>(null)
-  const sectionRatiosRef = useRef<Map<SectionId, number>>(new Map())
+  try {
+    const decoded = decodeURIComponent(window.location.hash.slice(1))
+    return decoded || null
+  } catch {
+    return null
+  }
+}
+
+export function useActiveSection(sectionIds: readonly string[]): string | null {
+  const [activeSection, setActiveSection] = useState<string | null>(null)
+  const sectionRatiosRef = useRef<Map<string, number>>(new Map())
 
   useEffect(() => {
+    if (sectionIds.length === 0) {
+      setActiveSection(null)
+      return
+    }
+
+    sectionRatiosRef.current.clear()
+    const sectionIdSet = new Set(sectionIds)
+    const firstSectionId = sectionIds[0]
+    const lastSectionId = sectionIds[sectionIds.length - 1]
+
     const updateActiveSection = () => {
       const scrollTop = window.scrollY
       const scrollHeight = document.documentElement.scrollHeight
       const clientHeight = window.innerHeight
 
-      // 맨 위에 있으면 Profile
-      if (scrollTop <= 10) {
-        setActiveSection("profile")
+      // Keep top and bottom activation deterministic across nav modes.
+      if (scrollTop <= SCROLL_EDGE_THRESHOLD_PX) {
+        setActiveSection(firstSectionId)
         return
       }
 
-      // 맨 아래에 있으면 Awards
-      if (scrollTop + clientHeight >= scrollHeight - 10) {
-        setActiveSection("awards")
+      if (scrollTop + clientHeight >= scrollHeight - SCROLL_EDGE_THRESHOLD_PX) {
+        setActiveSection(lastSectionId)
         return
       }
 
-      // intersectionRatio가 가장 높은 섹션 찾기
       let maxRatio = 0
-      let maxSection: SectionId | null = null
+      let maxSection: string | null = null
 
       sectionRatiosRef.current.forEach((ratio, id) => {
         if (ratio > maxRatio) {
@@ -51,10 +61,12 @@ export function useActiveSection(): SectionId | null {
       }
     }
 
-    const observerCallback: IntersectionObserverCallback = (entries) => {
+    const observerCallback: IntersectionObserverCallback = (
+      entries: IntersectionObserverEntry[]
+    ) => {
       entries.forEach((entry) => {
-        const id = entry.target.id as SectionId
-        if (SECTION_IDS.includes(id)) {
+        const id = entry.target.id
+        if (sectionIdSet.has(id)) {
           sectionRatiosRef.current.set(id, entry.intersectionRatio)
         }
       })
@@ -67,21 +79,31 @@ export function useActiveSection(): SectionId | null {
       rootMargin: "-10% 0px -10% 0px",
     })
 
-    SECTION_IDS.forEach((id) => {
+    sectionIds.forEach((id) => {
       const element = document.getElementById(id)
       if (element) {
         observer.observe(element)
       }
     })
 
-    // 스크롤 이벤트로 맨 위/아래 체크
+    const syncHashSection = () => {
+      const hashSectionId = readHashSectionId()
+      if (!hashSectionId || !sectionIdSet.has(hashSectionId)) return
+
+      setActiveSection(hashSectionId)
+    }
+
+    syncHashSection()
+
+    window.addEventListener("hashchange", syncHashSection)
     window.addEventListener("scroll", updateActiveSection, { passive: true })
 
     return () => {
       observer.disconnect()
+      window.removeEventListener("hashchange", syncHashSection)
       window.removeEventListener("scroll", updateActiveSection)
     }
-  }, [])
+  }, [sectionIds])
 
   return activeSection
 }

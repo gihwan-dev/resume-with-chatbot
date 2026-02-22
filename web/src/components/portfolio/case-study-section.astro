@@ -1,5 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content"
+import ImpactBadgeCards from "@/components/portfolio/impact-badge-cards.astro"
+import StoryThreadTimeline from "@/components/portfolio/story-thread-timeline.astro"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
@@ -10,149 +12,109 @@ interface Props {
 }
 
 const { portfolioCase, project } = Astro.props
+const storyThread = project.data.storyThread
+
+if (!storyThread) {
+  throw new Error(`storyThread is required for caseId: ${portfolioCase.caseId}`)
+}
 ---
 
-<article id="overview" class="mb-32 scroll-mt-24 group/case relative">
-  <div class="mb-12">
-    <h1 class="text-3xl sm:text-4xl font-extrabold text-resume-text-heading mb-6 tracking-tight leading-tight">
-      {portfolioCase.title}
-    </h1>
-    
-    <div class="text-lg text-resume-text-main/80 mb-8 leading-relaxed">
-      {project.data.description}
+<article
+  class="group/case relative mb-20 min-w-0 scroll-mt-24 space-y-12 sm:mb-24 sm:space-y-14 lg:space-y-16"
+  data-portfolio-case-study
+  data-case-id={portfolioCase.caseId}
+>
+  <section
+    id="hook"
+    class="scroll-mt-24 space-y-6 print:break-inside-avoid sm:space-y-8"
+    data-portfolio-section="hook"
+  >
+    <div class="space-y-4 sm:space-y-5">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-resume-primary">
+        Case Study
+      </p>
+      <h1
+        class="break-words text-2xl font-extrabold leading-tight tracking-tight text-resume-text-heading sm:text-4xl print:text-slate-900"
+        data-hook-title
+      >
+        {portfolioCase.title}
+      </h1>
+      <p
+        class="break-words text-base leading-relaxed text-resume-text-main/85 sm:text-lg print:text-slate-800"
+        data-hook-summary
+      >
+        {project.data.description}
+      </p>
     </div>
 
     {project.data.techStack && project.data.techStack.length > 0 && (
-      <div class="flex flex-wrap gap-2 mb-8">
+      <div class="flex flex-wrap gap-2" data-hook-tech-stack>
         {project.data.techStack.map((tech) => (
-          <Badge variant="outline" className="text-sm font-normal bg-resume-card-bg text-resume-text-main border-resume-border">
+          <Badge
+            variant="outline"
+            className="text-sm font-normal bg-resume-card-bg text-resume-text-main border-resume-border"
+            data-hook-tech-item
+          >
             {tech}
           </Badge>
         ))}
       </div>
     )}
-  </div>
 
-  <div class="portfolio-prose">
-    <slot />
-  </div>
-  
-  <Separator className="mt-24 print:hidden" />
+    <ImpactBadgeCards impacts={storyThread.impacts} />
+  </section>
+
+  <section
+    id="context"
+    class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4"
+    data-portfolio-section="context"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-context-title
+    >
+      Context
+    </h2>
+    <p
+      class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
+      data-context-text
+    >
+      {storyThread.context}
+    </p>
+  </section>
+
+  <section
+    id="threads"
+    class="scroll-mt-24 space-y-5 print:break-inside-avoid sm:space-y-6"
+    data-portfolio-section="threads"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-threads-title
+    >
+      Story Threads
+    </h2>
+    <StoryThreadTimeline threads={storyThread.threads} />
+  </section>
+
+  <section
+    id="retrospective"
+    class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4"
+    data-portfolio-section="retrospective"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-retrospective-title
+    >
+      Retrospective
+    </h2>
+    <p
+      class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
+      data-retrospective-text
+    >
+      {storyThread.lessonsLearned}
+    </p>
+  </section>
+
+  <Separator className="mt-10 print:hidden" />
 </article>
-
-<style is:global>
-  .portfolio-prose {
-    color: var(--resume-text-main);
-    line-height: 1.8;
-  }
-  .portfolio-prose h3, .portfolio-prose h4 {
-    color: var(--resume-text-heading);
-    font-weight: 700;
-    margin-top: 2.5em;
-    margin-bottom: 1em;
-    font-size: 1.5rem;
-    scroll-margin-top: 6rem;
-  }
-  .portfolio-prose h4 {
-    font-size: 1.25rem;
-  }
-  .portfolio-prose p {
-    margin-top: 1.25em;
-    margin-bottom: 1.25em;
-    opacity: 0.9;
-  }
-  .portfolio-prose ul {
-    margin-top: 1.25em;
-    margin-bottom: 1.25em;
-    padding-left: 1.625em;
-    list-style-type: disc;
-    opacity: 0.9;
-  }
-  .portfolio-prose li {
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    padding-left: 0.375em;
-  }
-  .portfolio-prose li::marker {
-    color: var(--resume-primary);
-    opacity: 0.7;
-  }
-  .portfolio-prose strong {
-    color: var(--resume-text-heading);
-    font-weight: 600;
-  }
-  .portfolio-prose a {
-    color: var(--resume-primary);
-    font-weight: 500;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    transition: color 0.2s ease;
-  }
-  .portfolio-prose a:hover {
-    color: var(--resume-secondary);
-  }
-  .portfolio-prose hr {
-    margin-top: 3em;
-    margin-bottom: 3em;
-    border: 0;
-    border-top: 1px solid var(--resume-border);
-  }
-  .portfolio-prose blockquote {
-    border-left: 4px solid var(--resume-primary);
-    padding-left: 1rem;
-    margin-top: 1.5em;
-    margin-bottom: 1.5em;
-    font-size: 1.125rem;
-    color: var(--resume-text-heading);
-    font-style: italic;
-    background-color: var(--resume-highlight);
-    padding: 1rem 1rem 1rem 1.25rem;
-    border-radius: 0 0.5rem 0.5rem 0;
-  }
-  
-  /* Print specific adjustments */
-  @media print {
-    .portfolio-prose {
-      color: #000;
-      line-height: 1.6;
-    }
-    .portfolio-prose h3, .portfolio-prose h4 {
-      color: #000;
-      page-break-after: avoid;
-      break-after: avoid;
-    }
-    .portfolio-prose p, .portfolio-prose ul, .portfolio-prose ol, .portfolio-prose li {
-      page-break-inside: avoid;
-      break-inside: avoid;
-      color: #333;
-    }
-    .portfolio-prose img,
-    .portfolio-prose figure,
-    .portfolio-prose pre,
-    .portfolio-prose blockquote,
-    .portfolio-prose table,
-    .portfolio-prose compare-toggle {
-      page-break-inside: avoid;
-      break-inside: avoid;
-      break-after: avoid;
-    }
-    .portfolio-prose h3 + p,
-    .portfolio-prose h4 + p,
-    .portfolio-prose h3 + ul,
-    .portfolio-prose h4 + ul {
-      page-break-before: avoid;
-      break-before: avoid;
-    }
-    .portfolio-prose a::after {
-      content: " (" attr(href) ")";
-      font-size: 0.85em;
-      word-break: break-all;
-      color: #666;
-    }
-    /* Don't expand internal hash links */
-    .portfolio-prose a[href^="#"]::after,
-    .portfolio-prose a[href^="/portfolio/"]::after {
-      content: none;
-    }
-  }
-</style>

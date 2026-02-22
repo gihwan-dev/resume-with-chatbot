@@ -92,6 +92,24 @@ export const styles = StyleSheet.create({
     lineHeight: 1.5,
     marginBottom: 6,
   },
+  experienceProjectList: {
+    marginTop: 2,
+  },
+  experienceProjectRow: {
+    flexDirection: "row",
+    marginBottom: 2,
+    paddingLeft: 8,
+  },
+  experienceProjectBullet: {
+    width: 8,
+    fontSize: 9,
+    color: colors.muted,
+  },
+  experienceProjectText: {
+    flex: 1,
+    fontSize: 9,
+    lineHeight: 1.5,
+  },
   blogLinkText: {
     fontSize: 8,
     marginBottom: 2,

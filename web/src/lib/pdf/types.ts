@@ -15,6 +15,7 @@ export interface SerializedWork {
   isCurrent: boolean
   location?: string
   summary: string
+  projectTitles: string[]
 }
 
 export interface SerializedProject {

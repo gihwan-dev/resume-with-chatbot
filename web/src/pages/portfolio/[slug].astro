@@ -1,7 +1,6 @@
 ---
-import { type CollectionEntry, getCollection, render } from "astro:content"
+import { type CollectionEntry, getCollection } from "astro:content"
 import CaseStudySection from "@/components/portfolio/case-study-section.astro"
-import TableOfContents from "@/components/portfolio/table-of-contents.astro"
 import Layout from "@/layouts/Layout.astro"
 import type { PortfolioCaseContract, PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
@@ -23,7 +22,7 @@ export async function getStaticPaths() {
           portfolioCase,
           project,
           resumeItemId: mapping?.resumeItemId ?? null,
-          defaultSectionId: mapping?.defaultSectionId ?? "overview",
+          defaultSectionId: mapping?.defaultSectionId ?? "hook",
         },
       }
     })
@@ -45,12 +44,10 @@ if (!project) {
 }
 
 const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
-
-const { Content } = await render(project)
 ---
 
 <Layout title={`${portfolioCase.title} | 최기환 포트폴리오`}>
-  <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8 print:py-0 print:px-0 print:max-w-full">
+  <div class="container mx-auto px-4 py-10 sm:px-6 sm:py-12 lg:px-8 print:max-w-full print:px-0 print:py-0">
     <div class="mb-8 print:hidden">
       <a id="back-to-resume-link" href={resumeHref} class="inline-flex items-center text-sm font-medium text-resume-text-muted hover:text-resume-primary transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 h-4 w-4">
@@ -67,6 +64,13 @@ const { Content } = await render(project)
     >
       const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
       const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+      const LEGACY_SECTION_ALIAS_MAP = {
+        overview: "hook",
+        problem: "threads",
+        decision: "threads",
+        result: "threads",
+        retrospective: "retrospective",
+      }
       const sectionIdSet = new Set(allowedSectionIds)
       const expectedPathname = `/portfolio/${caseId}`
 
@@ -83,16 +87,32 @@ const { Content } = await render(project)
         }
       }
 
+      function normalizeSectionId(sectionId) {
+        if (!sectionId) return null
+        if (sectionIdSet.has(sectionId)) return sectionId
+
+        const legacyMappedSectionId = LEGACY_SECTION_ALIAS_MAP[sectionId]
+        if (legacyMappedSectionId && sectionIdSet.has(legacyMappedSectionId)) {
+          return legacyMappedSectionId
+        }
+
+        return null
+      }
+
       function normalizeSectionHash() {
         const currentSectionId = readHashSectionId()
         if (currentSectionId === null) return null
-        if (sectionIdSet.has(currentSectionId)) return currentSectionId
+
+        const normalizedSectionId = normalizeSectionId(currentSectionId)
+        const nextSectionId = normalizedSectionId ?? defaultSectionId
 
         const nextUrl = new URL(window.location.href)
-        nextUrl.hash = defaultSectionId
-        window.history.replaceState(window.history.state, "", nextUrl.toString())
+        if (currentSectionId !== nextSectionId) {
+          nextUrl.hash = nextSectionId
+          window.history.replaceState(window.history.state, "", nextUrl.toString())
+        }
 
-        return defaultSectionId
+        return nextSectionId
       }
 
       function scrollToSection(sectionId, behavior = "auto") {
@@ -215,25 +235,15 @@ const { Content } = await render(project)
       )
     </script>
 
-
-    <div class="grid grid-cols-1 lg:grid-cols-[250px_1fr] xl:grid-cols-[300px_1fr] gap-12 lg:gap-24 relative">
-      <aside class="hidden lg:block">
-        <TableOfContents portfolioCase={portfolioCase} />
-      </aside>
-
-      <main class="w-full max-w-[800px] print:max-w-full print:w-full">
+    <div class="relative">
+      <main class="mx-auto w-full min-w-0 max-w-[820px] print:w-full print:max-w-full">
         <div class="print:mb-12 hidden print:block">
           <h1 class="text-4xl font-bold mb-2">포트폴리오 상세 케이스 스터디</h1>
           <p class="text-resume-text-muted">최기환 (Gihwan-dev)</p>
           <hr class="mt-8 mb-12 border-resume-border" />
         </div>
 
-        <CaseStudySection 
-          portfolioCase={portfolioCase} 
-          project={project} 
-        >
-          <Content />
-        </CaseStudySection>
+        <CaseStudySection portfolioCase={portfolioCase} project={project} />
       </main>
     </div>
   </div>

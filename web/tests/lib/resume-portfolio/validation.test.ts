@@ -214,7 +214,7 @@ describe("validateResumePortfolioMapping", () => {
     const brokenSummaryBlocks = contracts.summaryBlocks.map((item) => ({ ...item }))
     brokenSummaryBlocks[0] = {
       ...brokenSummaryBlocks[0],
-      ctaHref: "/portfolio/exem-data-grid#overview",
+      ctaHref: "/portfolio/exem-data-grid#hook",
     }
 
     const result = validateResumePortfolioMapping({

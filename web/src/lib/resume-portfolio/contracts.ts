@@ -1,12 +1,35 @@
-export const PORTFOLIO_SECTION_IDS = [
-  "overview",
-  "problem",
-  "decision",
-  "result",
-  "retrospective",
-] as const
+export const PORTFOLIO_SECTION_IDS = ["hook", "context", "threads", "retrospective"] as const
 
 export type PortfolioSectionId = (typeof PORTFOLIO_SECTION_IDS)[number]
+
+export interface ImpactItem {
+  value: string
+  label: string
+  description: string
+}
+
+export interface StoryThreadComparison {
+  beforeLabel?: string
+  afterLabel?: string
+  before: string[]
+  after: string[]
+}
+
+export interface StoryThreadItem {
+  issueTitle: string
+  problems: string[]
+  thoughtProcess: string
+  actions: string[]
+  comparison?: StoryThreadComparison
+  result: string
+}
+
+export interface ProjectStoryThread {
+  context: string
+  impacts: ImpactItem[]
+  threads: StoryThreadItem[]
+  lessonsLearned: string
+}
 
 export interface PortfolioAnchor {
   caseId: string

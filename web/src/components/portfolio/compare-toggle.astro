@@ -2,44 +2,85 @@
 interface Props {
   beforeLabel?: string
   afterLabel?: string
+  ariaLabel?: string
 }
 
-const { beforeLabel = "Before (개선 전)", afterLabel = "After (개선 후)" } = Astro.props
+const {
+  beforeLabel = "Before (개선 전)",
+  afterLabel = "After (개선 후)",
+  ariaLabel = "Before and After comparison",
+} = Astro.props
 ---
 
-<compare-toggle class="block my-8 rounded-xl border border-resume-border bg-resume-card-bg overflow-hidden shadow-sm print:border-none print:shadow-none print:my-4">
-  <div class="flex border-b border-resume-border p-2 bg-resume-bg/50 print:hidden">
+<compare-toggle
+  class="my-6 block min-w-0 overflow-hidden rounded-xl border border-resume-border bg-resume-card-bg shadow-sm sm:my-8 print:my-3 print:border-slate-300 print:shadow-none"
+  data-compare-toggle
+>
+  <div
+    class="flex border-b border-resume-border bg-resume-bg/50 p-1.5 print:hidden sm:p-2"
+    role="tablist"
+    aria-label={ariaLabel}
+    data-tablist
+    data-compare-tablist
+  >
     <button
+      type="button"
       data-toggle="before"
-      class="flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all text-resume-text-muted hover:text-resume-text-main"
+      role="tab"
+      aria-selected="false"
+      tabindex="-1"
+      class="flex-1 rounded-lg border border-transparent px-2.5 py-1.5 text-xs font-semibold text-resume-text-muted transition-all hover:text-resume-text-main sm:px-4 sm:py-2 sm:text-sm"
+      data-compare-tab="before"
     >
       {beforeLabel}
     </button>
     <button
+      type="button"
       data-toggle="after"
-      class="flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all bg-resume-bg text-resume-primary shadow-sm border border-resume-primary/30"
+      role="tab"
+      aria-selected="true"
+      tabindex="0"
+      class="flex-1 rounded-lg border border-resume-primary/30 bg-resume-bg px-2.5 py-1.5 text-xs font-semibold text-resume-primary shadow-sm transition-all sm:px-4 sm:py-2 sm:text-sm"
+      data-compare-tab="after"
     >
       {afterLabel}
     </button>
   </div>
-  
-  <div class="relative p-6 pt-8 print:p-0 print:pt-4">
-    <div data-content="before" class="hidden print:hidden animate-in fade-in zoom-in-95 duration-200">
+
+  <div class="relative min-w-0 p-4 pt-6 sm:p-6 sm:pt-8 print:p-0 print:pt-3">
+    <div
+      data-content="before"
+      role="tabpanel"
+      class="hidden print:hidden animate-in fade-in zoom-in-95 duration-200"
+      hidden
+      aria-hidden="true"
+      data-compare-panel="before"
+    >
       <slot name="before" />
     </div>
-    <div data-content="after" class="print:hidden animate-in fade-in zoom-in-95 duration-200">
+    <div
+      data-content="after"
+      role="tabpanel"
+      class="print:hidden animate-in fade-in zoom-in-95 duration-200"
+      aria-hidden="false"
+      data-compare-panel="after"
+    >
       <slot name="after" />
     </div>
-    
-    <div class="hidden print:block space-y-12">
+
+    <div class="hidden space-y-8 print:block">
       <div class="break-inside-avoid">
-        <h4 class="font-bold text-lg mb-4 pb-2 border-b border-resume-border text-resume-text-heading">{beforeLabel}</h4>
-        <div class="opacity-80 grayscale">
+        <h4 class="mb-3 border-b border-resume-border pb-2 text-base font-bold text-resume-text-heading print:border-slate-300 print:text-slate-900">
+          {beforeLabel}
+        </h4>
+        <div class="opacity-85">
           <slot name="before" />
         </div>
       </div>
       <div class="break-inside-avoid">
-        <h4 class="font-bold text-lg mb-4 pb-2 border-b border-resume-border text-resume-primary">{afterLabel}</h4>
+        <h4 class="mb-3 border-b border-resume-border pb-2 text-base font-bold text-resume-primary print:border-slate-300 print:text-slate-900">
+          {afterLabel}
+        </h4>
         <div>
           <slot name="after" />
         </div>
@@ -49,47 +90,169 @@ const { beforeLabel = "Before (개선 전)", afterLabel = "After (개선 후)" }
 </compare-toggle>
 
 <script>
+  const ACTIVE_TAB_CLASSES = [
+    "bg-resume-bg",
+    "text-resume-primary",
+    "shadow-sm",
+    "border-resume-primary/30",
+  ]
+  const INACTIVE_TAB_CLASSES = [
+    "text-resume-text-muted",
+    "hover:text-resume-text-main",
+    "border-transparent",
+  ]
+
+  let compareToggleSequence = 0
+  const cleanupByElement = new WeakMap<HTMLElement, () => void>()
+
   class CompareToggle extends HTMLElement {
     connectedCallback() {
-      // Prevents multiple attachments if re-rendered
-      if (this.dataset.initialized) return;
-      this.dataset.initialized = "true";
+      if (this.dataset.initialized === "true") return
+      this.dataset.initialized = "true"
 
-      const btnBefore = this.querySelector('[data-toggle="before"]');
-      const btnAfter = this.querySelector('[data-toggle="after"]');
-      const contentBefore = this.querySelector('[data-content="before"]');
-      const contentAfter = this.querySelector('[data-content="after"]');
+      const tabList = this.querySelector("[data-tablist]")
+      const btnBefore = this.querySelector('[data-toggle="before"]')
+      const btnAfter = this.querySelector('[data-toggle="after"]')
+      const panelBefore = this.querySelector('[data-content="before"]')
+      const panelAfter = this.querySelector('[data-content="after"]')
 
-      if (!btnBefore || !btnAfter || !contentBefore || !contentAfter) return;
+      if (
+        !(tabList instanceof HTMLElement) ||
+        !(btnBefore instanceof HTMLButtonElement) ||
+        !(btnAfter instanceof HTMLButtonElement) ||
+        !(panelBefore instanceof HTMLElement) ||
+        !(panelAfter instanceof HTMLElement)
+      ) {
+        return
+      }
 
-      const activeBtnClass = "bg-resume-bg text-resume-primary shadow-sm border border-resume-primary/30";
-      const inactiveBtnClass = "text-resume-text-muted hover:text-resume-text-main";
-      const activeBtnClassOld = "bg-resume-card-bg text-resume-text-heading shadow-sm border border-resume-border";
+      compareToggleSequence += 1
+      const instanceId = `compare-toggle-${compareToggleSequence}`
 
-      btnBefore.addEventListener('click', () => {
-        contentBefore.classList.remove('hidden');
-        contentAfter.classList.add('hidden');
-        
-        btnBefore.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${activeBtnClassOld}`;
-        btnAfter.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${inactiveBtnClass}`;
-      });
+      btnBefore.id = `${instanceId}-tab-before`
+      btnAfter.id = `${instanceId}-tab-after`
+      panelBefore.id = `${instanceId}-panel-before`
+      panelAfter.id = `${instanceId}-panel-after`
 
-      btnAfter.addEventListener('click', () => {
-        contentBefore.classList.add('hidden');
-        contentAfter.classList.remove('hidden');
-        
-        btnBefore.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${inactiveBtnClass}`;
-        btnAfter.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${activeBtnClass}`;
-      });
-      
-      // Initialize state to After
-      btnBefore.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${inactiveBtnClass}`;
-      btnAfter.className = `flex-1 py-2 px-4 text-sm font-semibold rounded-lg transition-all ${activeBtnClass}`;
+      btnBefore.setAttribute("aria-controls", panelBefore.id)
+      btnAfter.setAttribute("aria-controls", panelAfter.id)
+      panelBefore.setAttribute("aria-labelledby", btnBefore.id)
+      panelAfter.setAttribute("aria-labelledby", btnAfter.id)
+
+      const tabs: HTMLButtonElement[] = [btnBefore, btnAfter]
+      const tabKeys: Array<"before" | "after"> = ["before", "after"]
+
+      const setTabActiveState = (tab: HTMLButtonElement, active: boolean) => {
+        tab.classList.remove(...ACTIVE_TAB_CLASSES, ...INACTIVE_TAB_CLASSES)
+        tab.classList.add(...(active ? ACTIVE_TAB_CLASSES : INACTIVE_TAB_CLASSES))
+        tab.setAttribute("aria-selected", active ? "true" : "false")
+        tab.tabIndex = active ? 0 : -1
+      }
+
+      const setPanelActiveState = (panel: HTMLElement, active: boolean) => {
+        panel.hidden = !active
+        panel.classList.toggle("hidden", !active)
+        panel.setAttribute("aria-hidden", active ? "false" : "true")
+      }
+
+      const activateTab = (key: "before" | "after", focusTab = false) => {
+        const isBefore = key === "before"
+
+        setTabActiveState(btnBefore, isBefore)
+        setTabActiveState(btnAfter, !isBefore)
+        setPanelActiveState(panelBefore, isBefore)
+        setPanelActiveState(panelAfter, !isBefore)
+
+        if (focusTab) {
+          const targetTab = isBefore ? btnBefore : btnAfter
+          targetTab.focus()
+        }
+      }
+
+      const onClick = (event: MouseEvent) => {
+        const target = event.currentTarget
+        if (!(target instanceof HTMLButtonElement)) return
+
+        const key = target.dataset.toggle
+        if (key !== "before" && key !== "after") return
+
+        activateTab(key)
+      }
+
+      const onKeyDown = (event: KeyboardEvent) => {
+        const target = event.currentTarget
+        if (!(target instanceof HTMLButtonElement)) return
+
+        const currentKey = target.dataset.toggle
+        if (currentKey !== "before" && currentKey !== "after") return
+
+        const currentIndex = tabKeys.indexOf(currentKey)
+        if (currentIndex < 0) return
+
+        switch (event.key) {
+          case "ArrowLeft":
+          case "ArrowUp": {
+            event.preventDefault()
+            const nextIndex = (currentIndex - 1 + tabKeys.length) % tabKeys.length
+            activateTab(tabKeys[nextIndex], true)
+            break
+          }
+          case "ArrowRight":
+          case "ArrowDown": {
+            event.preventDefault()
+            const nextIndex = (currentIndex + 1) % tabKeys.length
+            activateTab(tabKeys[nextIndex], true)
+            break
+          }
+          case "Home": {
+            event.preventDefault()
+            activateTab(tabKeys[0], true)
+            break
+          }
+          case "End": {
+            event.preventDefault()
+            activateTab(tabKeys[tabKeys.length - 1], true)
+            break
+          }
+          case "Enter":
+          case " ":
+          case "Spacebar": {
+            event.preventDefault()
+            activateTab(currentKey, true)
+            break
+          }
+          default:
+            break
+        }
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", onClick)
+        tab.addEventListener("keydown", onKeyDown)
+      })
+
+      activateTab("after")
+
+      cleanupByElement.set(this, () => {
+        tabs.forEach((tab) => {
+          tab.removeEventListener("click", onClick)
+          tab.removeEventListener("keydown", onKeyDown)
+        })
+      })
+    }
+
+    disconnectedCallback() {
+      const cleanup = cleanupByElement.get(this)
+      if (cleanup) {
+        cleanup()
+      }
+
+      cleanupByElement.delete(this)
+      delete this.dataset.initialized
     }
   }
 
-  // Define the custom element if it hasn't been defined yet
-  if (!customElements.get('compare-toggle')) {
-    customElements.define('compare-toggle', CompareToggle);
+  if (!customElements.get("compare-toggle")) {
+    customElements.define("compare-toggle", CompareToggle)
   }
 </script>

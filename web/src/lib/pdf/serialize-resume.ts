@@ -1,5 +1,6 @@
 import { getCollection } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
+import { buildCompanyProjectsByCompanyId } from "@/lib/experience/company-projects"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import type { SerializedResumeData } from "./types"
 
@@ -23,6 +24,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
   )
 
   const { summaryBlocks } = buildResumePortfolioContracts(projects)
+  const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(projects)
 
   const sortedAwards = [...awards].sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
 
@@ -43,6 +45,9 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       isCurrent: w.data.isCurrent,
       location: w.data.location,
       summary: w.data.summary,
+      projectTitles: (companyProjectsByCompanyId.get(w.data.companyId) ?? []).map(
+        (project) => project.title
+      ),
     })),
     projects: summaryBlocks.map((summaryBlock) => ({
       resumeItemId: summaryBlock.resumeItemId,
