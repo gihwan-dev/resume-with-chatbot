@@ -1,7 +1,6 @@
 ---
 import { type CollectionEntry, getCollection, render } from "astro:content"
 import CaseStudySection from "@/components/portfolio/case-study-section.astro"
-import TableOfContents from "@/components/portfolio/table-of-contents.astro"
 import Layout from "@/layouts/Layout.astro"
 import type { PortfolioCaseContract, PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
@@ -215,13 +214,8 @@ const { Content } = await render(project)
       )
     </script>
 
-
-    <div class="grid grid-cols-1 lg:grid-cols-[250px_1fr] xl:grid-cols-[300px_1fr] gap-12 lg:gap-24 relative">
-      <aside class="hidden lg:block">
-        <TableOfContents portfolioCase={portfolioCase} />
-      </aside>
-
-      <main class="w-full max-w-[800px] print:max-w-full print:w-full">
+    <div class="relative">
+      <main class="w-full max-w-[800px] mx-auto print:max-w-full print:w-full">
         <div class="print:mb-12 hidden print:block">
           <h1 class="text-4xl font-bold mb-2">포트폴리오 상세 케이스 스터디</h1>
           <p class="text-resume-text-muted">최기환 (Gihwan-dev)</p>

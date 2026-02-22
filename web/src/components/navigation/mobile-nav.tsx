@@ -6,10 +6,22 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { CHAT_MODAL_OPENED_EVENT, MOBILE_NAV_OPENED_EVENT } from "@/lib/layer-events"
 import { cn } from "@/lib/utils"
-import { SectionNav } from "./section-nav"
+import { SectionNav, type SectionNavItem, type SectionNavVariant } from "./section-nav"
 import { ThemeToggle } from "./theme-toggle"
 
-export function MobileNav() {
+interface MobileNavProps {
+  sections: readonly SectionNavItem[]
+  ariaLabel: string
+  sectionTitle: string
+  sectionVariant?: SectionNavVariant
+}
+
+export function MobileNav({
+  sections,
+  ariaLabel,
+  sectionTitle,
+  sectionVariant = "default",
+}: MobileNavProps) {
   const [open, setOpen] = React.useState(false)
 
   React.useEffect(() => {
@@ -93,7 +105,10 @@ export function MobileNav() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-[var(--layer-nav)]" data-slot="mobile-nav-root">
+    <div
+      className="fixed top-4 right-4 z-[var(--layer-nav)] print:hidden"
+      data-slot="mobile-nav-root"
+    >
       <Sheet open={open} onOpenChange={handleOpenChange} modal={false}>
         <SheetTrigger asChild>
           <Button
@@ -124,9 +139,14 @@ export function MobileNav() {
             </div>
             <div className="border-t border-resume-border pt-4 transition-colors duration-100">
               <span className="text-xs font-medium uppercase text-resume-text-muted tracking-wider mb-2 block">
-                Sections
+                {sectionTitle}
               </span>
-              <SectionNav onNavigate={() => setOpen(false)} ariaLabel="모바일 이력서 섹션 이동" />
+              <SectionNav
+                sections={sections}
+                onNavigate={() => setOpen(false)}
+                ariaLabel={ariaLabel}
+                variant={sectionVariant}
+              />
             </div>
           </div>
         </SheetContent>

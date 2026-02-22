@@ -80,6 +80,22 @@ test.describe("Accessibility keyboard flows", () => {
       .toBe("#projects")
   })
 
+  test("포트폴리오 상세 목차 내비게이션을 키보드로 이동할 수 있다", async ({ page }) => {
+    await page.goto("/portfolio/exem-data-grid#overview")
+    await waitForUiReady(page)
+
+    const decisionLink = page.locator('.toc-link[data-section-id="decision"]').first()
+    await decisionLink.focus()
+    await decisionLink.press("Enter")
+
+    await expect
+      .poll(async () => page.evaluate(() => window.location.hash), {
+        message: "URL hash should update after portfolio TOC keyboard navigation",
+      })
+      .toBe("#decision")
+    await expect(decisionLink).toHaveAttribute("aria-current", "location")
+  })
+
   test("챗봇 모달은 키보드 열기/닫기 및 포커스 복귀를 지원한다", async ({ page }) => {
     const fab = page.locator(FAB_SELECTOR)
     await expect(async () => {
@@ -164,5 +180,25 @@ test.describe("Mobile accessibility", () => {
         message: "URL hash should update after mobile section navigation",
       })
       .toBe("#projects")
+  })
+
+  test("포트폴리오 상세 모바일 메뉴에서 목차 링크 선택 후 메뉴가 닫힌다", async ({ page }) => {
+    await preparePage(page, "light")
+    await page.goto("/portfolio/exem-data-grid#overview")
+    await waitForUiReady(page)
+    await openMobileSheet(page)
+
+    const resultLink = page
+      .locator(SHEET_CONTENT_SELECTOR)
+      .locator('.toc-link[data-section-id="result"]')
+    await resultLink.focus()
+    await resultLink.press("Enter")
+
+    await expect(page.locator(SHEET_CONTENT_SELECTOR)).toHaveCount(0)
+    await expect
+      .poll(async () => page.evaluate(() => window.location.hash), {
+        message: "URL hash should update after mobile portfolio TOC navigation",
+      })
+      .toBe("#result")
   })
 })

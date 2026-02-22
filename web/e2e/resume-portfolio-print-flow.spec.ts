@@ -30,11 +30,11 @@ test.describe("Resume -> Portfolio -> Print flow", () => {
     await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#result")
     await expect(resultLink).toHaveAttribute("aria-current", "location")
 
-    const tocNav = page.locator("nav").filter({ has: page.locator(".toc-list") })
-    await expect(tocNav).toBeVisible()
+    const desktopNavRoot = page.locator('[data-slot="desktop-nav-root"]')
+    await expect(desktopNavRoot).toBeVisible()
 
     await page.emulateMedia({ media: "print" })
-    await expect(tocNav).not.toBeVisible()
+    await expect(desktopNavRoot).not.toBeVisible()
 
     const pdfBuffer = await page.pdf({
       format: "A4",

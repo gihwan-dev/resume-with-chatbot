@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test"
 import { mockApiRoutes } from "./fixtures/mock-api"
 
+const MOBILE_VIEWPORT = { width: 390, height: 844 }
+
 const hasAvoidRule = (value: string | null | undefined): boolean => {
   if (!value) return false
   return value.includes("avoid")
@@ -45,16 +47,48 @@ test.describe("Portfolio TOC behavior", () => {
     await expect(resultLink).toHaveAttribute("aria-current", "location")
   })
 
+  test("포트폴리오 목차를 키보드로 이동해도 active/hash가 동기화된다", async ({ page }) => {
+    await page.goto("/portfolio/exem-data-grid#overview")
+
+    const decisionLink = page.locator('.toc-link[data-section-id="decision"]')
+    await decisionLink.focus()
+    await decisionLink.press("Enter")
+
+    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#decision")
+    await expect(decisionLink).toHaveAttribute("aria-current", "location")
+  })
+
+  test("모바일 메뉴에서도 포트폴리오 목차가 노출되고 선택 후 메뉴가 닫힌다", async ({ page }) => {
+    await page.setViewportSize(MOBILE_VIEWPORT)
+    await page.goto("/portfolio/exem-data-grid#overview")
+
+    const menuButton = page.getByRole("button", { name: /open menu/i })
+    await expect(menuButton).toBeVisible()
+    await expect(async () => {
+      await menuButton.click({ force: true })
+      await expect(page.locator('[data-slot="sheet-content"]')).toBeVisible({ timeout: 1000 })
+    }).toPass({ timeout: 10_000 })
+
+    const sheet = page.locator('[data-slot="sheet-content"]')
+
+    const resultLink = sheet.locator('.toc-link[data-section-id="result"]')
+    await expect(resultLink).toBeVisible()
+    await resultLink.click()
+
+    await expect(sheet).toHaveCount(0)
+    await expect.poll(async () => page.evaluate(() => window.location.hash)).toBe("#result")
+  })
+
   test("인쇄 미디어에서는 웹 전용 UI가 숨김 처리된다", async ({ page }) => {
     await page.goto("/portfolio/exem-customer-dashboard#overview")
 
-    const tocNav = page.locator("nav").filter({ has: page.locator(".toc-list") })
+    const desktopNavRoot = page.locator('[data-slot="desktop-nav-root"]')
 
-    await expect(tocNav).toBeVisible()
+    await expect(desktopNavRoot).toBeVisible()
 
     await page.emulateMedia({ media: "print" })
 
-    await expect(tocNav).not.toBeVisible()
+    await expect(desktopNavRoot).not.toBeVisible()
   })
 
   test("인쇄 미디어에서는 외부 링크 URL이 본문에 노출된다", async ({ page }) => {
