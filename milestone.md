@@ -1,142 +1,195 @@
-# 프로젝트 개발 마일스톤
+# 이력서 합격확률 최적화 마일스톤 (성능·아키텍처 FE)
 
-> 기반 문서: docs/PRD.md
+> 기반 문서: `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-hiring-optimization-direction-2026-02-22.md`, `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-engineering-guide-2025.md`, `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/PRD.md`, 사용자 피드백(2026-02-22)
 > 실행 라벨: `[SEQUENTIAL]`(순차), `[PARALLEL:PG-n]`(같은 그룹끼리 병렬)
-> 분해 기준: 컨텍스트 윈도우 친화 단위(한 번에 구현/검증 가능한 크기)
+> 분해 기준: 컨텍스트 윈도우 친화 단위(한 번의 구현/검증 세션에서 완료 가능한 크기)
+> 범위: 웹 섹션 구조 + 콘텐츠 리라이팅 + AI 추천 질문 + PDF 동기화 + 품질 게이트
 
-## Phase 1. [SEQUENTIAL] Story Thread 데이터 계약 확정
-- [x] **스토리텔링 상세 페이지 스키마 정의**
-  - 목표: Hook First, Context, Story Threads, Retrospective를 안정적으로 렌더링할 수 있는 데이터 계약을 확정합니다.
+## Phase 1. [SEQUENTIAL] 기준선 스냅샷 및 수용 기준 정의
+
+- [ ] **현행 구조/문구/지표 기준선 기록**
+  - 목표: 리라이팅 전후 비교 기준을 명확히 고정한다.
   - 검증:
-    - `impacts`, `threads`, `thoughtProcess`, `lessonsLearned`의 필수/옵션 규칙이 정의됩니다.
-    - 기존 Problem/Decision/Result 본문을 새 구조로 매핑하는 규칙이 합의됩니다.
-    - 스키마 검증 실패 시 오류 기준(누락/타입 불일치/빈 배열)이 명확해집니다.
+    - 현재 메인 섹션 순서, 대표 문구, 핵심 수치가 문서로 기록된다.
+    - 현행 AI 추천 질문 목록이 스냅샷으로 남는다.
+    - 검증 커맨드 기준선(typecheck/lint/unit/e2e)이 정리된다.
 
-- [x] **마이그레이션 스파이크(대표 케이스 1건)**
-  - 목표: 기존 케이스를 새 스키마로 전환할 때의 난이도와 누락 리스크를 사전에 제거합니다.
+- [ ] **수용 기준(AC) 선언**
+  - 목표: "30초 스캔 적합성"을 릴리즈 판단 가능한 기준으로 만든다.
   - 검증:
-    - 대표 케이스 1건이 신규 구조로 시범 변환됩니다.
-    - 변환 체크리스트(수치 근거, 전환 문장, 이슈-액션 페어링)가 작성됩니다.
-    - 변환 불가 항목의 보완 원칙(요약/삭제/추가 작성)이 정리됩니다.
+    - Hero/Core Strength/Experience 통합 기준이 정의된다.
+    - 주도성/트레이드오프/측정 방식 문장 기준이 정의된다.
+    - 문서 품질 게이트와 구현 검증 게이트가 분리된다.
 
-## Phase 2. [PARALLEL:PG-1] 콘텐츠 마이그레이션 배치 A
-- [x] **핵심 케이스 2건 Story Thread 리라이팅**
-  - 목표: 스캔 친화성과 인과관계가 드러나는 서사 구조로 프로젝트를 전환합니다.
+## Phase 2. [SEQUENTIAL] 콘텐츠·스키마 계약 확정
+
+- [ ] **콘텐츠 확장 필드 계약 정의**
+  - 목표: 신규 필드를 optional로 도입해 하위 호환을 유지한다.
   - 검증:
-    - 각 케이스에 Impact 2~3개가 수치 기반으로 채워집니다.
-    - 각 케이스에 이슈 스레드 2~3개(Problem→Thought→Action→Result)가 완성됩니다.
-    - Retrospective 문단이 배운 점 중심으로 정리됩니다.
+    - `basics.heroMetrics[]`, `skills.coreStrengths[]` 확장안이 문서화된다.
+    - `ProjectStoryThread.architectureSummary?`, `ProjectStoryThread.measurementMethod?`, `StoryThreadItem.tradeOff?` 확장안이 문서화된다.
+    - 신규 필드 미존재 시 기존 렌더 유지 정책이 확정된다.
 
-## Phase 3. [PARALLEL:PG-1] 콘텐츠 마이그레이션 배치 B
-- [x] **잔여 케이스 Story Thread 리라이팅 및 품질 정합화**
-  - 목표: 나머지 프로젝트를 동일한 톤/깊이/형식으로 마이그레이션해 전체 일관성을 확보합니다.
+- [ ] **PDF 직렬화 동기화 규칙 확정**
+  - 목표: 웹 섹션 우선순위가 PDF에도 일관되게 반영되도록 계약을 고정한다.
   - 검증:
-    - 잔여 케이스가 동일 스키마로 전환됩니다.
-    - 용어/문장 톤/성과 지표 단위 표기가 통일됩니다.
-    - 누락된 사고 과정(전환 문장) 없는 상태가 됩니다.
+    - `web/src/lib/pdf/types.ts` 확장 원칙이 정의된다.
+    - `web/src/lib/pdf/serialize-resume.ts` 매핑 우선순위가 정의된다.
+    - 역호환 처리 기준(신규 필드 없는 데이터)까지 명시된다.
 
-## Phase 4. [PARALLEL:PG-1] 핵심 UI 컴포넌트 구축
-- [x] **Impact Badge 카드 컴포넌트 구현 (상단 전용)**
-  - 목표: Hero 영역에서 핵심 성과를 즉시 인지할 수 있는 강조형 카드 UI를 구현합니다.
-  - 검증: 카드가 수치, 레이블, 설명을 렌더링하며, 시각적 강조가 본문보다 우선 노출되도록 설계됩니다.
+## Phase 3. [PARALLEL:PG-1] Hero + Core Strength 재작성
 
-- [x] **Story Thread 끊김 없는 타임라인 컴포넌트 구현 (본문 전용)**
-  - 목표: 박스(Card) 형태를 배제하고, 여백과 타임라인 라인만으로 Problem-Thought-Action-Result를 물 흐르듯 읽히게 만듭니다.
-  - 검증: 
-    - 닫힌 테두리(박스) 없이 좌측 연결 라인만으로 서사의 연속성이 표현됩니다.
-    - Thought Process 인용구의 옅은 배경색이 시각적 환기(Transition) 역할을 수행합니다.
-
-## Phase 5. [SEQUENTIAL] 상세 페이지 통합 및 내비게이션 정합성
-- [x] **Top-to-Bottom 내러티브 페이지 조립**
-  - 목표: Hero → Context → Story Threads → Retrospective 순서로 상세 페이지를 재구성합니다.
+- [ ] **Hero 정체성/신뢰 지표 재작성**
+  - 목표: 첫 화면 10초 내 정체성과 신뢰를 전달한다.
   - 검증:
-    - 첫 화면에서 프로젝트 가치와 임팩트가 즉시 확인됩니다.
-    - Context 이후 스레드가 자연스럽게 이어져 읽기 흐름이 유지됩니다.
-    - 회고 섹션이 페이지 결말로 일관되게 배치됩니다.
+    - 성능·아키텍처 FE 포지셔닝 문구가 반영된다.
+    - 수치 지표 3~4개가 근거 기반으로 배치된다.
+    - 요약 문장이 문제-해결-영향 관점으로 정리된다.
 
-- [x] **목차/딥링크/섹션 활성화 동작 갱신**
-  - 목표: 새 섹션 구조에서도 TOC, 해시 이동, active state가 정확히 동작하도록 맞춥니다.
+- [ ] **Core Strength 4축 섹션 신설**
+  - 목표: 스택보다 능력 프레임이 먼저 읽히도록 구조를 바꾼다.
   - 검증:
-    - 해시 링크 진입 시 올바른 섹션이 표시됩니다.
-    - 스크롤 스파이 활성 상태가 새 구조와 일치합니다.
-    - 잘못된 해시 진입 시 안전한 기본 섹션으로 복구됩니다.
+    - 대규모 렌더링 아키텍처/성능 최적화/아키텍처 설계/DX 자동화 4축이 고정된다.
+    - 각 축에 근거 기반 설명이 1~2문장으로 배치된다.
+    - 기존 Skills는 보조 정보로 순서가 뒤로 이동한다.
 
-## Phase 6. [PARALLEL:PG-2] 인터랙티브 증거 블록 고도화
-- [x] **Before & After 토글을 Story Thread에 표준 삽입**
-  - 목표: 글만으로 어려운 구조 변화는 비교 UI로 증명할 수 있게 만듭니다.
-  - 검증:
-    - 토글이 Action 컨텍스트 안에서 자연스럽게 표시됩니다.
-    - Before/After 콘텐츠 길이 차이가 커도 레이아웃이 깨지지 않습니다.
-    - 키보드 및 스크린리더 접근이 가능합니다.
+## Phase 4. [PARALLEL:PG-1] Experience-Projects 통합 설계
 
-## Phase 7. [PARALLEL:PG-2] 반응형 및 인쇄 최적화
-- [x] **모바일/데스크톱 반응형 완성**
-  - 목표: 빠른 스캔 사용자를 위해 화면 크기별 정보 우선순위와 가독성을 최적화합니다.
+- [ ] **Experience 중심 케이스 통합**
+  - 목표: Experience/Projects 이원 구조의 중복 인상을 제거한다.
   - 검증:
-    - 모바일에서 Hero→Thread 순서와 간격이 읽기 친화적으로 유지됩니다.
-    - 데스크톱에서 타임라인/본문 정렬이 안정적으로 유지됩니다.
-    - 줄바꿈/카드 높이 차이에도 시각적 균형이 유지됩니다.
+    - 대표 프로젝트 4건이 Experience 컨텍스트 안에서 연결된다.
+    - 스캔 동선이 "회사 경험 -> 대표 케이스" 단일 경로로 단순화된다.
+    - 링크/CTA가 상세 포트폴리오와 일관되게 유지된다.
 
-- [x] **`@media print` 인쇄 품질 개선**
-  - 목표: PDF 출력 시 타임라인 라인과 배경 표현이 깔끔하게 보이도록 최적화합니다.
+- [ ] **Technical Writing 섹션 재정의**
+  - 목표: 블로그를 "사고 수준 증명" 섹션으로 격상한다.
   - 검증:
-    - 인쇄물에서 텍스트 대비와 섹션 경계가 명확합니다.
-    - 불필요한 배경/장식 요소가 출력 품질을 해치지 않습니다.
-    - 페이지 분할 시 스레드 단위 가독성이 유지됩니다.
+    - 설계 의사결정 중심 소개문이 추가된다.
+    - 글 목록 노출 규칙(최신/대표 주제)이 정의된다.
+    - 기존 Blog 링크 동작과 analytics 이벤트가 유지된다.
 
-## Phase 8. [SEQUENTIAL] 품질 검증 및 완료 기준 충족
-- [x] **회귀 테스트 및 접근성 점검**
-  - 목표: 개편 후 기존 핵심 사용자 흐름과 접근성 품질을 유지합니다.
-  - 검증:
-    - 포트폴리오 딥링크/목차/프린트 관련 자동화 테스트가 통과합니다.
-    - 주요 사용자 흐름(목록→상세→복귀)이 회귀 없이 동작합니다.
-    - 심각도 높은 접근성 이슈(critical/serious)가 없는 상태입니다.
+## Phase 5. [PARALLEL:PG-1] 프로젝트 4건 리라이팅
 
-- [ ] **PRD 수용 기준(AC) 최종 확인**
-  - 목표: 문서 요구사항과 구현 결과를 일치시켜 릴리즈 판단 가능 상태로 만듭니다.
+- [ ] **케이스 스터디 템플릿 일괄 적용**
+  - 목표: 4개 프로젝트를 동일한 의사결정 중심 구조로 리라이팅한다.
   - 검증:
-    - Hook First, Story Thread, 전환 문장, Before/After 요구가 모두 충족됩니다.
-    - 데이터 스키마 요구 필드가 모든 대상 케이스에서 누락 없이 채워집니다.
-    - 팀 리뷰에서 “수십 초 스캔” 시나리오 기준으로 이해 가능하다는 합의를 얻습니다.
+    - `Context/Problem/Why Hard/Architecture Decision/Implementation/Result/Learned`가 4건 모두 반영된다.
+    - 각 케이스 상단에 `Architecture Summary`가 추가된다.
+    - 결과 문장에 수치 + 운영 영향이 함께 표기된다.
+
+- [ ] **문장 품질 규칙 적용**
+  - 목표: 주도성/트레이드오프/측정 신뢰도를 시니어 기준으로 끌어올린다.
+  - 검증:
+    - 핵심 액션 문장에 `설계·제안·주도` 표현이 반영된다.
+    - `A vs B` 트레이드오프 문단이 각 케이스에 포함된다.
+    - 측정 도구 + 반복 횟수 + 기준값 표기가 포함된다.
+
+## Phase 6. [SEQUENTIAL] 랜딩 섹션·내비게이션 정합성
+
+- [ ] **메인 섹션 순서 및 앵커 재정렬**
+  - 목표: 목표 정보 구조(Hero -> Core Strength -> Experience -> Technical Writing -> Awards & Certificates -> AI Assistant)를 실제 화면에 반영한다.
+  - 검증:
+    - 섹션 ID 및 내비게이션 활성 상태가 새 순서와 일치한다.
+    - 스크롤 스파이/해시 이동이 회귀 없이 동작한다.
+    - analytics `section_view`가 새 섹션 ID로 정상 집계된다.
+
+## Phase 7. [PARALLEL:PG-2] AI 추천 질문 개편
+
+- [ ] **추천 질문 4개 교체**
+  - 목표: 채용 담당자가 질문 없이도 핵심 역량을 탐색할 수 있게 만든다.
+  - 검증:
+    - 아키텍처/성능/트레이드오프/테스트 전략 질문 4개가 반영된다.
+    - 버튼 클릭 시 사용자 메시지 append 흐름이 유지된다.
+    - `chat_message` 이벤트 로깅이 유지된다.
+
+## Phase 8. [PARALLEL:PG-2] PDF 동기화
+
+- [ ] **웹- PDF 섹션 우선순위 동기화**
+  - 목표: PDF도 웹과 동일한 메시지 우선순위를 갖게 만든다.
+  - 검증:
+    - Hero 지표/Core Strength/통합 Experience 핵심 문구가 반영된다.
+    - PDF 출력에서 텍스트 밀도와 가독성이 유지된다.
+    - 기존 PDF 다운로드/파일명/응답 헤더 동작이 회귀하지 않는다.
+
+## Phase 9. [SEQUENTIAL] 품질 게이트 및 수용 검증
+
+- [ ] **자동 검증 게이트 통과**
+  - 목표: 구조 개편 후 기능/접근성/인쇄/딥링크 안정성을 보장한다.
+  - 검증:
+    - typecheck/lint/unit/e2e/print/a11y가 모두 통과한다.
+    - `portfolio` 상세 딥링크, TOC, resume 복귀 흐름 회귀가 없다.
+    - 심각도 높은 접근성 이슈(critical/serious)가 없다.
+
+- [ ] **수용 시나리오 리뷰 완료**
+  - 목표: 30초 스캔 관점의 채용 시나리오를 최종 검증한다.
+  - 검증:
+    - 1차 스캔에서 포지셔닝과 대표 수치가 즉시 인지된다.
+    - 2차 검토에서 트레이드오프/측정 방식/주도성이 확인된다.
+    - AI 추천 질문 경로로 핵심 사례 탐색이 가능하다.
 
 ---
 
-## 참고 노트
+## Public API/인터페이스/타입 변경 제안
 
-**[2026-02-21] 세션 요약**:
-- 발견된 이슈: `index.ts` export 정렬/포맷 이슈 2건(린트 단계에서 즉시 수정).
-- 아키텍처 결정: Story Thread 스키마를 `projects` frontmatter optional 필드로 점진 도입하고, v1 딥링크/섹션 계약은 유지.
-- 다음 페이즈 영향: Phase 2에서 동일 매핑 규칙으로 핵심 케이스 2건을 Story Thread 구조로 리라이팅 가능.
+아래 변경은 **제안 스펙**이며, 실제 적용 시 Phase 2에서 확정한다.
 
-**[2026-02-22] 세션 요약**:
-- 발견된 이슈: 신규 수치 생성 없이 기존 본문의 검증 가능한 수치만 Impact로 구성해야 함.
-- 아키텍처 결정: `storyThread`는 frontmatter 데이터로만 추가하고, legacy 본문/섹션/딥링크 계약은 유지.
-- 다음 페이즈 영향: Phase 3에서 `exem-dx-improvement`를 동일 규칙으로 전환하고 톤/단위 정합화를 진행.
+1. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/content.config.ts`
+  - `basics.heroMetrics[]` optional
+  - `skills.coreStrengths[]` optional
 
-**[2026-02-22] Phase 3 완료 요약**:
-- 완료 사항: 잔여 1건(`exem-dx-improvement`)에 Story Thread(`context`, `impacts`, `threads`, `lessonsLearned`) 전환을 완료.
-- 품질 기준: Impact/Result 수치는 기존 본문의 검증 가능한 수치만 재사용하고 신규 추정 수치는 추가하지 않음.
-- 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 4(핵심 UI 컴포넌트 구축)이며, 데이터 커버리지 4/4 기준으로 UI 통합 작업에 착수 가능.
+2. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/resume-portfolio/contracts.ts`
+  - `ProjectStoryThread.architectureSummary?` optional
+  - `ProjectStoryThread.measurementMethod?` optional
+  - `StoryThreadItem.tradeOff?` optional
 
-**[2026-02-22] Phase 4 완료 요약**:
-- 완료 사항: `Impact Badge` 카드와 `Story Thread` 타임라인 컴포넌트를 구현하고 상세 페이지를 `Hook -> Context -> Threads -> Retrospective` 구조로 즉시 전환.
-- 아키텍처 결정: canonical 해시를 `hook/context/threads/retrospective`로 전환하고 legacy 해시(`overview/problem/decision/result/retrospective`)는 자동 매핑으로 호환 유지.
-- 신규 해시 계약 선반영(Phase 5 일부 앞당김): TOC 활성 상태, 딥링크 정규화, 모바일 목차 이동, 인쇄 흐름 테스트를 새 섹션 계약 기준으로 갱신.
+3. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/pdf/types.ts`
+  - Hero/Core Strength/통합 Experience 대응 optional 직렬화 필드 확장
 
-**[2026-02-22] Phase 5-6 완료 요약**:
-- 완료 사항: Phase 5 기준(Top-to-Bottom 구조, TOC/딥링크/active state 정합성)을 기존 구현/회귀 테스트로 재검증해 완료 처리하고, Phase 6로 `storyThread` frontmatter 기반 `comparison` 계약을 추가해 Before/After 토글을 4개 대표 스레드에 표준 삽입.
-- 접근성/구현 결정: `CompareToggle`을 탭 패턴(`tablist/tab/tabpanel`)으로 리팩터링하고 키보드 탐색(`Arrow`, `Home/End`, `Enter/Space`) 및 ARIA 연결(`aria-controls`, `aria-labelledby`)을 적용.
-- 검증 결과: `pnpm -C web run typecheck`, `pnpm -C web run lint`, `pnpm -C web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/hash.test.ts tests/lib/resume-portfolio/validation.test.ts`, `pnpm -C web exec playwright test e2e/portfolio-before-after.spec.ts e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts --project=chromium` 모두 통과.
-- 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 7(반응형 및 인쇄 최적화)이며, 새 비교 블록이 포함된 Story Thread를 기준으로 모바일/프린트 균형 조정이 필요.
+4. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/pdf/serialize-resume.ts`
+  - 신규 필드 존재 시 우선 반영, 미존재 시 기존 데이터 파생 규칙 유지
 
-**[2026-02-22] Phase 7 완료 요약**:
-- 완료 사항: 상세 페이지 반응형을 모바일 우선으로 조정(Impact grid 1/2/3열, 타임라인 라인/마커 정렬 안정화, 섹션 타이포/간격/줄바꿈 보정)하고, `@media print` 기반 인쇄 품질 개선(라이트 토큰 강제, 보조 UI 숨김, 스레드/비교 블록 대비 및 분할 안정화)을 완료.
-- 테스트/검증 결정: `portfolio-toc-and-print` 시나리오에 모바일 수평 오버플로 및 섹션 순서, 데스크톱 타임라인 정렬, 다크 테마 상태 인쇄 라이트 규칙/보조 UI 숨김 검증을 추가.
-- 검증 결과: `pnpm -C web run typecheck`, `pnpm -C web run lint`, `CI=1 pnpm -C web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/portfolio-toc-and-print.spec.ts --project=chromium` 통과.
-- 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 8(품질 검증 및 완료 기준 충족)이며, 회귀 테스트/접근성 점검과 PRD 수용 기준 최종 확인으로 진행.
+5. 하위 호환 기본값
+  - 신규 필드 미존재 시 기존 렌더링 유지
+  - 기존 해시 계약 `hook/context/threads/retrospective` 유지
 
-**[2026-02-22] Phase 8 진행 요약**:
-- 완료 사항: 포트폴리오 상세 UI에 안정 셀렉터(`data-*`) 계약을 추가하고, 회귀 흐름(`resume -> portfolio detail -> resume return + scroll restore`) 및 PRD AC 자동 증빙 E2E를 신규 구축했으며, 접근성 스펙에 포트폴리오 상세(데스크톱/모바일 목차 오픈 상태) axe 검증을 확장.
-- 문서/엔트리포인트: `docs/phase8-acceptance-checklist.md`를 추가하고 `web/package.json`에 `phase8:verify` 스크립트를 신설.
-- 검증 결과: `pnpm -C web run typecheck`, `pnpm -C web run lint`, `pnpm -C web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/hash.test.ts tests/lib/resume-portfolio/validation.test.ts`, `CI=1 pnpm -C web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/portfolio-before-after.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts e2e/portfolio-resume-return-flow.spec.ts e2e/portfolio-prd-acceptance.spec.ts --project=chromium`, `pnpm -C web run phase8:verify` 모두 통과.
-- AC 상태: 자동 검증 항목은 충족되었고, `PRD 수용 기준(AC) 최종 확인`은 팀 리뷰 합의 서명 전까지 대기 상태(`[ ]`)로 유지.
+---
+
+## 테스트 케이스 및 시나리오
+
+1. 스키마/타입 단위 테스트
+  - `story-thread-schema`, `validation`, `serialize-resume`에 optional 필드 케이스 추가
+
+2. UI 회귀 테스트
+  - 메인 섹션 순서, Experience 통합 노출, 앵커/스크롤 스파이 정합성 검증
+
+3. 포트폴리오 상세 테스트
+  - `Architecture Summary`, `trade-off`, `measurementMethod` 문구 노출 검증
+
+4. AI 추천 질문 테스트
+  - 4개 질문 노출, 클릭 시 append, 이벤트 유지 확인
+
+5. PDF/인쇄 테스트
+  - Hero 지표/Core Strength/통합 Experience 반영 및 print-flow 안정성 검증
+
+6. 접근성 테스트
+  - 키보드 내비게이션, heading 계층, 대비, 모달 접근성 회귀 없음 확인
+
+### 실행 커맨드 기준
+
+```bash
+pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck
+pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint
+pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts
+CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts --project=chromium
+```
+
+---
+
+## 가정과 기본값
+
+- 문서는 한국어로 작성한다.
+- 기존 `/Users/choegihwan/Documents/Projects/resume-with-ai/milestone.md`는 유지하고 덮어쓰지 않는다.
+- 포지셔닝은 `성능·아키텍처 FE` 단일 전략으로 고정한다.
+- 기업 유형별 분기 전략(대기업/스타트업/외국계)은 이번 범위에서 제외한다.
+- 이번 산출물은 문서 2개 생성에 집중하고, 코드 변경은 후속 구현 단계로 분리한다.
