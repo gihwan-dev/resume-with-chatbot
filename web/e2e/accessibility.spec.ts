@@ -8,12 +8,16 @@ const MODAL_CONTENT_SELECTOR = ".aui-modal-content"
 const SHEET_CONTENT_SELECTOR = '[data-slot="sheet-content"]'
 const MOBILE_VIEWPORT = { width: 390, height: 844 }
 
-async function preparePage(page: import("@playwright/test").Page, theme: "light" | "dark") {
+async function preparePage(
+  page: import("@playwright/test").Page,
+  theme: "light" | "dark",
+  url = "/"
+) {
   await page.addInitScript((value) => {
     localStorage.setItem("theme", value)
   }, theme)
   await mockApiRoutes(page)
-  await page.goto("/")
+  await page.goto(url)
   await waitForUiReady(page)
 }
 
@@ -140,6 +144,11 @@ for (const theme of ["light", "dark"] as const) {
     await openModal(page)
     await expectNoCriticalOrSeriousViolations(page, `chat-open:${theme}`)
   })
+
+  test(`axe: ${theme} 포트폴리오 상세 화면은 critical/serious 위반이 없다`, async ({ page }) => {
+    await preparePage(page, theme, "/portfolio/exem-data-grid#hook")
+    await expectNoCriticalOrSeriousViolations(page, `portfolio-detail:${theme}`)
+  })
 }
 
 test.describe("Mobile accessibility", () => {
@@ -164,6 +173,14 @@ test.describe("Mobile accessibility", () => {
     await preparePage(page, "light")
     await openMobileSheet(page)
     await expectNoCriticalOrSeriousViolations(page, "mobile-sheet-open:light")
+  })
+
+  test("모바일 포트폴리오 목차 오픈 상태에서 axe critical/serious 위반이 없다", async ({
+    page,
+  }) => {
+    await preparePage(page, "light", "/portfolio/exem-data-grid#hook")
+    await openMobileSheet(page)
+    await expectNoCriticalOrSeriousViolations(page, "mobile-portfolio-sheet-open:light")
   })
 
   test("모바일 메뉴에서 섹션 링크를 키보드로 선택하면 메뉴가 닫힌다", async ({ page }) => {

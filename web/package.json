@@ -20,7 +20,8 @@
     "a11y:lighthouse": "mkdir -p ./lighthouse && lighthouse http://localhost:4321 --only-categories=accessibility --output=html --output=json --output-path=./lighthouse/accessibility --quiet --chrome-flags='--headless=new --no-sandbox'",
     "perf:gate": "node scripts/perf-gate.mjs",
     "quality:sync-issues": "node scripts/quality-issue-sync.mjs",
-    "phase6:verify": "pnpm run typecheck && pnpm run lint && pnpm run test:run && pnpm exec playwright test e2e/resume-portfolio-print-flow.spec.ts e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/chat-fab.spec.ts e2e/accessibility.spec.ts --project=chromium && (pnpm run perf:gate; PERF_EXIT=$?; pnpm run quality:sync-issues; SYNC_EXIT=$?; if [ $PERF_EXIT -ne 0 ]; then exit $PERF_EXIT; fi; exit $SYNC_EXIT)"
+    "phase6:verify": "pnpm run typecheck && pnpm run lint && pnpm run test:run && pnpm exec playwright test e2e/resume-portfolio-print-flow.spec.ts e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/chat-fab.spec.ts e2e/accessibility.spec.ts --project=chromium && (pnpm run perf:gate; PERF_EXIT=$?; pnpm run quality:sync-issues; SYNC_EXIT=$?; if [ $PERF_EXIT -ne 0 ]; then exit $PERF_EXIT; fi; exit $SYNC_EXIT)",
+    "phase8:verify": "pnpm run typecheck && pnpm run lint && pnpm exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/hash.test.ts tests/lib/resume-portfolio/validation.test.ts && CI=1 pnpm exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/portfolio-before-after.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts e2e/portfolio-resume-return-flow.spec.ts e2e/portfolio-prd-acceptance.spec.ts --project=chromium"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.10",

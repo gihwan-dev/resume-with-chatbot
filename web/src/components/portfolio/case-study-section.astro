@@ -19,26 +19,41 @@ if (!storyThread) {
 }
 ---
 
-<article class="group/case relative mb-20 min-w-0 scroll-mt-24 space-y-12 sm:mb-24 sm:space-y-14 lg:space-y-16">
-  <section id="hook" class="scroll-mt-24 space-y-6 print:break-inside-avoid sm:space-y-8">
+<article
+  class="group/case relative mb-20 min-w-0 scroll-mt-24 space-y-12 sm:mb-24 sm:space-y-14 lg:space-y-16"
+  data-portfolio-case-study
+  data-case-id={portfolioCase.caseId}
+>
+  <section
+    id="hook"
+    class="scroll-mt-24 space-y-6 print:break-inside-avoid sm:space-y-8"
+    data-portfolio-section="hook"
+  >
     <div class="space-y-4 sm:space-y-5">
       <p class="text-sm font-semibold uppercase tracking-[0.2em] text-resume-primary">
         Case Study
       </p>
-      <h1 class="break-words text-2xl font-extrabold leading-tight tracking-tight text-resume-text-heading sm:text-4xl print:text-slate-900">
+      <h1
+        class="break-words text-2xl font-extrabold leading-tight tracking-tight text-resume-text-heading sm:text-4xl print:text-slate-900"
+        data-hook-title
+      >
         {portfolioCase.title}
       </h1>
-      <p class="break-words text-base leading-relaxed text-resume-text-main/85 sm:text-lg print:text-slate-800">
+      <p
+        class="break-words text-base leading-relaxed text-resume-text-main/85 sm:text-lg print:text-slate-800"
+        data-hook-summary
+      >
         {project.data.description}
       </p>
     </div>
 
     {project.data.techStack && project.data.techStack.length > 0 && (
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap gap-2" data-hook-tech-stack>
         {project.data.techStack.map((tech) => (
           <Badge
             variant="outline"
             className="text-sm font-normal bg-resume-card-bg text-resume-text-main border-resume-border"
+            data-hook-tech-item
           >
             {tech}
           </Badge>
@@ -49,21 +64,54 @@ if (!storyThread) {
     <ImpactBadgeCards impacts={storyThread.impacts} />
   </section>
 
-  <section id="context" class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4">
-    <h2 class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900">Context</h2>
-    <p class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800">
+  <section
+    id="context"
+    class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4"
+    data-portfolio-section="context"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-context-title
+    >
+      Context
+    </h2>
+    <p
+      class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
+      data-context-text
+    >
       {storyThread.context}
     </p>
   </section>
 
-  <section id="threads" class="scroll-mt-24 space-y-5 print:break-inside-avoid sm:space-y-6">
-    <h2 class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900">Story Threads</h2>
+  <section
+    id="threads"
+    class="scroll-mt-24 space-y-5 print:break-inside-avoid sm:space-y-6"
+    data-portfolio-section="threads"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-threads-title
+    >
+      Story Threads
+    </h2>
     <StoryThreadTimeline threads={storyThread.threads} />
   </section>
 
-  <section id="retrospective" class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4">
-    <h2 class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900">Retrospective</h2>
-    <p class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800">
+  <section
+    id="retrospective"
+    class="scroll-mt-24 space-y-3 print:break-inside-avoid sm:space-y-4"
+    data-portfolio-section="retrospective"
+  >
+    <h2
+      class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900"
+      data-retrospective-title
+    >
+      Retrospective
+    </h2>
+    <p
+      class="break-words text-[15px] leading-relaxed text-resume-text-main/90 sm:text-base print:text-slate-800"
+      data-retrospective-text
+    >
       {storyThread.lessonsLearned}
     </p>
   </section>

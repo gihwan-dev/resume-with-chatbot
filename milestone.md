@@ -85,7 +85,7 @@
     - 페이지 분할 시 스레드 단위 가독성이 유지됩니다.
 
 ## Phase 8. [SEQUENTIAL] 품질 검증 및 완료 기준 충족
-- [ ] **회귀 테스트 및 접근성 점검**
+- [x] **회귀 테스트 및 접근성 점검**
   - 목표: 개편 후 기존 핵심 사용자 흐름과 접근성 품질을 유지합니다.
   - 검증:
     - 포트폴리오 딥링크/목차/프린트 관련 자동화 테스트가 통과합니다.
@@ -134,3 +134,9 @@
 - 테스트/검증 결정: `portfolio-toc-and-print` 시나리오에 모바일 수평 오버플로 및 섹션 순서, 데스크톱 타임라인 정렬, 다크 테마 상태 인쇄 라이트 규칙/보조 UI 숨김 검증을 추가.
 - 검증 결과: `pnpm -C web run typecheck`, `pnpm -C web run lint`, `CI=1 pnpm -C web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/portfolio-toc-and-print.spec.ts --project=chromium` 통과.
 - 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 8(품질 검증 및 완료 기준 충족)이며, 회귀 테스트/접근성 점검과 PRD 수용 기준 최종 확인으로 진행.
+
+**[2026-02-22] Phase 8 진행 요약**:
+- 완료 사항: 포트폴리오 상세 UI에 안정 셀렉터(`data-*`) 계약을 추가하고, 회귀 흐름(`resume -> portfolio detail -> resume return + scroll restore`) 및 PRD AC 자동 증빙 E2E를 신규 구축했으며, 접근성 스펙에 포트폴리오 상세(데스크톱/모바일 목차 오픈 상태) axe 검증을 확장.
+- 문서/엔트리포인트: `docs/phase8-acceptance-checklist.md`를 추가하고 `web/package.json`에 `phase8:verify` 스크립트를 신설.
+- 검증 결과: `pnpm -C web run typecheck`, `pnpm -C web run lint`, `pnpm -C web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/hash.test.ts tests/lib/resume-portfolio/validation.test.ts`, `CI=1 pnpm -C web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/portfolio-before-after.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts e2e/portfolio-resume-return-flow.spec.ts e2e/portfolio-prd-acceptance.spec.ts --project=chromium`, `pnpm -C web run phase8:verify` 모두 통과.
+- AC 상태: 자동 검증 항목은 충족되었고, `PRD 수용 기준(AC) 최종 확인`은 팀 리뷰 합의 서명 전까지 대기 상태(`[ ]`)로 유지.
