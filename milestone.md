@@ -23,14 +23,14 @@
 
 ## Phase 2. [SEQUENTIAL] 콘텐츠·스키마 계약 확정
 
-- [ ] **콘텐츠 확장 필드 계약 정의**
+- [x] **콘텐츠 확장 필드 계약 정의**
   - 목표: 신규 필드를 optional로 도입해 하위 호환을 유지한다.
   - 검증:
     - `basics.heroMetrics[]`, `skills.coreStrengths[]` 확장안이 문서화된다.
     - `ProjectStoryThread.architectureSummary?`, `ProjectStoryThread.measurementMethod?`, `StoryThreadItem.tradeOff?` 확장안이 문서화된다.
     - 신규 필드 미존재 시 기존 렌더 유지 정책이 확정된다.
 
-- [ ] **PDF 직렬화 동기화 규칙 확정**
+- [x] **PDF 직렬화 동기화 규칙 확정**
   - 목표: 웹 섹션 우선순위가 PDF에도 일관되게 반영되도록 계약을 고정한다.
   - 검증:
     - `web/src/lib/pdf/types.ts` 확장 원칙이 정의된다.
@@ -240,3 +240,33 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 
 - 완료 처리:
   - Phase 1의 두 체크박스를 `[x]`로 업데이트.
+
+### 2026-02-22 — Phase 2 실행 및 완료
+
+- 생성 문서:
+  - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-phase2-content-schema-contract-2026-02-22.md`
+  - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-phase2-pdf-serialization-rules-2026-02-22.md`
+
+- 코드 계약 확정:
+  - `web/src/content.config.ts`에 `basics.heroMetrics[]`, `skills.coreStrengths[]` optional 스키마(1~4개) 추가
+  - `web/src/lib/resume-portfolio/contracts.ts`에 `architectureSummary?`, `measurementMethod?`, `tradeOff?` 추가
+  - `web/src/lib/resume-portfolio/story-thread-schema.ts`에 신규 optional 필드 검증 규칙(빈 문자열 금지) 추가
+  - `web/src/lib/pdf/types.ts`에 Hero/Core Strength/Project 확장 직렬화 타입 추가
+  - `web/src/lib/pdf/serialize-resume.ts`에 `resumeItemId -> projectId` 매핑 기반 신규 필드 직렬화 추가
+
+- 테스트 확장:
+  - `web/tests/lib/resume-portfolio/story-thread-schema.test.ts`
+    - 신규 optional 필드 유효 입력 통과 케이스 추가
+    - `architectureSummary/measurementMethod/tradeOff` 빈 문자열 실패 케이스 추가
+  - `web/tests/lib/pdf/serialize-resume.test.ts`
+    - 신규 필드 미존재(역호환) 시나리오 검증 추가
+    - 신규 필드 존재 시 매핑/중복 제거(`tradeOffs`) 시나리오 검증 추가
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과 (0 error, 0 warning, hint 2개)
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts` 통과 (3 files, 27 tests)
+
+- 완료 처리:
+  - Phase 2의 두 체크박스를 `[x]`로 업데이트.
+  - 다음 미완료 Phase는 `Phase 3. [PARALLEL:PG-1] Hero + Core Strength 재작성`.

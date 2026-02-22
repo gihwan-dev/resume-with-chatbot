@@ -20,12 +20,15 @@ export interface StoryThreadItem {
   problems: string[]
   thoughtProcess: string
   actions: string[]
+  tradeOff?: string
   comparison?: StoryThreadComparison
   result: string
 }
 
 export interface ProjectStoryThread {
   context: string
+  architectureSummary?: string
+  measurementMethod?: string
   impacts: ImpactItem[]
   threads: StoryThreadItem[]
   lessonsLearned: string

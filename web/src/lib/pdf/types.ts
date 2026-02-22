@@ -1,3 +1,14 @@
+export interface SerializedHeroMetric {
+  value: string
+  label: string
+  description?: string
+}
+
+export interface SerializedCoreStrength {
+  title: string
+  summary: string
+}
+
 export interface SerializedProfile {
   name: string
   label: string
@@ -5,6 +16,7 @@ export interface SerializedProfile {
   url?: string
   summary: string
   profiles: { network: string; username: string; url: string }[]
+  heroMetrics?: SerializedHeroMetric[]
 }
 
 export interface SerializedWork {
@@ -27,6 +39,9 @@ export interface SerializedProject {
   technologies: string[]
   accomplishments: string[]
   evidenceIds: string[]
+  architectureSummary?: string
+  measurementMethod?: string
+  tradeOffs?: string[]
   ctaLabel?: string
   ctaHref?: string
 }
@@ -69,6 +84,7 @@ export interface SerializedBlogPost {
 
 export interface SerializedResumeData {
   profile: SerializedProfile
+  coreStrengths?: SerializedCoreStrength[]
   work: SerializedWork[]
   projects: SerializedProject[]
   blogPosts: SerializedBlogPost[]

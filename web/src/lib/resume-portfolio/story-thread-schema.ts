@@ -52,12 +52,15 @@ export const storyThreadItemSchema: z.ZodType<StoryThreadItem> = z.object({
       invalid_type_error: "actions는 문자열 배열이어야 합니다.",
     })
     .min(1, "actions는 최소 1개 이상이어야 합니다."),
+  tradeOff: nonEmptyText.optional(),
   comparison: storyThreadComparisonSchema.optional(),
   result: nonEmptyText,
 })
 
 export const projectStoryThreadSchema: z.ZodType<ProjectStoryThread> = z.object({
   context: nonEmptyText,
+  architectureSummary: nonEmptyText.optional(),
+  measurementMethod: nonEmptyText.optional(),
   impacts: z
     .array(impactItemSchema, {
       required_error: "impacts 필드가 누락되었습니다.",

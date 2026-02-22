@@ -70,6 +70,29 @@ describe("projectStoryThreadSchema", () => {
     expect(result.errors).toHaveLength(0)
   })
 
+  it("유효 입력: 신규 optional 필드가 있어도 스키마 검증을 통과한다", () => {
+    const validWithOptionalFields = {
+      ...VALID_STORY_THREAD,
+      architectureSummary: "구조 전환과 회귀 자동화로 성능 안정성을 확보했습니다.",
+      measurementMethod: "React Profiler 기준 동일 시나리오 30회 평균값으로 측정했습니다.",
+      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
+        index === 0
+          ? {
+              ...thread,
+              tradeOff: "개발 복잡도는 증가했지만 운영 안정성이 높아지는 방향을 선택했습니다.",
+            }
+          : thread
+      ),
+    }
+
+    const parsed = projectStoryThreadSchema.safeParse(validWithOptionalFields)
+    expect(parsed.success).toBe(true)
+
+    const result = validateProjectStoryThread(validWithOptionalFields)
+    expect(result.isValid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+  })
+
   it("누락 입력: 필수 필드 누락을 missing으로 분류한다", () => {
     const missingImpacts = {
       ...VALID_STORY_THREAD,
@@ -193,6 +216,67 @@ describe("projectStoryThreadSchema", () => {
         expect.objectContaining({
           code: "invalid_value",
           path: "storyThread.lessonsLearned",
+        }),
+      ])
+    )
+  })
+
+  it("빈 문자열: architectureSummary가 비어 있으면 invalid_value로 분류한다", () => {
+    const emptyArchitectureSummaryInput = {
+      ...VALID_STORY_THREAD,
+      architectureSummary: "   ",
+    }
+
+    const result = validateProjectStoryThread(emptyArchitectureSummaryInput)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.architectureSummary",
+        }),
+      ])
+    )
+  })
+
+  it("빈 문자열: measurementMethod가 비어 있으면 invalid_value로 분류한다", () => {
+    const emptyMeasurementMethodInput = {
+      ...VALID_STORY_THREAD,
+      measurementMethod: "   ",
+    }
+
+    const result = validateProjectStoryThread(emptyMeasurementMethodInput)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.measurementMethod",
+        }),
+      ])
+    )
+  })
+
+  it("빈 문자열: tradeOff가 비어 있으면 invalid_value로 분류한다", () => {
+    const emptyTradeOffInput = {
+      ...VALID_STORY_THREAD,
+      threads: VALID_STORY_THREAD.threads.map((thread, index) =>
+        index === 0
+          ? {
+              ...thread,
+              tradeOff: "   ",
+            }
+          : thread
+      ),
+    }
+
+    const result = validateProjectStoryThread(emptyTradeOffInput)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.threads[0].tradeOff",
         }),
       ])
     )

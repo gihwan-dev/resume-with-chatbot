@@ -16,7 +16,9 @@ vi.mock("astro:content", () => ({
 import { serializeResumeData } from "../../../src/lib/pdf/serialize-resume"
 
 describe("serializeResumeData", () => {
-  it("blogPosts를 포함해 직렬화한다", async () => {
+  function setupCollections(options?: { includeOptionalFields?: boolean }) {
+    const includeOptionalFields = options?.includeOptionalFields ?? false
+
     mockGetCollection.mockReset()
     mockGetObsidianBlogPosts.mockReset()
     mockGetCollection.mockImplementation(async (collectionName) => {
@@ -31,6 +33,21 @@ describe("serializeResumeData", () => {
                 url: "https://resume-with-ai.gihwan-dev.com",
                 summary: "summary",
                 profiles: [],
+                ...(includeOptionalFields
+                  ? {
+                      heroMetrics: [
+                        {
+                          value: "10초 -> 3초",
+                          label: "장애 인지 시간 단축",
+                          description: "운영 대응 시작 시점을 앞당겼습니다.",
+                        },
+                        {
+                          value: "90%",
+                          label: "DOM 감소",
+                        },
+                      ],
+                    }
+                  : {}),
               },
             },
           ] as never
@@ -81,6 +98,46 @@ describe("serializeResumeData", () => {
                 dateStart: new Date("2025-01-01"),
                 dateEnd: undefined,
                 priority: 1,
+                ...(includeOptionalFields
+                  ? {
+                      storyThread: {
+                        context: "문제 배경",
+                        architectureSummary: "구조 전환으로 렌더링 병목을 해소했습니다.",
+                        measurementMethod: "React Profiler 동일 시나리오 30회 평균값 기준",
+                        impacts: [
+                          {
+                            value: "10초 -> 3초",
+                            label: "장애 인지 시간 단축",
+                            description: "초기 대응 속도를 높였습니다.",
+                          },
+                          {
+                            value: "73~82%",
+                            label: "인터랙션 지연 개선",
+                            description: "조작 중 지연을 완화했습니다.",
+                          },
+                        ],
+                        threads: [
+                          {
+                            issueTitle: "분산된 폴링 규칙",
+                            problems: ["정책 편차가 있었습니다."],
+                            thoughtProcess: "중앙화가 필요했습니다.",
+                            actions: ["Polling Manager 적용"],
+                            tradeOff: "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
+                            result: "운영 일관성을 확보했습니다.",
+                          },
+                          {
+                            issueTitle: "렌더링 경합",
+                            problems: ["리렌더링이 과도했습니다."],
+                            thoughtProcess: "렌더링 경계 재설계가 필요했습니다.",
+                            actions: ["구조 전환"],
+                            tradeOff: "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
+                            result: "성능 안정성을 확보했습니다.",
+                          },
+                        ],
+                        lessonsLearned: "구조 개선과 검증 자동화는 함께 설계해야 합니다.",
+                      },
+                    }
+                  : {}),
               },
               body: "project body",
             },
@@ -97,6 +154,42 @@ describe("serializeResumeData", () => {
                 dateStart: new Date("2025-02-01"),
                 dateEnd: undefined,
                 priority: 2,
+                ...(includeOptionalFields
+                  ? {
+                      storyThread: {
+                        context: "문제 배경",
+                        impacts: [
+                          {
+                            value: "90%",
+                            label: "DOM 감소",
+                            description: "렌더링 부담을 낮췄습니다.",
+                          },
+                          {
+                            value: "22ms -> 0.5ms",
+                            label: "리사이즈 개선",
+                            description: "반응성을 높였습니다.",
+                          },
+                        ],
+                        threads: [
+                          {
+                            issueTitle: "table 구조 한계",
+                            problems: ["DOM이 과다했습니다."],
+                            thoughtProcess: "가상화가 필요했습니다.",
+                            actions: ["div 전환", "가상화 적용"],
+                            result: "DOM 부담이 감소했습니다.",
+                          },
+                          {
+                            issueTitle: "이벤트 오버헤드",
+                            problems: ["핸들러가 분산됐습니다."],
+                            thoughtProcess: "이벤트 위임이 필요했습니다.",
+                            actions: ["컨테이너 위임"],
+                            result: "오버헤드가 줄었습니다.",
+                          },
+                        ],
+                        lessonsLearned: "구조와 검증을 함께 설계해야 합니다.",
+                      },
+                    }
+                  : {}),
               },
               body: "project body",
             },
@@ -144,6 +237,20 @@ describe("serializeResumeData", () => {
             {
               data: {
                 categories: [{ name: "Frontend", items: ["React"] }],
+                ...(includeOptionalFields
+                  ? {
+                      coreStrengths: [
+                        {
+                          title: "대규모 렌더링 아키텍처",
+                          summary: "렌더링 경계를 재설계해 고밀도 화면을 안정화합니다.",
+                        },
+                        {
+                          title: "성능 최적화",
+                          summary: "측정 기반으로 병목을 제거하고 회귀를 방지합니다.",
+                        },
+                      ],
+                    }
+                  : {}),
               },
             },
           ] as never
@@ -151,6 +258,10 @@ describe("serializeResumeData", () => {
           return [] as never
       }
     })
+  }
+
+  it("신규 필드가 없을 때도 기존 구조를 유지하며 직렬화한다", async () => {
+    setupCollections()
 
     const blogPosts = [
       {
@@ -182,5 +293,66 @@ describe("serializeResumeData", () => {
       "총 12건의 프로젝트에서 요구사항 정의부터 배포까지 전 과정을 단독 수행",
       "5점 만점 리뷰 9건 확보",
     ])
+    expect(result.profile.heroMetrics).toBeUndefined()
+    expect(result.coreStrengths).toBeUndefined()
+    for (const project of result.projects) {
+      expect(project.architectureSummary).toBeUndefined()
+      expect(project.measurementMethod).toBeUndefined()
+      expect(project.tradeOffs).toBeUndefined()
+    }
+  })
+
+  it("신규 optional 필드가 존재하면 PDF 직렬화에 반영한다", async () => {
+    setupCollections({ includeOptionalFields: true })
+
+    const blogPosts = [
+      {
+        title: "리액트 아키텍처 글",
+        url: "https://publish.obsidian.md/gihwan-dev/50-Blog/sample-post",
+        publishedAt: "2026-01-11T08:17:53.000Z",
+        summary: "요약",
+      },
+    ]
+    mockGetObsidianBlogPosts.mockResolvedValue(blogPosts)
+
+    const result = await serializeResumeData()
+
+    expect(result.profile.heroMetrics).toEqual([
+      {
+        value: "10초 -> 3초",
+        label: "장애 인지 시간 단축",
+        description: "운영 대응 시작 시점을 앞당겼습니다.",
+      },
+      {
+        value: "90%",
+        label: "DOM 감소",
+      },
+    ])
+    expect(result.coreStrengths).toEqual([
+      {
+        title: "대규모 렌더링 아키텍처",
+        summary: "렌더링 경계를 재설계해 고밀도 화면을 안정화합니다.",
+      },
+      {
+        title: "성능 최적화",
+        summary: "측정 기반으로 병목을 제거하고 회귀를 방지합니다.",
+      },
+    ])
+
+    const dashboardProject = result.projects.find(
+      (project) => project.resumeItemId === "project-exem-customer-dashboard"
+    )
+    expect(dashboardProject?.architectureSummary).toBe("구조 전환으로 렌더링 병목을 해소했습니다.")
+    expect(dashboardProject?.measurementMethod).toBe(
+      "React Profiler 동일 시나리오 30회 평균값 기준"
+    )
+    expect(dashboardProject?.tradeOffs).toEqual(["복잡도는 증가했지만 운영 일관성이 높아졌습니다."])
+
+    const dataGridProject = result.projects.find(
+      (project) => project.resumeItemId === "project-exem-data-grid"
+    )
+    expect(dataGridProject?.architectureSummary).toBeUndefined()
+    expect(dataGridProject?.measurementMethod).toBeUndefined()
+    expect(dataGridProject?.tradeOffs).toBeUndefined()
   })
 })

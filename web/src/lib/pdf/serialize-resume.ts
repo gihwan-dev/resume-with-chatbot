@@ -8,6 +8,21 @@ import {
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import type { SerializedResumeData } from "./types"
 
+function toOptionalText(value: string | undefined): string | undefined {
+  const normalized = value?.trim()
+  return normalized ? normalized : undefined
+}
+
+function extractTradeOffs(threads: { tradeOff?: string }[] | undefined): string[] | undefined {
+  if (!threads || threads.length === 0) return undefined
+
+  const uniqueTradeOffs = [
+    ...new Set(threads.map((thread) => toOptionalText(thread.tradeOff))),
+  ].filter((tradeOff): tradeOff is string => Boolean(tradeOff))
+
+  return uniqueTradeOffs.length > 0 ? uniqueTradeOffs : undefined
+}
+
 export async function serializeResumeData(): Promise<SerializedResumeData> {
   const [basics, work, projects, education, certificates, awards, skills, blogPosts] =
     await Promise.all([
@@ -48,7 +63,11 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
     ]
   })
 
-  const { summaryBlocks } = buildResumePortfolioContracts(projects)
+  const { summaryBlocks, mappings } = buildResumePortfolioContracts(projects)
+  const projectById = new Map(projects.map((project) => [project.id, project]))
+  const projectIdByResumeItemId = new Map(
+    mappings.map((mapping) => [mapping.resumeItemId, mapping.portfolioCaseId])
+  )
   const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(normalizedProjects)
 
   const sortedAwards = [...awards].sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
@@ -61,7 +80,9 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       url: profile.url,
       summary: profile.summary,
       profiles: profile.profiles,
+      heroMetrics: profile.heroMetrics,
     },
+    coreStrengths: skills[0]?.data.coreStrengths,
     work: workWithCompanyId.map(({ entry: w, companyId }) => ({
       company: w.data.company,
       role: w.data.role,
@@ -75,17 +96,25 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       ),
       highlights: w.data.highlights ?? [],
     })),
-    projects: summaryBlocks.map((summaryBlock) => ({
-      resumeItemId: summaryBlock.resumeItemId,
-      title: summaryBlock.title,
-      summary: summaryBlock.summary,
-      hasPortfolio: summaryBlock.hasPortfolio,
-      technologies: summaryBlock.technologies,
-      accomplishments: summaryBlock.accomplishments,
-      evidenceIds: summaryBlock.evidenceIds,
-      ctaLabel: summaryBlock.ctaLabel,
-      ctaHref: summaryBlock.ctaHref,
-    })),
+    projects: summaryBlocks.map((summaryBlock) => {
+      const projectId = projectIdByResumeItemId.get(summaryBlock.resumeItemId)
+      const storyThread = projectId ? projectById.get(projectId)?.data.storyThread : undefined
+
+      return {
+        resumeItemId: summaryBlock.resumeItemId,
+        title: summaryBlock.title,
+        summary: summaryBlock.summary,
+        hasPortfolio: summaryBlock.hasPortfolio,
+        technologies: summaryBlock.technologies,
+        accomplishments: summaryBlock.accomplishments,
+        evidenceIds: summaryBlock.evidenceIds,
+        architectureSummary: toOptionalText(storyThread?.architectureSummary),
+        measurementMethod: toOptionalText(storyThread?.measurementMethod),
+        tradeOffs: extractTradeOffs(storyThread?.threads),
+        ctaLabel: summaryBlock.ctaLabel,
+        ctaHref: summaryBlock.ctaHref,
+      }
+    }),
     blogPosts,
     education: education.map((e) => ({
       institution: e.data.institution,
