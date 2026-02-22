@@ -132,6 +132,7 @@ const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
       function setupPortfolioPage() {
         cleanupPortfolioPage()
         const cleanups = []
+        const portfolioEntryHistoryLength = window.history.length
 
         const link = document.getElementById("back-to-resume-link")
         if (link instanceof HTMLAnchorElement) {
@@ -139,27 +140,9 @@ const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
           const onBackClick = (event) => {
             event.preventDefault()
 
-            const latestResumeIndex = Number.parseInt(
-              sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY) ?? "",
-              10
-            )
-            const latestCurrentIndex = window.history.state?.index
-
-            if (
-              Number.isInteger(latestResumeIndex) &&
-              typeof latestCurrentIndex === "number" &&
-              latestCurrentIndex > latestResumeIndex
-            ) {
-              const stepsBack = latestCurrentIndex - latestResumeIndex
-
-              if (window.history.length > stepsBack) {
-                window.history.go(-stepsBack)
-                return
-              }
-            }
-
-            if (window.history.length > 1) {
-              window.history.back()
+            const fallbackStepsBack = window.history.length - portfolioEntryHistoryLength + 1
+            if (fallbackStepsBack > 0 && window.history.length > fallbackStepsBack) {
+              window.history.go(-fallbackStepsBack)
               return
             }
 
