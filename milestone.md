@@ -47,14 +47,14 @@
     - Thought Process 인용구의 옅은 배경색이 시각적 환기(Transition) 역할을 수행합니다.
 
 ## Phase 5. [SEQUENTIAL] 상세 페이지 통합 및 내비게이션 정합성
-- [ ] **Top-to-Bottom 내러티브 페이지 조립**
+- [x] **Top-to-Bottom 내러티브 페이지 조립**
   - 목표: Hero → Context → Story Threads → Retrospective 순서로 상세 페이지를 재구성합니다.
   - 검증:
     - 첫 화면에서 프로젝트 가치와 임팩트가 즉시 확인됩니다.
     - Context 이후 스레드가 자연스럽게 이어져 읽기 흐름이 유지됩니다.
     - 회고 섹션이 페이지 결말로 일관되게 배치됩니다.
 
-- [ ] **목차/딥링크/섹션 활성화 동작 갱신**
+- [x] **목차/딥링크/섹션 활성화 동작 갱신**
   - 목표: 새 섹션 구조에서도 TOC, 해시 이동, active state가 정확히 동작하도록 맞춥니다.
   - 검증:
     - 해시 링크 진입 시 올바른 섹션이 표시됩니다.
@@ -62,7 +62,7 @@
     - 잘못된 해시 진입 시 안전한 기본 섹션으로 복구됩니다.
 
 ## Phase 6. [PARALLEL:PG-2] 인터랙티브 증거 블록 고도화
-- [ ] **Before & After 토글을 Story Thread에 표준 삽입**
+- [x] **Before & After 토글을 Story Thread에 표준 삽입**
   - 목표: 글만으로 어려운 구조 변화는 비교 UI로 증명할 수 있게 만듭니다.
   - 검증:
     - 토글이 Action 컨텍스트 안에서 자연스럽게 표시됩니다.
@@ -122,3 +122,9 @@
 - 완료 사항: `Impact Badge` 카드와 `Story Thread` 타임라인 컴포넌트를 구현하고 상세 페이지를 `Hook -> Context -> Threads -> Retrospective` 구조로 즉시 전환.
 - 아키텍처 결정: canonical 해시를 `hook/context/threads/retrospective`로 전환하고 legacy 해시(`overview/problem/decision/result/retrospective`)는 자동 매핑으로 호환 유지.
 - 신규 해시 계약 선반영(Phase 5 일부 앞당김): TOC 활성 상태, 딥링크 정규화, 모바일 목차 이동, 인쇄 흐름 테스트를 새 섹션 계약 기준으로 갱신.
+
+**[2026-02-22] Phase 5-6 완료 요약**:
+- 완료 사항: Phase 5 기준(Top-to-Bottom 구조, TOC/딥링크/active state 정합성)을 기존 구현/회귀 테스트로 재검증해 완료 처리하고, Phase 6로 `storyThread` frontmatter 기반 `comparison` 계약을 추가해 Before/After 토글을 4개 대표 스레드에 표준 삽입.
+- 접근성/구현 결정: `CompareToggle`을 탭 패턴(`tablist/tab/tabpanel`)으로 리팩터링하고 키보드 탐색(`Arrow`, `Home/End`, `Enter/Space`) 및 ARIA 연결(`aria-controls`, `aria-labelledby`)을 적용.
+- 검증 결과: `pnpm -C web run typecheck`, `pnpm -C web run lint`, `pnpm -C web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/hash.test.ts tests/lib/resume-portfolio/validation.test.ts`, `pnpm -C web exec playwright test e2e/portfolio-before-after.spec.ts e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts --project=chromium` 모두 통과.
+- 다음 페이즈 영향: 다음 미완료 페이즈는 Phase 7(반응형 및 인쇄 최적화)이며, 새 비교 블록이 포함된 Story Thread를 기준으로 모바일/프린트 균형 조정이 필요.
