@@ -3,26 +3,23 @@ import { parseFollowUpQuestions, SUGGESTED_QUESTIONS } from "../../src/lib/chat-
 
 describe("chat-utils", () => {
   describe("SUGGESTED_QUESTIONS", () => {
-    it("채용 관점 빠른 질문 5개를 제공한다", () => {
-      expect(SUGGESTED_QUESTIONS).toHaveLength(5)
+    it("채용 관점 빠른 질문 4개를 제공한다", () => {
+      expect(SUGGESTED_QUESTIONS).toHaveLength(4)
       expect(SUGGESTED_QUESTIONS.map((question) => question.id)).toEqual([
-        "accessibility-wcag",
-        "typescript-quality",
-        "ai-tools",
-        "design-system",
-        "meta-framework",
+        "architecture-philosophy",
+        "performance-bottleneck-order",
+        "tradeoff-rationale",
+        "regression-test-strategy",
       ])
     })
 
     it("핵심 역량 키워드를 모두 포함한다", () => {
       const texts = SUGGESTED_QUESTIONS.map((question) => question.text).join(" ")
 
-      expect(texts).toContain("접근성")
-      expect(texts).toContain("TypeScript")
-      expect(texts).toContain("AI")
-      expect(texts).toContain("디자인 시스템")
-      expect(texts).toContain("SSR")
-      expect(texts).toContain("서버리스")
+      expect(texts).toContain("아키텍처")
+      expect(texts).toContain("성능 병목")
+      expect(texts).toContain("트레이드오프")
+      expect(texts).toContain("테스트 전략")
     })
   })
 

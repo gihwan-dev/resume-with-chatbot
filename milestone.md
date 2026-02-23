@@ -96,7 +96,7 @@
 
 ## Phase 7. [PARALLEL:PG-2] AI 추천 질문 개편
 
-- [ ] **추천 질문 4개 교체**
+- [x] **추천 질문 4개 교체**
   - 목표: 채용 담당자가 질문 없이도 핵심 역량을 탐색할 수 있게 만든다.
   - 검증:
     - 아키텍처/성능/트레이드오프/테스트 전략 질문 4개가 반영된다.
@@ -476,3 +476,41 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 - 완료 처리:
   - Phase 6 체크박스를 `[x]`로 업데이트.
   - 다음 미완료 Phase는 `Phase 7. [PARALLEL:PG-2] AI 추천 질문 개편`.
+
+### 2026-02-23 — Phase 7 실행 및 완료
+
+- 실행 방식 (Layer):
+  - Layer 1: `SUGGESTED_QUESTIONS` 4문항 교체 + `ThreadWelcome` named export 추가
+  - Layer 2: 컴포넌트 테스트 인프라 확장(`@testing-library/react`, `@testing-library/user-event`, `vitest` include `.tsx`)
+  - Layer 3: 질문 상수 테스트 갱신 + 추천 질문 클릭 상호작용 테스트 신규 추가
+  - Layer 4: typecheck/lint/vitest 검증 후 milestone 완료 처리
+
+- 구현 파일:
+  - `web/src/lib/chat-utils.ts`
+  - `web/src/components/assistant-ui/thread.tsx`
+  - `web/tests/lib/chat-utils.test.ts`
+  - `web/tests/components/thread-suggestion.test.tsx` (신규)
+  - `web/vitest.config.ts`
+  - `web/package.json`
+  - `web/pnpm-lock.yaml`
+
+- 핵심 반영:
+  - 추천 질문을 아래 4개로 고정:
+    - `architecture-philosophy` / `이 개발자의 아키텍처 설계 철학은 무엇인가요?`
+    - `performance-bottleneck-order` / `대규모 데이터 성능 병목을 어떤 순서로 해결했나요?`
+    - `tradeoff-rationale` / `가장 어려웠던 트레이드오프와 선택 근거는 무엇인가요?`
+    - `regression-test-strategy` / `회귀를 막기 위한 테스트 전략은 어떻게 설계했나요?`
+  - 추천 질문 클릭 시 `trackEvent("chat_message", { method: "suggestion" })` 및
+    `aui.thread().append({ role: "user", content: [{ type: "text", text }] })` 흐름 유지
+  - `ThreadWelcome`를 named export로 노출해 UI 상호작용 테스트 진입점을 고정
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과 (0 error, hint 2개)
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 실패
+    - 원인: `web/e2e/portfolio-resume-return-flow.spec.ts`의 기존 포맷 이슈(이번 변경 외 파일)
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec biome check src/lib/chat-utils.ts src/components/assistant-ui/thread.tsx tests/lib/chat-utils.test.ts tests/components/thread-suggestion.test.tsx vitest.config.ts package.json` 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/chat-utils.test.ts tests/components/thread-suggestion.test.tsx` 통과 (2 files, 5 tests)
+
+- 완료 처리:
+  - Phase 7 체크박스를 `[x]`로 업데이트.
+  - 다음 미완료 Phase는 `Phase 8. [PARALLEL:PG-2] PDF 동기화`.
