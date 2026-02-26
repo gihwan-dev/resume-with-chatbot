@@ -68,6 +68,12 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
   const projectIdByResumeItemId = new Map(
     mappings.map((mapping) => [mapping.resumeItemId, mapping.portfolioCaseId])
   )
+  const summaryBlockByProjectId = new Map<string, (typeof summaryBlocks)[number]>()
+  for (const summaryBlock of summaryBlocks) {
+    const projectId = projectIdByResumeItemId.get(summaryBlock.resumeItemId)
+    if (!projectId) continue
+    summaryBlockByProjectId.set(projectId, summaryBlock)
+  }
   const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(normalizedProjects)
 
   const sortedAwards = [...awards].sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
@@ -83,19 +89,44 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       heroMetrics: profile.heroMetrics,
     },
     coreStrengths: skills[0]?.data.coreStrengths,
-    work: workWithCompanyId.map(({ entry: w, companyId }) => ({
-      company: w.data.company,
-      role: w.data.role,
-      dateStart: w.data.dateStart.toISOString(),
-      dateEnd: w.data.dateEnd?.toISOString(),
-      isCurrent: w.data.isCurrent,
-      location: w.data.location,
-      summary: w.data.summary,
-      projectTitles: (companyProjectsByCompanyId.get(companyId) ?? []).map(
-        (project) => project.title
-      ),
-      highlights: w.data.highlights ?? [],
-    })),
+    work: workWithCompanyId.map(({ entry: w, companyId }) => {
+      const companyProjects = companyProjectsByCompanyId.get(companyId) ?? []
+      const projectCases = companyProjects.flatMap((project) => {
+        const summaryBlock = summaryBlockByProjectId.get(project.projectId)
+        if (!summaryBlock) return []
+
+        const storyThread = projectById.get(project.projectId)?.data.storyThread
+
+        return [
+          {
+            projectId: project.projectId,
+            title: summaryBlock.title,
+            summary: summaryBlock.summary,
+            accomplishments: summaryBlock.accomplishments.slice(0, 2),
+            architectureSummary: toOptionalText(storyThread?.coreApproach),
+            measurementMethod: toOptionalText(storyThread?.validationImpact?.measurementMethod),
+            tradeOffs: extractTradeOffs(storyThread?.decisions),
+          },
+        ]
+      })
+      const mappedProjectCaseIds = new Set(projectCases.map((projectCase) => projectCase.projectId))
+      const unmappedProjectTitles = companyProjects
+        .filter((project) => !mappedProjectCaseIds.has(project.projectId))
+        .map((project) => project.title)
+
+      return {
+        company: w.data.company,
+        role: w.data.role,
+        dateStart: w.data.dateStart.toISOString(),
+        dateEnd: w.data.dateEnd?.toISOString(),
+        isCurrent: w.data.isCurrent,
+        location: w.data.location,
+        summary: w.data.summary,
+        projectCases: projectCases.length > 0 ? projectCases : undefined,
+        projectTitles: unmappedProjectTitles,
+        highlights: w.data.highlights ?? [],
+      }
+    }),
     projects: summaryBlocks.map((summaryBlock) => {
       const projectId = projectIdByResumeItemId.get(summaryBlock.resumeItemId)
       const storyThread = projectId ? projectById.get(projectId)?.data.storyThread : undefined

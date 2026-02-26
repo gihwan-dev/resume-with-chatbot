@@ -105,7 +105,7 @@
 
 ## Phase 8. [PARALLEL:PG-2] PDF 동기화
 
-- [ ] **웹- PDF 섹션 우선순위 동기화**
+- [x] **웹- PDF 섹션 우선순위 동기화**
   - 목표: PDF도 웹과 동일한 메시지 우선순위를 갖게 만든다.
   - 검증:
     - Hero 지표/Core Strength/통합 Experience 핵심 문구가 반영된다.
@@ -514,3 +514,57 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 - 완료 처리:
   - Phase 7 체크박스를 `[x]`로 업데이트.
   - 다음 미완료 Phase는 `Phase 8. [PARALLEL:PG-2] PDF 동기화`.
+
+### 2026-02-26 — Phase 8 실행 및 완료
+
+- 실행 방식 (Layer):
+  - Layer 1: PDF 직렬화 타입/매핑 확장 (`projectCases` 추가, company 우선순위 반영, fallback 유지)
+  - Layer 2: PDF 문서 트리 재구성 (Hero Metrics, Core Strength, Experience case 카드, 섹션 순서 재정렬)
+  - Layer 3: PDF 스타일/테스트/검증 스크립트 보강 + API 헤더 테스트 추가
+  - Layer 4: typecheck/lint/vitest/phase8:verify 실행 및 결과 기록
+
+- 구현 파일:
+  - `web/src/lib/pdf/types.ts`
+  - `web/src/lib/pdf/serialize-resume.ts`
+  - `web/src/components/pdf/resume-document.tsx`
+  - `web/src/lib/pdf/styles.ts`
+  - `web/tests/lib/pdf/serialize-resume.test.ts`
+  - `web/tests/components/pdf/resume-document.test.tsx` (신규)
+  - `web/tests/pages/api/resume-pdf.test.ts` (신규)
+  - `web/package.json`
+  - `web/e2e/portfolio-resume-return-flow.spec.ts` (lint 선행 포맷 이슈 정리)
+  - `milestone.md`
+
+- 핵심 반영:
+  - `SerializedWorkProjectCase` 타입 추가 및 `SerializedWork.projectCases?` 확장
+  - `resumeItemId <-> projectId` 매핑 기반으로 work별 `projectCases` 생성
+    - `projectId/title/summary/accomplishments(최대 2)/architectureSummary/measurementMethod/tradeOffs` 직렬화
+    - company 프로젝트 우선순위(`priority`) 순서 유지
+    - `projectTitles/highlights` fallback 필드 유지
+  - PDF 렌더 순서를 `Profile -> Core Strength -> Experience -> Technical Writing -> Awards -> Certificates -> Skills`로 고정
+  - `Projects`, `Education` 섹션을 PDF 렌더 트리에서 제거
+  - Experience에서 `projectCases` 우선 카드 렌더, 미존재 시 기존 `projectTitles/highlights` fallback 렌더
+  - `phase8:verify`에 `tests/lib/pdf/serialize-resume.test.ts` 추가
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과 (0 error, 0 warning, hint 2개)
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint`
+    - 1차 실패:
+      - `tests/components/pdf/resume-document.test.tsx`의 `any` 사용 경고
+      - `web/src/components/pdf/resume-document.tsx` 포맷 이슈
+      - `web/e2e/portfolio-resume-return-flow.spec.ts` 기존 포맷 이슈
+    - 조치:
+      - 테스트 타입을 `ReactNode`로 수정
+      - `pnpm -C web exec biome format --write src/components/pdf/resume-document.tsx tests/components/pdf/resume-document.test.tsx e2e/portfolio-resume-return-flow.spec.ts`
+    - 2차 재실행 통과
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/pdf/serialize-resume.test.ts tests/components/pdf/resume-document.test.tsx tests/pages/api/resume-pdf.test.ts`
+    - 1차 실패: `@react-pdf/renderer` mock에 `StyleSheet` 누락
+    - 조치: 레이아웃 테스트 mock에 `StyleSheet.create` 추가
+    - 2차 재실행 통과 (3 files, 5 tests)
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run phase8:verify`
+    - 초기 실행: Playwright 단계 실패 (`listen EPERM: operation not permitted ::1:4322`)
+    - 재실행: Playwright 포함 `36 passed`로 통과 (최종 성공 상태)
+
+- 완료 처리:
+  - Phase 8 체크박스를 `[x]`로 업데이트.
+  - 다음 미완료 Phase는 `Phase 9. [SEQUENTIAL] 품질 게이트 및 수용 검증`.

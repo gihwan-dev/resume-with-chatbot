@@ -9,6 +9,16 @@ export interface SerializedCoreStrength {
   summary: string
 }
 
+export interface SerializedWorkProjectCase {
+  projectId: string
+  title: string
+  summary: string
+  accomplishments: string[]
+  architectureSummary?: string
+  measurementMethod?: string
+  tradeOffs?: string[]
+}
+
 export interface SerializedProfile {
   name: string
   label: string
@@ -27,6 +37,7 @@ export interface SerializedWork {
   isCurrent: boolean
   location?: string
   summary: string
+  projectCases?: SerializedWorkProjectCase[]
   projectTitles: string[]
   highlights: string[]
 }

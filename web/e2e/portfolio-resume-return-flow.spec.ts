@@ -64,7 +64,10 @@ test.describe("Resume -> Portfolio -> Resume return flow", () => {
       page.waitForURL((url) => url.hash === "#problem-definition"),
       problemDefinitionLink.click(),
     ])
-    await Promise.all([page.waitForURL((url) => url.hash === "#key-decisions"), keyDecisionsLink.click()])
+    await Promise.all([
+      page.waitForURL((url) => url.hash === "#key-decisions"),
+      keyDecisionsLink.click(),
+    ])
 
     const backToResumeLink = page.locator("#back-to-resume-link")
     await expect(backToResumeLink).toBeVisible()

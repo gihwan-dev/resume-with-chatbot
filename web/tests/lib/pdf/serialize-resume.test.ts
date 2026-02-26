@@ -16,8 +16,15 @@ vi.mock("astro:content", () => ({
 import { serializeResumeData } from "../../../src/lib/pdf/serialize-resume"
 
 describe("serializeResumeData", () => {
-  function setupCollections(options?: { includeOptionalFields?: boolean }) {
+  function setupCollections(options?: {
+    includeOptionalFields?: boolean
+    includeUnmappedCompanyProject?: boolean
+    includeDuplicateTitleUnmappedProject?: boolean
+  }) {
     const includeOptionalFields = options?.includeOptionalFields ?? false
+    const includeUnmappedCompanyProject = options?.includeUnmappedCompanyProject ?? false
+    const includeDuplicateTitleUnmappedProject =
+      options?.includeDuplicateTitleUnmappedProject ?? false
 
     mockGetCollection.mockReset()
     mockGetObsidianBlogPosts.mockReset()
@@ -201,6 +208,46 @@ describe("serializeResumeData", () => {
               },
               body: "project body",
             },
+            ...(includeUnmappedCompanyProject
+              ? [
+                  {
+                    id: "exem-unmapped-maintenance",
+                    data: {
+                      companyId: "exem",
+                      title: "매핑 누락 프로젝트",
+                      company: "Exem",
+                      description: "project summary",
+                      techStack: ["React"],
+                      link: undefined,
+                      github: undefined,
+                      dateStart: new Date("2025-05-01"),
+                      dateEnd: undefined,
+                      priority: 5,
+                    },
+                    body: "project body",
+                  },
+                ]
+              : []),
+            ...(includeDuplicateTitleUnmappedProject
+              ? [
+                  {
+                    id: "exem-unmapped-same-title",
+                    data: {
+                      companyId: "exem",
+                      title: "고객 특화 DB 모니터링 대시보드 개발",
+                      company: "Exem",
+                      description: "project summary",
+                      techStack: ["React"],
+                      link: undefined,
+                      github: undefined,
+                      dateStart: new Date("2025-06-01"),
+                      dateEnd: undefined,
+                      priority: 6,
+                    },
+                    body: "project body",
+                  },
+                ]
+              : []),
           ] as never
         case "education":
           return [] as never
@@ -258,12 +305,21 @@ describe("serializeResumeData", () => {
     expect(result.projects[0].accomplishments.length).toBeGreaterThan(0)
     expect(result.projects[0].evidenceIds.length).toBeGreaterThan(0)
     expect(result.work).toHaveLength(2)
-    expect(result.work[0].projectTitles).toEqual([
-      "고객 특화 DB 모니터링 대시보드 개발",
-      "데이터 그리드 개발",
-      "차세대 데이터베이스 성능 모니터링 제품 개발",
-      "개발 생산성 향상 및 자동화 인프라 구축",
+    expect(result.work[0].projectTitles).toEqual([])
+    expect(result.work[0].projectCases).toHaveLength(4)
+    expect(result.work[0].projectCases?.map((projectCase) => projectCase.projectId)).toEqual([
+      "exem-customer-dashboard",
+      "exem-data-grid",
+      "exem-new-generation",
+      "exem-dx-improvement",
     ])
+    for (const projectCase of result.work[0].projectCases ?? []) {
+      expect(projectCase.accomplishments.length).toBeLessThanOrEqual(2)
+      expect(projectCase.architectureSummary).toBeUndefined()
+      expect(projectCase.measurementMethod).toBeUndefined()
+      expect(projectCase.tradeOffs).toBeUndefined()
+    }
+    expect(result.work[1].projectCases).toBeUndefined()
     expect(result.work[1].projectTitles).toEqual([])
     expect(result.work[1].highlights).toEqual([
       "총 12건의 프로젝트에서 요구사항 정의부터 배포까지 전 과정을 단독 수행",
@@ -314,6 +370,18 @@ describe("serializeResumeData", () => {
         summary: "측정 기반으로 병목을 제거하고 회귀를 방지합니다.",
       },
     ])
+    expect(result.work[0].projectCases).toHaveLength(4)
+    const dashboardCase = result.work[0].projectCases?.[0]
+    expect(dashboardCase?.projectId).toBe("exem-customer-dashboard")
+    expect(dashboardCase?.title).toBe("고객 특화 DB 모니터링 대시보드 개발")
+    expect(dashboardCase?.summary).toContain("장애 인지 시간을 70% 단축")
+    expect(dashboardCase?.accomplishments).toHaveLength(2)
+    expect(dashboardCase?.measurementMethod).toBe("React Profiler 동일 시나리오 30회 평균값 기준")
+    expect(dashboardCase?.tradeOffs).toEqual([
+      "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
+      "적응 비용은 늘지만 판단 속도가 빨라집니다.",
+    ])
+    expect(result.work[1].projectCases).toBeUndefined()
 
     const dashboardProject = result.projects.find(
       (project) => project.resumeItemId === "project-exem-customer-dashboard"
@@ -335,5 +403,44 @@ describe("serializeResumeData", () => {
     expect(dataGridProject?.architectureSummary).toBeUndefined()
     expect(dataGridProject?.measurementMethod).toBeUndefined()
     expect(dataGridProject?.tradeOffs).toBeUndefined()
+  })
+
+  it("일부 프로젝트만 projectCases로 매핑돼도 unmapped projectTitles는 유지한다", async () => {
+    setupCollections({ includeUnmappedCompanyProject: true })
+    mockGetObsidianBlogPosts.mockResolvedValue([])
+
+    const result = await serializeResumeData()
+    const exemWork = result.work[0]
+
+    expect(exemWork.projectCases).toHaveLength(4)
+    expect(exemWork.projectCases?.map((projectCase) => projectCase.projectId)).toEqual([
+      "exem-customer-dashboard",
+      "exem-data-grid",
+      "exem-new-generation",
+      "exem-dx-improvement",
+    ])
+    expect(exemWork.projectTitles).toEqual(["매핑 누락 프로젝트"])
+    expect(
+      exemWork.projectCases?.some((projectCase) => projectCase.title === "매핑 누락 프로젝트")
+    ).toBe(false)
+  })
+
+  it("동명 프로젝트가 있어도 mapped/unmapped를 projectId 기준으로 분리한다", async () => {
+    setupCollections({ includeDuplicateTitleUnmappedProject: true })
+    mockGetObsidianBlogPosts.mockResolvedValue([])
+
+    const result = await serializeResumeData()
+    const exemWork = result.work[0]
+
+    expect(exemWork.projectCases).toHaveLength(4)
+    expect(exemWork.projectCases?.map((projectCase) => projectCase.projectId)).toContain(
+      "exem-customer-dashboard"
+    )
+    expect(
+      exemWork.projectCases?.filter(
+        (projectCase) => projectCase.title === "고객 특화 DB 모니터링 대시보드 개발"
+      )
+    ).toHaveLength(1)
+    expect(exemWork.projectTitles).toEqual(["고객 특화 DB 모니터링 대시보드 개발"])
   })
 })
