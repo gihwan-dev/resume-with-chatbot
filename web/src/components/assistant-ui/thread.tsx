@@ -27,6 +27,22 @@ import { Button } from "@/components/ui/button"
 import { useFollowUp } from "@/hooks/use-follow-up"
 import { trackEvent } from "@/lib/analytics"
 import { SUGGESTED_QUESTIONS } from "@/lib/chat-utils"
+import { cn } from "@/lib/utils"
+
+export type UserMessageSubmitMethod = "input" | "suggestion" | "follow_up"
+
+interface ThreadProps {
+  onUserMessageSubmitted?: (method: UserMessageSubmitMethod) => void
+  onboardingVariant?: "A" | "B"
+  onboardingExamplesVisible?: boolean
+  composerHighlightVisible?: boolean
+}
+
+interface ThreadWelcomeProps {
+  onUserMessageSubmitted?: (method: UserMessageSubmitMethod) => void
+  onboardingVariant?: "A" | "B"
+  onboardingExamplesVisible?: boolean
+}
 
 const ThreadHeader: FC = () => {
   const aui = useAui()
@@ -50,7 +66,12 @@ const ThreadHeader: FC = () => {
   )
 }
 
-export const Thread: FC = () => {
+export const Thread: FC<ThreadProps> = ({
+  onUserMessageSubmitted,
+  onboardingVariant,
+  onboardingExamplesVisible,
+  composerHighlightVisible,
+}) => {
   return (
     <ThreadPrimitive.Root
       className="aui-root aui-thread-root @container flex h-full flex-col bg-background"
@@ -58,6 +79,7 @@ export const Thread: FC = () => {
         ["--thread-max-width" as string]: "44rem",
       }}
     >
+      <UserMessageSubmissionFallback onUserMessageSubmitted={onUserMessageSubmitted} />
       <ThreadHeader />
       <ThreadPrimitive.Viewport
         turnAnchor="top"
@@ -65,23 +87,57 @@ export const Thread: FC = () => {
       >
         <ThreadPrimitive.ViewportFooter className="h-4 shrink-0" />
         <ThreadPrimitive.Empty>
-          <ThreadWelcome />
+          <ThreadWelcome
+            onUserMessageSubmitted={onUserMessageSubmitted}
+            onboardingVariant={onboardingVariant}
+            onboardingExamplesVisible={onboardingExamplesVisible}
+          />
         </ThreadPrimitive.Empty>
 
         <ThreadPrimitive.Messages
           components={{
             UserMessage,
-            AssistantMessage,
+            AssistantMessage: () => (
+              <AssistantMessage onUserMessageSubmitted={onUserMessageSubmitted} />
+            ),
           }}
         />
 
         <ThreadPrimitive.ViewportFooter className="aui-thread-viewport-footer sticky bottom-0 mx-auto mt-auto flex w-full max-w-(--thread-max-width) flex-col gap-4 overflow-visible rounded-t-3xl pb-4">
           <ThreadScrollToBottom />
-          <Composer />
+          <Composer
+            onUserMessageSubmitted={onUserMessageSubmitted}
+            composerHighlightVisible={composerHighlightVisible}
+          />
         </ThreadPrimitive.ViewportFooter>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>
   )
+}
+
+const UserMessageSubmissionFallback: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
+  onUserMessageSubmitted,
+}) => {
+  const hasUserMessage = useAuiState(({ thread }) =>
+    thread.messages.some((message) => message.role === "user")
+  )
+  const hasReportedRef = useRef(false)
+
+  useEffect(() => {
+    if (!hasUserMessage) {
+      hasReportedRef.current = false
+      return
+    }
+
+    if (hasReportedRef.current) {
+      return
+    }
+
+    hasReportedRef.current = true
+    onUserMessageSubmitted?.("input")
+  }, [hasUserMessage, onUserMessageSubmitted])
+
+  return null
 }
 
 const ThreadScrollToBottom: FC = () => {
@@ -98,7 +154,14 @@ const ThreadScrollToBottom: FC = () => {
   )
 }
 
-export const ThreadWelcome: FC = () => {
+export const ThreadWelcome: FC<ThreadWelcomeProps> = ({
+  onUserMessageSubmitted,
+  onboardingVariant,
+  onboardingExamplesVisible,
+}) => {
+  const onboardingExampleQuestions =
+    onboardingVariant === "B" && onboardingExamplesVisible ? SUGGESTED_QUESTIONS.slice(0, 3) : []
+
   return (
     <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-(--thread-max-width) grow flex-col">
       <div className="aui-thread-welcome-center flex w-full grow flex-col items-center justify-center">
@@ -111,23 +174,47 @@ export const ThreadWelcome: FC = () => {
           </p>
         </div>
       </div>
+      {onboardingExampleQuestions.length > 0 ? (
+        <div className="flex w-full flex-wrap gap-2 pb-2">
+          {onboardingExampleQuestions.map((question) => (
+            <SuggestionButton
+              key={`onboarding-${question.id}`}
+              text={question.text}
+              compact
+              onUserMessageSubmitted={onUserMessageSubmitted}
+            />
+          ))}
+        </div>
+      ) : null}
       <div className="grid w-full grid-cols-2 gap-2 pb-4">
         {SUGGESTED_QUESTIONS.map((q) => (
-          <SuggestionButton key={q.id} text={q.text} />
+          <SuggestionButton
+            key={q.id}
+            text={q.text}
+            onUserMessageSubmitted={onUserMessageSubmitted}
+          />
         ))}
       </div>
     </div>
   )
 }
 
-const SuggestionButton: FC<{ text: string }> = ({ text }) => {
+const SuggestionButton: FC<{
+  text: string
+  compact?: boolean
+  onUserMessageSubmitted?: (method: UserMessageSubmitMethod) => void
+}> = ({ text, compact = false, onUserMessageSubmitted }) => {
   const aui = useAui()
   return (
     <Button
       variant="ghost"
-      className="h-auto w-full min-w-0 overflow-hidden items-start justify-start rounded-2xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
+      className={cn(
+        "h-auto w-full min-w-0 overflow-hidden items-start justify-start rounded-2xl border px-4 py-3 text-left text-sm transition-colors hover:bg-muted",
+        compact && "w-auto max-w-full py-2 text-xs"
+      )}
       onClick={() => {
         trackEvent("chat_message", { method: "suggestion" })
+        onUserMessageSubmitted?.("suggestion")
         aui.thread().append({ role: "user", content: [{ type: "text", text }] })
       }}
     >
@@ -136,11 +223,21 @@ const SuggestionButton: FC<{ text: string }> = ({ text }) => {
   )
 }
 
-const Composer: FC = () => {
+const Composer: FC<Pick<ThreadProps, "onUserMessageSubmitted" | "composerHighlightVisible">> = ({
+  onUserMessageSubmitted,
+  composerHighlightVisible,
+}) => {
   return (
     <ComposerPrimitive.Root
-      onSubmit={() => trackEvent("chat_message", { method: "input" })}
-      className="aui-composer-root relative flex w-full flex-col rounded-2xl border border-input bg-background px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-ring/20"
+      onSubmit={() => {
+        trackEvent("chat_message", { method: "input" })
+        onUserMessageSubmitted?.("input")
+      }}
+      className={cn(
+        "aui-composer-root relative flex w-full flex-col rounded-2xl border border-input bg-background px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-ring has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-ring/20",
+        composerHighlightVisible &&
+          "border-primary ring-2 ring-primary/30 shadow-lg motion-reduce:transition-none"
+      )}
     >
       <ComposerPrimitive.Input
         placeholder="메시지를 입력하세요..."
@@ -195,7 +292,9 @@ const MessageError: FC = () => {
   )
 }
 
-const AssistantMessage: FC = () => {
+const AssistantMessage: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
+  onUserMessageSubmitted,
+}) => {
   return (
     <MessagePrimitive.Root
       className="aui-assistant-message-root fade-in slide-in-from-bottom-1 relative mx-auto w-full max-w-(--thread-max-width) animate-in py-3 duration-150"
@@ -225,7 +324,7 @@ const AssistantMessage: FC = () => {
         <AssistantActionBar />
       </div>
 
-      <FollowUpSuggestions />
+      <FollowUpSuggestions onUserMessageSubmitted={onUserMessageSubmitted} />
     </MessagePrimitive.Root>
   )
 }
@@ -257,7 +356,9 @@ const AssistantActionBar: FC = () => {
   )
 }
 
-const FollowUpSuggestions: FC = () => {
+const FollowUpSuggestions: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
+  onUserMessageSubmitted,
+}) => {
   const message = useAuiState(({ message }) => message)
   const aui = useAui()
   const { questions, generateFollowUp, clearQuestions } = useFollowUp()
@@ -324,6 +425,7 @@ const FollowUpSuggestions: FC = () => {
             className="h-auto max-w-full min-w-0 overflow-hidden py-1.5 px-2.5 text-left text-xs font-normal cursor-pointer border border-transparent hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
             onClick={() => {
               trackEvent("chat_message", { method: "follow_up" })
+              onUserMessageSubmitted?.("follow_up")
               clearQuestions()
               aui.thread().append({
                 role: "user",
