@@ -106,7 +106,7 @@ export function MobileNav({
 
   return (
     <div
-      className="fixed top-4 right-4 z-[var(--layer-nav)] print:hidden"
+      className="fixed top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-[var(--layer-nav)] print:hidden"
       data-slot="mobile-nav-root"
     >
       <Sheet open={open} onOpenChange={handleOpenChange} modal={false}>

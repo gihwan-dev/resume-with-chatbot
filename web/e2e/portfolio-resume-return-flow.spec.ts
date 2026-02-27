@@ -13,10 +13,10 @@ test.describe("Resume -> Portfolio -> Resume return flow", () => {
 
   test("상세 진입 후 이력서로 돌아가면 스크롤 위치가 복원된다", async ({ page }) => {
     await page.evaluate(() => {
-      const projectsSection = document.getElementById("projects")
-      if (!projectsSection) return
+      const experienceSection = document.getElementById("experience")
+      if (!experienceSection) return
 
-      const offsetTop = projectsSection.getBoundingClientRect().top + window.scrollY
+      const offsetTop = experienceSection.getBoundingClientRect().top + window.scrollY
       window.scrollTo(0, Math.max(0, offsetTop - 120))
     })
 
@@ -27,9 +27,9 @@ test.describe("Resume -> Portfolio -> Resume return flow", () => {
     const expectedScrollY = Math.round(await page.evaluate(() => window.scrollY))
 
     const firstCta = page.getByRole("link", { name: "상세 케이스 스터디 보기" }).first()
-    await expect(firstCta).toHaveAttribute("href", /\/portfolio\/[a-z0-9-]+#hook$/)
+    await expect(firstCta).toHaveAttribute("href", /\/portfolio\/[a-z0-9-]+#tldr$/)
 
-    await Promise.all([page.waitForURL("**/portfolio/*#hook"), firstCta.click()])
+    await Promise.all([page.waitForURL("**/portfolio/*#tldr"), firstCta.click()])
     await waitForUiReady(page)
 
     const backToResumeLink = page.locator("#back-to-resume-link")
@@ -48,5 +48,32 @@ test.describe("Resume -> Portfolio -> Resume return flow", () => {
 
     const finalScrollY = Math.round(await page.evaluate(() => window.scrollY))
     expect(Math.abs(finalScrollY - expectedScrollY)).toBeLessThanOrEqual(SCROLL_TOLERANCE_PX)
+  })
+
+  test("상세 내부 해시 네비게이션 이후에도 이력서로 한 번에 복귀한다", async ({ page }) => {
+    const firstCta = page.getByRole("link", { name: "상세 케이스 스터디 보기" }).first()
+    await Promise.all([page.waitForURL("**/portfolio/*#tldr"), firstCta.click()])
+    await waitForUiReady(page)
+
+    const problemDefinitionLink = page.locator('.toc-link[data-section-id="problem-definition"]')
+    const keyDecisionsLink = page.locator('.toc-link[data-section-id="key-decisions"]')
+    await expect(problemDefinitionLink).toBeVisible()
+    await expect(keyDecisionsLink).toBeVisible()
+
+    await Promise.all([
+      page.waitForURL((url) => url.hash === "#problem-definition"),
+      problemDefinitionLink.click(),
+    ])
+    await Promise.all([
+      page.waitForURL((url) => url.hash === "#key-decisions"),
+      keyDecisionsLink.click(),
+    ])
+
+    const backToResumeLink = page.locator("#back-to-resume-link")
+    await expect(backToResumeLink).toBeVisible()
+    await Promise.all([page.waitForURL((url) => url.pathname === "/"), backToResumeLink.click()])
+    await waitForUiReady(page)
+
+    await expect.poll(async () => page.evaluate(() => window.location.pathname)).toBe("/")
   })
 })

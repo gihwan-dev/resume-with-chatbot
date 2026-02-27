@@ -46,6 +46,48 @@ function ProfileSection({ profile }: { profile: SerializedResumeData["profile"] 
   )
 }
 
+function HeroMetricsSection({
+  heroMetrics,
+}: {
+  heroMetrics: SerializedResumeData["profile"]["heroMetrics"]
+}) {
+  if (!heroMetrics || heroMetrics.length === 0) return null
+
+  return (
+    <View style={styles.heroMetricsSection}>
+      {heroMetrics.map((metric) => (
+        <View key={`${metric.label}-${metric.value}`} style={styles.heroMetricCard}>
+          <Text style={styles.heroMetricValue}>{metric.value}</Text>
+          <Text style={styles.heroMetricLabel}>{metric.label}</Text>
+          {metric.description && (
+            <Text style={styles.heroMetricDescription}>{metric.description}</Text>
+          )}
+        </View>
+      ))}
+    </View>
+  )
+}
+
+function CoreStrengthSection({
+  coreStrengths,
+}: {
+  coreStrengths: SerializedResumeData["coreStrengths"]
+}) {
+  if (!coreStrengths || coreStrengths.length === 0) return null
+
+  return (
+    <View>
+      <Text style={styles.sectionTitle}>Core Strength</Text>
+      {coreStrengths.map((coreStrength) => (
+        <View key={coreStrength.title} style={styles.coreStrengthCard}>
+          <Text style={styles.coreStrengthTitle}>{coreStrength.title}</Text>
+          <Text style={styles.coreStrengthSummary}>{coreStrength.summary}</Text>
+        </View>
+      ))}
+    </View>
+  )
+}
+
 function SkillsSection({ skills }: { skills: SerializedResumeData["skills"] }) {
   if (!skills || skills.length === 0) return null
   return (
@@ -72,56 +114,67 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
   return (
     <View>
       <Text style={styles.sectionTitle}>Experience</Text>
-      {work.map((w) => (
-        <View key={`${w.company}-${w.dateStart}`} style={styles.itemSeparator} wrap={false}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle}>{w.role}</Text>
-            <Text style={styles.itemDate}>
-              {formatDateRange(w.dateStart, w.dateEnd, w.isCurrent)}
-            </Text>
-          </View>
-          <Text style={styles.itemSubtitle}>{w.company}</Text>
-          {w.projectTitles.length > 0 && (
-            <View style={styles.experienceProjectList}>
-              {w.projectTitles.map((projectTitle) => (
-                <View key={`${w.company}-${projectTitle}`} style={styles.experienceProjectRow}>
-                  <Text style={styles.experienceProjectBullet}>•</Text>
-                  <Text style={styles.experienceProjectText}>{projectTitle}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-      ))}
-    </View>
-  )
-}
+      {work.map((w) => {
+        const fallbackProjectItems =
+          w.projectTitles.length > 0
+            ? w.projectTitles
+            : w.projectCases && w.projectCases.length > 0
+              ? []
+              : w.highlights
 
-function ProjectSection({ projects }: { projects: SerializedResumeData["projects"] }) {
-  if (projects.length === 0) return null
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Projects</Text>
-      {projects.map((p) => (
-        <View key={p.resumeItemId} style={styles.projectContainer}>
-          <View minPresenceAhead={60}>
-            <Text style={styles.itemTitle}>{p.title}</Text>
-            <Text style={styles.itemSummary}>{p.summary}</Text>
-            {p.technologies.length > 0 && (
-              <View style={styles.techStackRow}>
-                {p.technologies.map((t) => (
-                  <Text key={t} style={styles.techBadge}>
-                    {t}
-                  </Text>
+        return (
+          <View key={`${w.company}-${w.dateStart}`} style={styles.itemSeparator}>
+            <View style={styles.itemHeader}>
+              <Text style={styles.itemTitle}>{w.role}</Text>
+              <Text style={styles.itemDate}>
+                {formatDateRange(w.dateStart, w.dateEnd, w.isCurrent)}
+              </Text>
+            </View>
+            <Text style={styles.itemSubtitle}>{w.company}</Text>
+            {w.projectCases && w.projectCases.length > 0 && (
+              <View style={styles.experienceCaseList}>
+                {w.projectCases.map((projectCase) => (
+                  <View
+                    key={`${w.company}-${projectCase.projectId}`}
+                    style={styles.experienceCaseCard}
+                  >
+                    <Text style={styles.experienceCaseTitle}>{projectCase.title}</Text>
+                    <Text style={styles.experienceCaseSummary}>{projectCase.summary}</Text>
+                    {projectCase.accomplishments.slice(0, 2).map((accomplishment) => (
+                      <View key={accomplishment} style={styles.experienceCaseBulletRow}>
+                        <Text style={styles.experienceCaseBullet}>•</Text>
+                        <Text style={styles.experienceCaseBulletText}>{accomplishment}</Text>
+                      </View>
+                    ))}
+                    {projectCase.measurementMethod && (
+                      <Text style={styles.experienceCaseMetaText}>
+                        <Text style={styles.experienceCaseMetaLabel}>Measurement: </Text>
+                        {projectCase.measurementMethod}
+                      </Text>
+                    )}
+                    {projectCase.tradeOffs?.map((tradeOff) => (
+                      <Text key={tradeOff} style={styles.experienceCaseMetaText}>
+                        <Text style={styles.experienceCaseMetaLabel}>Trade-off: </Text>
+                        {tradeOff}
+                      </Text>
+                    ))}
+                  </View>
+                ))}
+              </View>
+            )}
+            {fallbackProjectItems.length > 0 && (
+              <View style={styles.experienceProjectList}>
+                {fallbackProjectItems.map((projectTitle) => (
+                  <View key={`${w.company}-${projectTitle}`} style={styles.experienceProjectRow}>
+                    <Text style={styles.experienceProjectBullet}>•</Text>
+                    <Text style={styles.experienceProjectText}>{projectTitle}</Text>
+                  </View>
                 ))}
               </View>
             )}
           </View>
-          {p.accomplishments.length > 0 && (
-            <View>{markdownToPdf(p.accomplishments.map((item) => `* ${item}`).join("\n"))}</View>
-          )}
-        </View>
-      ))}
+        )
+      })}
     </View>
   )
 }
@@ -130,7 +183,7 @@ function BlogSection({ blogPosts }: { blogPosts: SerializedResumeData["blogPosts
   if (blogPosts.length === 0) return null
   return (
     <View>
-      <Text style={styles.sectionTitle}>Blog</Text>
+      <Text style={styles.sectionTitle}>Technical Writing</Text>
       {blogPosts.map((post) => (
         <View key={post.url} style={styles.itemSeparator} wrap={false}>
           <View style={styles.itemHeader}>
@@ -140,26 +193,6 @@ function BlogSection({ blogPosts }: { blogPosts: SerializedResumeData["blogPosts
           <Link src={post.url} style={styles.link}>
             <Text style={styles.blogLinkText}>Read post</Text>
           </Link>
-        </View>
-      ))}
-    </View>
-  )
-}
-
-function EducationSection({ education }: { education: SerializedResumeData["education"] }) {
-  if (education.length === 0) return null
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Education</Text>
-      {education.map((e) => (
-        <View key={`${e.institution}-${e.dateStart}`} style={styles.itemSeparator} wrap={false}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle}>{e.institution}</Text>
-            <Text style={styles.itemDate}>{formatDateRange(e.dateStart, e.dateEnd)}</Text>
-          </View>
-          <Text style={styles.itemSubtitle}>
-            {e.studyType} · {e.area}
-          </Text>
         </View>
       ))}
     </View>
@@ -219,13 +252,13 @@ export function ResumeDocument({ data }: { data: SerializedResumeData }) {
     >
       <Page size="A4" style={styles.page} wrap>
         <ProfileSection profile={data.profile} />
-        <SkillsSection skills={data.skills} />
+        <HeroMetricsSection heroMetrics={data.profile.heroMetrics} />
+        <CoreStrengthSection coreStrengths={data.coreStrengths} />
         <ExperienceSection work={data.work} />
-        <ProjectSection projects={data.projects} />
         <BlogSection blogPosts={data.blogPosts} />
-        <EducationSection education={data.education} />
-        <CertificateSection certificates={data.certificates} />
         <AwardSection awards={data.awards} />
+        <CertificateSection certificates={data.certificates} />
+        <SkillsSection skills={data.skills} />
         <Text
           style={styles.footer}
           render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}

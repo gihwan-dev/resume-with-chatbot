@@ -17,6 +17,42 @@ export const AssistantModal: FC = () => {
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
+    const anchor = triggerRef.current?.closest<HTMLElement>(".aui-modal-anchor")
+    if (!anchor) {
+      return
+    }
+
+    const applyVisibilityGuard = () => {
+      anchor.style.setProperty("display", "block", "important")
+      anchor.style.setProperty("visibility", "visible", "important")
+      anchor.style.setProperty("opacity", "1", "important")
+    }
+
+    const clearVisibilityGuard = () => {
+      anchor.style.removeProperty("display")
+      anchor.style.removeProperty("visibility")
+      anchor.style.removeProperty("opacity")
+    }
+
+    const printMediaQuery = window.matchMedia("print")
+    const handlePrintMediaChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        clearVisibilityGuard()
+        return
+      }
+      applyVisibilityGuard()
+    }
+
+    applyVisibilityGuard()
+    printMediaQuery.addEventListener("change", handlePrintMediaChange)
+
+    return () => {
+      printMediaQuery.removeEventListener("change", handlePrintMediaChange)
+      clearVisibilityGuard()
+    }
+  }, [])
+
+  useEffect(() => {
     const handleEscapeToClose = (event: KeyboardEvent) => {
       if (!open || event.key !== "Escape") {
         return
@@ -66,7 +102,7 @@ export const AssistantModal: FC = () => {
 
   return (
     <AssistantModalPrimitive.Root onOpenChange={handleOpenChange}>
-      <AssistantModalPrimitive.Anchor className="aui-root aui-modal-anchor fixed right-4 bottom-4 z-[var(--layer-chat)] size-14 print:hidden">
+      <AssistantModalPrimitive.Anchor className="aui-root aui-modal-anchor fixed right-[max(1rem,env(safe-area-inset-right))] bottom-[max(1rem,env(safe-area-inset-bottom))] z-[var(--layer-chat)] size-14 print:hidden">
         <AssistantModalPrimitive.Trigger asChild>
           <AssistantModalButton ref={triggerRef} />
         </AssistantModalPrimitive.Trigger>

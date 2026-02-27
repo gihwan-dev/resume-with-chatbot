@@ -14,9 +14,10 @@ const { skills } = Astro.props
 ---
 
 <section id="skills" class="mb-12">
-  <h2 class="text-2xl font-bold text-resume-text-main mb-8 tracking-tight">
-    Skills
-  </h2>
+  <h2 class="text-2xl font-bold text-resume-text-main mb-2 tracking-tight">Skills</h2>
+  <p class="text-sm text-resume-text-muted mb-8 leading-relaxed">
+    핵심 문제 해결 사례를 보완하는 기술 스택 요약입니다.
+  </p>
   <div class="space-y-5">
     {
       skills.categories.map((category) => (

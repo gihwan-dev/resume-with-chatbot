@@ -6,6 +6,8 @@ const companyIdSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "companyId must be kebab-case")
 
+const nonEmptyText = z.string().trim().min(1)
+
 const basics = defineCollection({
   loader: glob({ pattern: "profile.json", base: "./src/content/basics" }),
   schema: z.object({
@@ -21,6 +23,17 @@ const basics = defineCollection({
         url: z.string().url(),
       })
     ),
+    heroMetrics: z
+      .array(
+        z.object({
+          value: nonEmptyText,
+          label: nonEmptyText,
+          description: nonEmptyText.optional(),
+        })
+      )
+      .min(1)
+      .max(4)
+      .optional(),
   }),
 })
 
@@ -36,6 +49,7 @@ const work = defineCollection({
     isCurrent: z.boolean().default(false),
     location: z.string().optional(),
     summary: z.string(),
+    highlights: z.array(z.string().min(1)).optional(),
   }),
 })
 
@@ -97,6 +111,16 @@ const skills = defineCollection({
         items: z.array(z.string()),
       })
     ),
+    coreStrengths: z
+      .array(
+        z.object({
+          title: nonEmptyText,
+          summary: nonEmptyText,
+        })
+      )
+      .min(1)
+      .max(4)
+      .optional(),
   }),
 })
 

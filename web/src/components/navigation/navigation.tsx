@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { NAVIGATION_READY_EVENT } from "@/lib/layer-events"
 import { PORTFOLIO_SECTION_IDS, type PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
 import { DesktopNav } from "./desktop-nav"
@@ -13,10 +13,12 @@ import {
 import { ThemeProvider } from "./theme-provider"
 
 const PORTFOLIO_SECTION_LABELS: Record<PortfolioSectionId, string> = {
-  hook: "핵심 임팩트",
-  context: "배경",
-  threads: "스토리 스레드",
-  retrospective: "회고",
+  tldr: "TL;DR",
+  "problem-definition": "문제 정의",
+  "key-decisions": "핵심 의사결정",
+  "implementation-highlights": "구현 전략",
+  "validation-impact": "검증 및 결과",
+  learned: "회고",
 }
 
 const DEFAULT_PORTFOLIO_SECTION_ITEMS: readonly SectionNavItem[] = PORTFOLIO_SECTION_IDS.map(
@@ -25,6 +27,7 @@ const DEFAULT_PORTFOLIO_SECTION_ITEMS: readonly SectionNavItem[] = PORTFOLIO_SEC
     label: PORTFOLIO_SECTION_LABELS[sectionId],
   })
 )
+const DEFAULT_RESUME_SECTION_ITEMS: readonly SectionNavItem[] = RESUME_SECTION_NAV_ITEMS
 
 type NavigationMode = "resume" | "portfolio-detail"
 
@@ -33,8 +36,26 @@ interface NavigationState {
   sections: readonly SectionNavItem[]
 }
 
+interface NavigationProps {
+  initialPathname?: string
+}
+
 function isPortfolioDetailPathname(pathname: string) {
   return /^\/portfolio\/[^/]+\/?$/.test(pathname)
+}
+
+function getInitialNavigationState(pathname: string): NavigationState {
+  if (isPortfolioDetailPathname(pathname)) {
+    return {
+      mode: "portfolio-detail",
+      sections: DEFAULT_PORTFOLIO_SECTION_ITEMS,
+    }
+  }
+
+  return {
+    mode: "resume",
+    sections: DEFAULT_RESUME_SECTION_ITEMS,
+  }
 }
 
 function getPortfolioSectionsFromDocument() {
@@ -45,26 +66,26 @@ function getPortfolioSectionsFromDocument() {
   return visibleSections.length > 0 ? visibleSections : DEFAULT_PORTFOLIO_SECTION_ITEMS
 }
 
+function getResumeSectionsFromDocument() {
+  const visibleSections = DEFAULT_RESUME_SECTION_ITEMS.filter((section) =>
+    Boolean(document.getElementById(section.id))
+  )
+
+  return visibleSections.length > 0 ? visibleSections : DEFAULT_RESUME_SECTION_ITEMS
+}
+
 function isSameSectionSet(left: readonly SectionNavItem[], right: readonly SectionNavItem[]) {
   if (left.length !== right.length) return false
 
   return left.every((section, index) => section.id === right[index]?.id)
 }
 
-export function Navigation() {
-  const [navigationState, setNavigationState] = useState<NavigationState>(() => {
-    if (typeof window === "undefined" || !isPortfolioDetailPathname(window.location.pathname)) {
-      return {
-        mode: "resume",
-        sections: RESUME_SECTION_NAV_ITEMS,
-      }
-    }
-
-    return {
-      mode: "portfolio-detail",
-      sections: getPortfolioSectionsFromDocument(),
-    }
-  })
+export function Navigation({ initialPathname = "/" }: NavigationProps) {
+  const mobileWrapperRef = useRef<HTMLDivElement>(null)
+  const desktopWrapperRef = useRef<HTMLDivElement>(null)
+  const [navigationState, setNavigationState] = useState<NavigationState>(() =>
+    getInitialNavigationState(initialPathname)
+  )
 
   useEffect(() => {
     const resumeWindow = window as Window & {
@@ -91,7 +112,7 @@ export function Navigation() {
           }
         : {
             mode: "resume",
-            sections: RESUME_SECTION_NAV_ITEMS,
+            sections: getResumeSectionsFromDocument(),
           }
 
       setNavigationState((currentState) => {
@@ -116,6 +137,76 @@ export function Navigation() {
     }
   }, [])
 
+  useEffect(() => {
+    const desktopRootSelector = '[data-slot="desktop-nav-root"]'
+    const mobileRootSelector = '[data-slot="mobile-nav-root"]'
+
+    const setVisible = (element: HTMLElement | null, visible: boolean) => {
+      if (!element) {
+        return
+      }
+
+      element.style.setProperty("display", visible ? "block" : "none", "important")
+      element.style.setProperty("visibility", visible ? "visible" : "hidden", "important")
+      element.style.setProperty("opacity", visible ? "1" : "0", "important")
+    }
+
+    const clearGuard = (element: HTMLElement | null) => {
+      if (!element) {
+        return
+      }
+
+      element.style.removeProperty("display")
+      element.style.removeProperty("visibility")
+      element.style.removeProperty("opacity")
+    }
+
+    const applyVisibilityGuard = () => {
+      const isDesktop = window.matchMedia("(min-width: 1024px)").matches
+      const desktopRoot = document.querySelector<HTMLElement>(desktopRootSelector)
+      const mobileRoot = document.querySelector<HTMLElement>(mobileRootSelector)
+
+      setVisible(desktopWrapperRef.current, isDesktop)
+      setVisible(mobileWrapperRef.current, !isDesktop)
+      setVisible(desktopRoot, isDesktop)
+      setVisible(mobileRoot, !isDesktop)
+    }
+
+    const clearVisibilityGuard = () => {
+      clearGuard(desktopWrapperRef.current)
+      clearGuard(mobileWrapperRef.current)
+      clearGuard(document.querySelector<HTMLElement>(desktopRootSelector))
+      clearGuard(document.querySelector<HTMLElement>(mobileRootSelector))
+    }
+
+    const printMediaQuery = window.matchMedia("print")
+    const handleResize = () => {
+      if (printMediaQuery.matches) {
+        return
+      }
+
+      applyVisibilityGuard()
+    }
+    const handlePrintMediaChange = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        clearVisibilityGuard()
+        return
+      }
+
+      applyVisibilityGuard()
+    }
+
+    applyVisibilityGuard()
+    window.addEventListener("resize", handleResize)
+    printMediaQuery.addEventListener("change", handlePrintMediaChange)
+
+    return () => {
+      window.removeEventListener("resize", handleResize)
+      printMediaQuery.removeEventListener("change", handlePrintMediaChange)
+      clearVisibilityGuard()
+    }
+  }, [])
+
   const isPortfolioDetailMode = navigationState.mode === "portfolio-detail"
   const sectionVariant: SectionNavVariant = isPortfolioDetailMode ? "toc" : "default"
   const desktopAriaLabel = isPortfolioDetailMode
@@ -127,7 +218,7 @@ export function Navigation() {
 
   return (
     <ThemeProvider>
-      <div className="xl:hidden">
+      <div ref={mobileWrapperRef} className="lg:hidden">
         <MobileNav
           sections={navigationState.sections}
           ariaLabel={mobileAriaLabel}
@@ -135,7 +226,7 @@ export function Navigation() {
           sectionVariant={sectionVariant}
         />
       </div>
-      <div className="hidden xl:block">
+      <div ref={desktopWrapperRef} className="hidden lg:block">
         <DesktopNav
           sections={navigationState.sections}
           ariaLabel={desktopAriaLabel}

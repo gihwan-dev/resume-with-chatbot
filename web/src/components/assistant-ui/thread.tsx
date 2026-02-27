@@ -98,7 +98,7 @@ const ThreadScrollToBottom: FC = () => {
   )
 }
 
-const ThreadWelcome: FC = () => {
+export const ThreadWelcome: FC = () => {
   return (
     <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-(--thread-max-width) grow flex-col">
       <div className="aui-thread-welcome-center flex w-full grow flex-col items-center justify-center">

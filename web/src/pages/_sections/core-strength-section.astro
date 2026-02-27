@@ -1,0 +1,30 @@
+---
+interface CoreStrength {
+  title: string
+  summary: string
+}
+
+interface Props {
+  coreStrengths: CoreStrength[]
+}
+
+const { coreStrengths } = Astro.props as Props
+---
+
+<section id="core-strength" class="mb-12">
+  <h2 class="text-2xl font-bold text-resume-text-main mb-3 tracking-tight">Core Strength</h2>
+
+  <ul class="grid gap-4 sm:grid-cols-2">
+    {
+      coreStrengths.map((strength) => (
+        <li
+          data-core-strength-item
+          class="rounded-sm border border-resume-border bg-resume-card-bg p-5 transition-colors hover:border-resume-primary/50"
+        >
+          <h3 class="text-base font-bold text-resume-text-heading mb-2">{strength.title}</h3>
+          <p class="text-sm text-resume-text-main/90 leading-relaxed">{strength.summary}</p>
+        </li>
+      ))
+    }
+  </ul>
+</section>

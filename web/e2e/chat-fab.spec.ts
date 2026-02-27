@@ -148,6 +148,7 @@ test.describe("Desktop layer priority", () => {
   })
 
   test("데스크톱에서 챗봇 레이어가 사이드바보다 높다", async ({ page }) => {
+    await expect(page.locator('[data-slot="desktop-nav-root"]')).toBeVisible()
     await openModal(page)
 
     const zIndex = await page.evaluate(() => {

@@ -8,31 +8,32 @@ interface Props {
 const { impacts } = Astro.props
 ---
 
-<div class="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3" data-impact-grid>
-  {impacts.map((impact, index) => (
-    <article
-      class="min-w-0 h-full rounded-xl border border-resume-primary/20 bg-resume-card-bg px-4 py-4 shadow-sm sm:px-5 print:break-inside-avoid print:border-slate-300 print:shadow-none"
-      data-impact-item
-      data-impact-index={index}
-    >
-      <p
-        class="break-words text-2xl font-extrabold tracking-tight text-resume-primary sm:text-3xl lg:text-4xl print:text-slate-800"
-        data-impact-value
+<div class="w-full" data-impact-grid>
+  <div class="flex w-full items-stretch border-y border-resume-border/45 py-3">
+    {impacts.map((impact, index) => (
+      <article
+        class="min-w-0 flex-1 border-l border-resume-border/45 px-3 text-center first:border-l-0 print:break-inside-avoid sm:px-4"
+        data-impact-item
+        data-impact-index={index}
       >
-        {impact.value}
-      </p>
-      <p
-        class="mt-2 break-words text-sm font-semibold text-resume-text-heading print:text-slate-900"
-        data-impact-label
-      >
-        {impact.label}
-      </p>
-      <p
-        class="mt-2 break-words text-sm leading-relaxed text-resume-text-main/80 print:text-slate-700"
-        data-impact-description
-      >
-        {impact.description}
-      </p>
-    </article>
-  ))}
+        <div class="space-y-1">
+          <p
+            class="break-words text-[13px] font-semibold leading-snug text-resume-text-heading sm:text-sm print:text-slate-900"
+            data-impact-label
+          >
+            {impact.label}
+          </p>
+          <p
+            class="break-words text-sm font-bold leading-snug text-resume-primary sm:text-[15px] print:text-slate-800"
+            data-impact-value
+          >
+            {impact.value}
+          </p>
+        </div>
+        <p class="sr-only" data-impact-description>
+          {impact.description}
+        </p>
+      </article>
+    ))}
+  </div>
 </div>

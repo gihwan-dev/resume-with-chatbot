@@ -1,4 +1,11 @@
-export const PORTFOLIO_SECTION_IDS = ["hook", "context", "threads", "retrospective"] as const
+export const PORTFOLIO_SECTION_IDS = [
+  "tldr",
+  "problem-definition",
+  "key-decisions",
+  "implementation-highlights",
+  "validation-impact",
+  "learned",
+] as const
 
 export type PortfolioSectionId = (typeof PORTFOLIO_SECTION_IDS)[number]
 
@@ -8,26 +15,28 @@ export interface ImpactItem {
   description: string
 }
 
-export interface StoryThreadComparison {
-  beforeLabel?: string
-  afterLabel?: string
-  before: string[]
-  after: string[]
+export interface DecisionItem {
+  title: string
+  whyThisChoice: string
+  alternative: string
+  tradeOff: string
 }
 
-export interface StoryThreadItem {
-  issueTitle: string
-  problems: string[]
-  thoughtProcess: string
-  actions: string[]
-  comparison?: StoryThreadComparison
-  result: string
+export interface ValidationImpact {
+  measurementMethod: string
+  metrics: string[]
+  operationalImpact: string
 }
 
 export interface ProjectStoryThread {
-  context: string
-  impacts: ImpactItem[]
-  threads: StoryThreadItem[]
+  tldrSummary: string
+  keyMetrics: ImpactItem[]
+  coreApproach: string
+  problemDefinition: string
+  problemPoints: string[]
+  decisions: DecisionItem[]
+  implementationHighlights: string[]
+  validationImpact: ValidationImpact
   lessonsLearned: string
 }
 

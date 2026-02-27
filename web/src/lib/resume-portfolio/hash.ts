@@ -2,13 +2,6 @@ import { PORTFOLIO_SECTION_IDS, type PortfolioAnchor, type PortfolioSectionId } 
 
 const CASE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const SECTION_ID_SET = new Set<PortfolioSectionId>(PORTFOLIO_SECTION_IDS)
-const LEGACY_SECTION_ALIAS_MAP: Record<string, PortfolioSectionId> = {
-  overview: "hook",
-  problem: "threads",
-  decision: "threads",
-  result: "threads",
-  retrospective: "retrospective",
-}
 
 function normalizeCaseId(caseId: string): string {
   const normalizedCaseId = caseId.trim().toLowerCase()
@@ -29,11 +22,9 @@ function normalizeSectionId(sectionId: string): PortfolioSectionId | null {
   const normalizedSectionId = sectionId.trim().toLowerCase()
   if (!normalizedSectionId) return null
 
-  const canonicalSectionId = SECTION_ID_SET.has(normalizedSectionId as PortfolioSectionId)
+  return SECTION_ID_SET.has(normalizedSectionId as PortfolioSectionId)
     ? (normalizedSectionId as PortfolioSectionId)
-    : LEGACY_SECTION_ALIAS_MAP[normalizedSectionId]
-
-  return canonicalSectionId ?? null
+    : null
 }
 
 export function parsePortfolioCtaHref(href: string): PortfolioAnchor | null {

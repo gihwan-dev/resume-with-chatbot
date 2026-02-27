@@ -18,7 +18,7 @@ export function ThemeToggle() {
   }
 
   return (
-    <div className="flex items-center w-full justify-center space-x-2">
+    <div className="flex items-center w-full justify-center gap-2">
       <Sun className="h-[1.2rem] w-[1.2rem]" aria-hidden />
       <Switch
         aria-label="다크 모드 전환"

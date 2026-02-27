@@ -1,14 +1,6 @@
 "use client"
 
-import {
-  Award,
-  Briefcase,
-  FileText,
-  FolderKanban,
-  type LucideIcon,
-  Trophy,
-  User,
-} from "lucide-react"
+import { Award, Briefcase, FileText, Layers, type LucideIcon, Trophy, User } from "lucide-react"
 import type { MouseEvent } from "react"
 import { useMemo } from "react"
 import { useActiveSection } from "@/hooks/use-active-section"
@@ -32,11 +24,11 @@ interface SectionNavProps {
 
 export const RESUME_SECTION_NAV_ITEMS: readonly SectionNavItem[] = [
   { id: "profile", label: "Profile", icon: User },
+  { id: "core-strength", label: "Core Strength", icon: Layers },
   { id: "experience", label: "Experience", icon: Briefcase },
-  { id: "projects", label: "Projects", icon: FolderKanban },
-  { id: "blog", label: "Blog", icon: FileText },
-  { id: "certificates", label: "Certificates", icon: Award },
+  { id: "blog", label: "Technical Writing", icon: FileText },
   { id: "awards", label: "Awards", icon: Trophy },
+  { id: "certificates", label: "Certificates", icon: Award },
 ]
 
 export function SectionNav({

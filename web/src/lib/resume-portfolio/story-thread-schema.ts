@@ -1,10 +1,5 @@
 import { z } from "zod"
-import type {
-  ImpactItem,
-  ProjectStoryThread,
-  StoryThreadComparison,
-  StoryThreadItem,
-} from "./contracts"
+import type { DecisionItem, ImpactItem, ProjectStoryThread, ValidationImpact } from "./contracts"
 
 const nonEmptyText = z
   .string({
@@ -14,65 +9,70 @@ const nonEmptyText = z
   .trim()
   .min(1, "빈 문자열은 허용되지 않습니다.")
 
+const maxThreeLinesText = nonEmptyText.refine(
+  (value) => value.split(/\r?\n/).filter((line) => line.trim().length > 0).length <= 3,
+  "최대 3줄까지 허용됩니다."
+)
+
 export const impactItemSchema: z.ZodType<ImpactItem> = z.object({
   value: nonEmptyText,
   label: nonEmptyText,
   description: nonEmptyText,
 })
 
-export const storyThreadComparisonSchema: z.ZodType<StoryThreadComparison> = z.object({
-  beforeLabel: nonEmptyText.optional(),
-  afterLabel: nonEmptyText.optional(),
-  before: z
-    .array(nonEmptyText, {
-      required_error: "comparison.before 필드가 누락되었습니다.",
-      invalid_type_error: "comparison.before는 문자열 배열이어야 합니다.",
-    })
-    .min(1, "comparison.before는 최소 1개 이상이어야 합니다."),
-  after: z
-    .array(nonEmptyText, {
-      required_error: "comparison.after 필드가 누락되었습니다.",
-      invalid_type_error: "comparison.after는 문자열 배열이어야 합니다.",
-    })
-    .min(1, "comparison.after는 최소 1개 이상이어야 합니다."),
+export const decisionItemSchema: z.ZodType<DecisionItem> = z.object({
+  title: nonEmptyText,
+  whyThisChoice: nonEmptyText,
+  alternative: nonEmptyText,
+  tradeOff: nonEmptyText,
 })
 
-export const storyThreadItemSchema: z.ZodType<StoryThreadItem> = z.object({
-  issueTitle: nonEmptyText,
-  problems: z
+export const validationImpactSchema: z.ZodType<ValidationImpact> = z.object({
+  measurementMethod: nonEmptyText,
+  metrics: z
     .array(nonEmptyText, {
-      required_error: "problems 필드가 누락되었습니다.",
-      invalid_type_error: "problems는 문자열 배열이어야 합니다.",
+      required_error: "validationImpact.metrics 필드가 누락되었습니다.",
+      invalid_type_error: "validationImpact.metrics는 문자열 배열이어야 합니다.",
     })
-    .min(1, "problems는 최소 1개 이상이어야 합니다."),
-  thoughtProcess: nonEmptyText,
-  actions: z
-    .array(nonEmptyText, {
-      required_error: "actions 필드가 누락되었습니다.",
-      invalid_type_error: "actions는 문자열 배열이어야 합니다.",
-    })
-    .min(1, "actions는 최소 1개 이상이어야 합니다."),
-  comparison: storyThreadComparisonSchema.optional(),
-  result: nonEmptyText,
+    .min(2, "validationImpact.metrics는 최소 2개 이상이어야 합니다.")
+    .max(3, "validationImpact.metrics는 최대 3개까지 허용됩니다."),
+  operationalImpact: nonEmptyText,
 })
 
 export const projectStoryThreadSchema: z.ZodType<ProjectStoryThread> = z.object({
-  context: nonEmptyText,
-  impacts: z
+  tldrSummary: nonEmptyText,
+  keyMetrics: z
     .array(impactItemSchema, {
-      required_error: "impacts 필드가 누락되었습니다.",
-      invalid_type_error: "impacts는 배열이어야 합니다.",
+      required_error: "keyMetrics 필드가 누락되었습니다.",
+      invalid_type_error: "keyMetrics는 배열이어야 합니다.",
     })
-    .min(2, "impacts는 최소 2개 이상이어야 합니다.")
-    .max(3, "impacts는 최대 3개까지 허용됩니다."),
-  threads: z
-    .array(storyThreadItemSchema, {
-      required_error: "threads 필드가 누락되었습니다.",
-      invalid_type_error: "threads는 배열이어야 합니다.",
+    .min(3, "keyMetrics는 정확히 3개여야 합니다.")
+    .max(3, "keyMetrics는 정확히 3개여야 합니다."),
+  coreApproach: nonEmptyText,
+  problemDefinition: nonEmptyText,
+  problemPoints: z
+    .array(nonEmptyText, {
+      required_error: "problemPoints 필드가 누락되었습니다.",
+      invalid_type_error: "problemPoints는 문자열 배열이어야 합니다.",
     })
-    .min(2, "threads는 최소 2개 이상이어야 합니다.")
-    .max(3, "threads는 최대 3개까지 허용됩니다."),
-  lessonsLearned: nonEmptyText,
+    .min(3, "problemPoints는 최소 3개 이상이어야 합니다.")
+    .max(4, "problemPoints는 최대 4개까지 허용됩니다."),
+  decisions: z
+    .array(decisionItemSchema, {
+      required_error: "decisions 필드가 누락되었습니다.",
+      invalid_type_error: "decisions는 배열이어야 합니다.",
+    })
+    .min(2, "decisions는 최소 2개 이상이어야 합니다.")
+    .max(3, "decisions는 최대 3개까지 허용됩니다."),
+  implementationHighlights: z
+    .array(nonEmptyText, {
+      required_error: "implementationHighlights 필드가 누락되었습니다.",
+      invalid_type_error: "implementationHighlights는 문자열 배열이어야 합니다.",
+    })
+    .min(3, "implementationHighlights는 최소 3개 이상이어야 합니다.")
+    .max(4, "implementationHighlights는 최대 4개까지 허용됩니다."),
+  validationImpact: validationImpactSchema,
+  lessonsLearned: maxThreeLinesText,
 })
 
 export type StoryThreadValidationErrorCode =
