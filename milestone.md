@@ -114,14 +114,14 @@
 
 ## Phase 9. [SEQUENTIAL] 품질 게이트 및 수용 검증
 
-- [ ] **자동 검증 게이트 통과**
+- [x] **자동 검증 게이트 통과**
   - 목표: 구조 개편 후 기능/접근성/인쇄/딥링크 안정성을 보장한다.
   - 검증:
     - typecheck/lint/unit/e2e/print/a11y가 모두 통과한다.
     - `portfolio` 상세 딥링크, TOC, resume 복귀 흐름 회귀가 없다.
     - 심각도 높은 접근성 이슈(critical/serious)가 없다.
 
-- [ ] **수용 시나리오 리뷰 완료**
+- [x] **수용 시나리오 리뷰 완료**
   - 목표: 30초 스캔 관점의 채용 시나리오를 최종 검증한다.
   - 검증:
     - 1차 스캔에서 포지셔닝과 대표 수치가 즉시 인지된다.
@@ -568,3 +568,35 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 - 완료 처리:
   - Phase 8 체크박스를 `[x]`로 업데이트.
   - 다음 미완료 Phase는 `Phase 9. [SEQUENTIAL] 품질 게이트 및 수용 검증`.
+
+### 2026-02-27 — Phase 9 실행 및 완료
+
+- 실행 방식 (Layer):
+  - Layer 1: `web/package.json`의 `phase9:verify` 스크립트를 고정 검증 체인으로 유지
+  - Layer 2: `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run phase9:verify` 최종 재실행 결과 반영
+  - Layer 3: Phase 9 수용 시나리오 보고서 신규 작성 및 근거 라인 고정
+  - Layer 4: milestone Phase 9 체크박스 완료 처리 및 전체 완료 상태 반영
+
+- 구현 파일:
+  - `web/package.json`
+  - `docs/resume-phase9-acceptance-review-2026-02-27.md` (신규)
+  - `milestone.md`
+
+- 핵심 반영:
+  - `phase9:verify`를 typecheck/lint/vitest/playwright 순서의 단일 검증 게이트로 유지
+  - 자동 검증 결과를 `vitest 5 files / 32 tests`, `playwright 33 passed` 기준으로 수용 보고서에 고정
+  - 30초 스캔 판정(T+0~10, T+10~30)과 AI 추천 질문 경로(4문항, append, `chat_message`) 판정을 문서화
+  - 근거를 방향 문서, 랜딩 렌더 순서/`section_view`, 질문 상수, thread append/event, Phase 9 대상 e2e 6개, 관련 unit/component 테스트 라인으로 명시
+
+- 검증 결과:
+  - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run phase9:verify` 통과
+  - `typecheck` 통과
+  - `lint` 통과
+  - `vitest`: `Test Files 5 passed (5)`, `Tests 32 passed (32)`
+  - `playwright`: `33 passed (25.5s)`
+  - 실패: `0`
+
+- 완료 처리:
+  - Phase 9 체크박스 2개를 `[x]`로 완료 처리.
+  - 수용 시나리오 리뷰 문서 `docs/resume-phase9-acceptance-review-2026-02-27.md`를 신규 작성.
+  - 다음 미완료 Phase는 없음(전체 완료).
