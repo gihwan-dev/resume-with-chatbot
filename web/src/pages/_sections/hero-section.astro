@@ -14,7 +14,63 @@ interface ProfileData {
   profiles?: ProfileLink[]
 }
 
+interface SummarySegment {
+  text: string
+  highlight: boolean
+}
+
+const SUMMARY_HIGHLIGHT_TOKENS = [
+  "리사이징, 드래그 앤 드롭",
+  "커스텀 데이터 그리드",
+  "this 바인딩",
+  "코어 자바스크립트",
+  "3,000대",
+  "300대",
+  "Echarts",
+  "Visx",
+]
+
 const { profile } = Astro.props as { profile?: ProfileData }
+const sortedSummaryHighlightTokens = [...SUMMARY_HIGHLIGHT_TOKENS].sort(
+  (a, b) => b.length - a.length
+)
+
+const tokenizeSummary = (summary?: string): SummarySegment[] => {
+  if (!summary) return []
+
+  const segments: SummarySegment[] = []
+  let cursor = 0
+
+  while (cursor < summary.length) {
+    const matchedToken = sortedSummaryHighlightTokens.find((token) =>
+      summary.startsWith(token, cursor)
+    )
+
+    if (matchedToken) {
+      segments.push({ text: matchedToken, highlight: true })
+      cursor += matchedToken.length
+      continue
+    }
+
+    let nextHighlightIndex = summary.length
+    for (const token of sortedSummaryHighlightTokens) {
+      const tokenIndex = summary.indexOf(token, cursor)
+      if (tokenIndex !== -1 && tokenIndex < nextHighlightIndex) {
+        nextHighlightIndex = tokenIndex
+      }
+    }
+
+    segments.push({
+      text: summary.slice(cursor, nextHighlightIndex),
+      highlight: false,
+    })
+    cursor = nextHighlightIndex
+  }
+
+  return segments
+}
+
+const summarySegments = tokenizeSummary(profile?.summary)
 ---
 
 <header
@@ -79,6 +135,16 @@ const { profile } = Astro.props as { profile?: ProfileData }
   </div>
 
   <p class="text-resume-text-main leading-relaxed w-full">
-    {profile?.summary}
+    {
+      summarySegments.length > 0
+        ? summarySegments.map((segment) =>
+            segment.highlight ? (
+              <span class="font-semibold text-resume-primary">{segment.text}</span>
+            ) : (
+              segment.text
+            ),
+          )
+        : profile?.summary
+    }
   </p>
 </header>
