@@ -24,6 +24,10 @@ const SUMMARY_HIGHLIGHT_TOKENS = [
   "커스텀 데이터 그리드",
   "this 바인딩",
   "코어 자바스크립트",
+  "실시간 폴링",
+  "20+ 기능",
+  "10 FPS",
+  "60 FPS",
   "3,000대",
   "300대",
   "Echarts",
@@ -70,6 +74,20 @@ const tokenizeSummary = (summary?: string): SummarySegment[] => {
   return segments
 }
 
+const SUMMARY_BULLET_PATTERN = /^-\s*/
+const summaryLines = profile?.summary?.split("\n") ?? []
+const trimmedSummaryLines = summaryLines.map((line) => line.trim())
+const nonEmptySummaryLines = trimmedSummaryLines.filter((line) => line.length > 0)
+const isBulletOnlySummary =
+  nonEmptySummaryLines.length > 0 &&
+  nonEmptySummaryLines.every((line) => SUMMARY_BULLET_PATTERN.test(line))
+const summaryBullets = isBulletOnlySummary
+  ? nonEmptySummaryLines
+      .map((line) => line.replace(SUMMARY_BULLET_PATTERN, "").trim())
+      .filter((line) => line.length > 0)
+  : []
+const hasSummaryBullets = summaryBullets.length > 0
+const summaryBulletSegments = summaryBullets.map((bullet) => tokenizeSummary(bullet))
 const summarySegments = tokenizeSummary(profile?.summary)
 ---
 
@@ -134,17 +152,35 @@ const summarySegments = tokenizeSummary(profile?.summary)
     </div>
   </div>
 
-  <p class="text-resume-text-main leading-relaxed w-full">
-    {
-      summarySegments.length > 0
-        ? summarySegments.map((segment) =>
-            segment.highlight ? (
-              <span class="font-semibold text-resume-primary">{segment.text}</span>
-            ) : (
-              segment.text
-            ),
-          )
-        : profile?.summary
-    }
-  </p>
+  {
+    hasSummaryBullets ? (
+      <ul class="text-resume-text-main w-full list-disc space-y-2 pl-5 leading-relaxed marker:text-resume-primary">
+        {summaryBulletSegments.map((segments) => (
+          <li>
+            {segments.map((segment) =>
+              segment.highlight ? (
+                <span class="font-semibold text-resume-primary">{segment.text}</span>
+              ) : (
+                segment.text
+              ),
+            )}
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="text-resume-text-main leading-relaxed w-full">
+        {
+          summarySegments.length > 0
+            ? summarySegments.map((segment) =>
+                segment.highlight ? (
+                  <span class="font-semibold text-resume-primary">{segment.text}</span>
+                ) : (
+                  segment.text
+                ),
+              )
+            : profile?.summary
+        }
+      </p>
+    )
+  }
 </header>
