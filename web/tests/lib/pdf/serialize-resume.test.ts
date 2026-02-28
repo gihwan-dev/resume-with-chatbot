@@ -260,20 +260,6 @@ describe("serializeResumeData", () => {
             {
               data: {
                 categories: [{ name: "Frontend", items: ["React"] }],
-                ...(includeOptionalFields
-                  ? {
-                      coreStrengths: [
-                        {
-                          title: "대규모 렌더링 아키텍처",
-                          summary: "렌더링 경계를 재설계해 고밀도 화면을 안정화합니다.",
-                        },
-                        {
-                          title: "성능 최적화",
-                          summary: "측정 기반으로 병목을 제거하고 회귀를 방지합니다.",
-                        },
-                      ],
-                    }
-                  : {}),
               },
             },
           ] as never
@@ -326,7 +312,6 @@ describe("serializeResumeData", () => {
       "5점 만점 리뷰 9건 확보",
     ])
     expect(result.profile.heroMetrics).toBeUndefined()
-    expect(result.coreStrengths).toBeUndefined()
     for (const project of result.projects) {
       expect(project.architectureSummary).toBeUndefined()
       expect(project.measurementMethod).toBeUndefined()
@@ -358,16 +343,6 @@ describe("serializeResumeData", () => {
       {
         value: "90%",
         label: "DOM 감소",
-      },
-    ])
-    expect(result.coreStrengths).toEqual([
-      {
-        title: "대규모 렌더링 아키텍처",
-        summary: "렌더링 경계를 재설계해 고밀도 화면을 안정화합니다.",
-      },
-      {
-        title: "성능 최적화",
-        summary: "측정 기반으로 병목을 제거하고 회귀를 방지합니다.",
       },
     ])
     expect(result.work[0].projectCases).toHaveLength(4)

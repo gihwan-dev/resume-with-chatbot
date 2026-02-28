@@ -68,26 +68,6 @@ function HeroMetricsSection({
   )
 }
 
-function CoreStrengthSection({
-  coreStrengths,
-}: {
-  coreStrengths: SerializedResumeData["coreStrengths"]
-}) {
-  if (!coreStrengths || coreStrengths.length === 0) return null
-
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Core Strength</Text>
-      {coreStrengths.map((coreStrength) => (
-        <View key={coreStrength.title} style={styles.coreStrengthCard}>
-          <Text style={styles.coreStrengthTitle}>{coreStrength.title}</Text>
-          <Text style={styles.coreStrengthSummary}>{coreStrength.summary}</Text>
-        </View>
-      ))}
-    </View>
-  )
-}
-
 function SkillsSection({ skills }: { skills: SerializedResumeData["skills"] }) {
   if (!skills || skills.length === 0) return null
   return (
@@ -253,7 +233,6 @@ export function ResumeDocument({ data }: { data: SerializedResumeData }) {
       <Page size="A4" style={styles.page} wrap>
         <ProfileSection profile={data.profile} />
         <HeroMetricsSection heroMetrics={data.profile.heroMetrics} />
-        <CoreStrengthSection coreStrengths={data.coreStrengths} />
         <ExperienceSection work={data.work} />
         <BlogSection blogPosts={data.blogPosts} />
         <AwardSection awards={data.awards} />

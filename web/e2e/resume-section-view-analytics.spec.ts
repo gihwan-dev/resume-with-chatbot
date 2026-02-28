@@ -2,14 +2,7 @@ import { expect, test } from "@playwright/test"
 import { mockApiRoutes } from "./fixtures/mock-api"
 import { waitForUiReady } from "./fixtures/ui-ready"
 
-const TRACKED_SECTION_IDS = [
-  "profile",
-  "core-strength",
-  "experience",
-  "blog",
-  "awards",
-  "certificates",
-] as const
+const TRACKED_SECTION_IDS = ["profile", "experience", "blog", "awards", "certificates"] as const
 
 async function prepareTrackedPage(page: import("@playwright/test").Page) {
   await page.addInitScript(() => {

@@ -58,7 +58,7 @@
 
 - 렌더 순서에는 `skills`가 포함되지만, 기본 내비게이션에는 `skills`가 없다.
 - `section_view` 집계에는 `skills`가 포함된다.
-- 현재 구조는 방향 문서의 목표 구조(`Hero -> Core Strength -> Experience -> Technical Writing -> Awards & Certificates -> AI Assistant`)와 다르다.
+- 현재 구조는 방향 문서의 목표 구조(상단 강점 4축 포함 재배열안)와 다르다.
   - 목표 구조 근거: `docs/resume-hiring-optimization-direction-2026-02-22.md:39`
 
 ## 4) 대표 문구 기준선 (Hero/Projects 중심)
@@ -150,7 +150,7 @@
 
 1. 구조 관점
 - 현재는 `Hero -> Skills -> Experience -> Projects -> Blog -> Certificates -> Awards` 구성이다.
-- 목표 구조 대비 `Core Strength`와 `Technical Writing` 명시적 구조가 비어 있다.
+- 목표 구조 대비 `강점 4축`과 `Technical Writing` 명시적 구조가 비어 있다.
 
 2. 문장 관점
 - 방향 문서가 요구하는 `주도성 동사`, `A vs B 트레이드오프`, `측정 도구/반복 횟수/기준값` 표기 기준은 아직 데이터 계약으로 고정되지 않았다.

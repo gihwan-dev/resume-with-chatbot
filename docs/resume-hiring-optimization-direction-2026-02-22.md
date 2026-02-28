@@ -37,18 +37,16 @@
 다음 순서를 기본 구조로 고정한다.
 
 1. **Hero (정체성 + 숫자 신뢰)**
-2. **Core Strength (능력 프레임 4축)**
-3. **Experience (대표 임팩트 케이스 통합)**
-4. **Technical Writing**
-5. **Awards & Certificates**
-6. **AI Assistant**
+2. **Experience (대표 임팩트 케이스 통합)**
+3. **Technical Writing**
+4. **Awards & Certificates**
+5. **AI Assistant**
 
 ### 섹션별 목적
 
 | 섹션 | 스캔 시 전달할 메시지 | 최소 포함 요소 |
 | --- | --- | --- |
 | Hero | 어떤 문제를 잘 푸는 FE인지 | 포지셔닝 한 줄 + 핵심 수치 3~4개 |
-| Core Strength | 스택이 아닌 문제해결 프레임 | Architecture/Performance/DX/협업 4축 |
 | Experience | 실제 문제 해결 사례와 영향 범위 | 대표 케이스 통합, 주도성 문장 |
 | Technical Writing | 설계 사고 언어화 능력 | 설계 주제별 글 큐레이션 |
 | Awards & Certificates | 학습/성과의 검증 신호 | 실무 연결 문장 |

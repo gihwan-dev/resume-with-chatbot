@@ -88,7 +88,6 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       profiles: profile.profiles,
       heroMetrics: profile.heroMetrics,
     },
-    coreStrengths: skills[0]?.data.coreStrengths,
     work: workWithCompanyId.map(({ entry: w, companyId }) => {
       const companyProjects = companyProjectsByCompanyId.get(companyId) ?? []
       const projectCases = companyProjects.flatMap((project) => {

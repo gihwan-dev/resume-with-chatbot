@@ -4,11 +4,6 @@ export interface SerializedHeroMetric {
   description?: string
 }
 
-export interface SerializedCoreStrength {
-  title: string
-  summary: string
-}
-
 export interface SerializedWorkProjectCase {
   projectId: string
   title: string
@@ -95,7 +90,6 @@ export interface SerializedBlogPost {
 
 export interface SerializedResumeData {
   profile: SerializedProfile
-  coreStrengths?: SerializedCoreStrength[]
   work: SerializedWork[]
   projects: SerializedProject[]
   blogPosts: SerializedBlogPost[]

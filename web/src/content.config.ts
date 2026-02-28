@@ -111,16 +111,6 @@ const skills = defineCollection({
         items: z.array(z.string()),
       })
     ),
-    coreStrengths: z
-      .array(
-        z.object({
-          title: nonEmptyText,
-          summary: nonEmptyText,
-        })
-      )
-      .min(1)
-      .max(4)
-      .optional(),
   }),
 })
 

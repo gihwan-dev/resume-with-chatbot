@@ -123,24 +123,6 @@ export const styles = StyleSheet.create({
     lineHeight: 1.55,
     marginBottom: 6,
   },
-  coreStrengthCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    marginBottom: 6,
-  },
-  coreStrengthTitle: {
-    fontSize: 9,
-    fontWeight: 700,
-    marginBottom: 2,
-  },
-  coreStrengthSummary: {
-    fontSize: 8,
-    lineHeight: 1.5,
-    color: colors.muted,
-  },
   experienceProjectList: {
     marginTop: 2,
   },

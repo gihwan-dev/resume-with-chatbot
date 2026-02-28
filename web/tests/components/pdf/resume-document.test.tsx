@@ -74,12 +74,6 @@ function createMockResumeData(): SerializedResumeData {
         },
       ],
     },
-    coreStrengths: [
-      {
-        title: "대규모 렌더링 아키텍처",
-        summary: "구조 전환으로 대용량 UI를 안정화합니다.",
-      },
-    ],
     work: [
       {
         company: "Exem",
@@ -165,7 +159,7 @@ describe("ResumeDocument", () => {
     viewWrapValues.length = 0
   })
 
-  it("섹션 순서를 profile -> core-strength -> experience -> technical writing -> awards -> certificates -> skills로 렌더링한다", () => {
+  it("섹션 순서를 profile -> experience -> technical writing -> awards -> certificates -> skills로 렌더링한다", () => {
     const { container } = render(<ResumeDocument data={createMockResumeData()} />)
     const text = container.textContent ?? ""
 
@@ -177,7 +171,6 @@ describe("ResumeDocument", () => {
 
     const expectedOrder = [
       "최기환",
-      "Core Strength",
       "Experience",
       "Technical Writing",
       "Awards",
@@ -241,7 +234,6 @@ describe("ResumeDocument", () => {
 
   it("Experience 렌더에서 wrap=false를 사용하지 않아 페이지 분할을 허용한다", () => {
     const data = createMockResumeData()
-    data.coreStrengths = undefined
     data.blogPosts = []
     data.certificates = []
     data.awards = []
