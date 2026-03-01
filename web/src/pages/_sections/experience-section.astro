@@ -52,7 +52,7 @@ function selectOutcomeBullets(accomplishments: string[]): string[] {
     return outcomes
   }
 
-  return accomplishments.slice(0, 2)
+  return accomplishments
 }
 
 function parseOutcomeBullet(accomplishment: string): ParsedOutcomeBullet {
@@ -139,9 +139,9 @@ function parseOutcomeBullet(accomplishment: string): ParsedOutcomeBullet {
                 >
                   <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
                   {project.summary && (
-                    <p class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90">
-                      {project.summary}
-                    </p>
+                    <div class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
+                      <Markdown of={project.summary} />
+                    </div>
                   )}
 
                   {project.accomplishments && project.accomplishments.length > 0 && (

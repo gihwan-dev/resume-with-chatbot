@@ -77,7 +77,7 @@ describe("serializeResumeData", () => {
               id: "exem-customer-dashboard",
               data: {
                 companyId: "exem",
-                title: "고객 특화 DB 모니터링 대시보드 개발",
+                title: "인스턴스 통합 모니터링 대시보드 개발",
                 company: "Exem",
                 description: "project summary",
                 techStack: ["React", "TypeScript", "TanStack Query"],
@@ -215,7 +215,7 @@ describe("serializeResumeData", () => {
                     id: "exem-unmapped-same-title",
                     data: {
                       companyId: "exem",
-                      title: "고객 특화 DB 모니터링 대시보드 개발",
+                      title: "인스턴스 통합 모니터링 대시보드 개발",
                       company: "Exem",
                       description: "project summary",
                       techStack: ["React"],
@@ -268,7 +268,7 @@ describe("serializeResumeData", () => {
     expect(mockGetObsidianBlogPosts).toHaveBeenCalledWith({ limit: 5 })
     expect(result.blogPosts).toEqual(blogPosts)
     expect(result.projects).toHaveLength(4)
-    expect(result.projects[0].summary).toContain("장애 인지 시간을 70% 단축")
+    expect(result.projects[0].summary).toContain("실시간 상태를 한 화면에서 모니터링하는 대시보드")
     expect(result.projects[0].accomplishments.length).toBeGreaterThan(0)
     expect(result.work).toHaveLength(2)
     expect(result.work[0].projectTitles).toEqual([])
@@ -280,7 +280,11 @@ describe("serializeResumeData", () => {
       "exem-dx-improvement",
     ])
     for (const projectCase of result.work[0].projectCases ?? []) {
-      expect(projectCase.accomplishments.length).toBeLessThanOrEqual(2)
+      if (projectCase.projectId === "exem-customer-dashboard") {
+        expect(projectCase.accomplishments.length).toBe(7)
+      } else {
+        expect(projectCase.accomplishments.length).toBeLessThanOrEqual(2)
+      }
       expect(projectCase.architectureSummary).toBeUndefined()
       expect(projectCase.measurementMethod).toBeUndefined()
       expect(projectCase.tradeOffs).toBeUndefined()
@@ -316,9 +320,9 @@ describe("serializeResumeData", () => {
     expect(result.work[0].projectCases).toHaveLength(4)
     const dashboardCase = result.work[0].projectCases?.[0]
     expect(dashboardCase?.projectId).toBe("exem-customer-dashboard")
-    expect(dashboardCase?.title).toBe("고객 특화 DB 모니터링 대시보드 개발")
-    expect(dashboardCase?.summary).toContain("장애 인지 시간을 70% 단축")
-    expect(dashboardCase?.accomplishments).toHaveLength(2)
+    expect(dashboardCase?.title).toBe("인스턴스 통합 모니터링 대시보드 개발")
+    expect(dashboardCase?.summary).toContain("그룹 단위 일·월·연 추세 분석 제품")
+    expect(dashboardCase?.accomplishments).toHaveLength(7)
     expect(dashboardCase?.measurementMethod).toBe("React Profiler 동일 시나리오 30회 평균값 기준")
     expect(dashboardCase?.tradeOffs).toEqual([
       "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
@@ -381,9 +385,9 @@ describe("serializeResumeData", () => {
     )
     expect(
       exemWork.projectCases?.filter(
-        (projectCase) => projectCase.title === "고객 특화 DB 모니터링 대시보드 개발"
+        (projectCase) => projectCase.title === "인스턴스 통합 모니터링 대시보드 개발"
       )
     ).toHaveLength(1)
-    expect(exemWork.projectTitles).toEqual(["고객 특화 DB 모니터링 대시보드 개발"])
+    expect(exemWork.projectTitles).toEqual(["인스턴스 통합 모니터링 대시보드 개발"])
   })
 })

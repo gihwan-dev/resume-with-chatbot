@@ -2,6 +2,7 @@ import { Link, Text, View } from "@react-pdf/renderer"
 import { styles } from "./styles"
 
 type PdfNode = React.JSX.Element
+type PdfTextStyle = React.ComponentProps<typeof Text>["style"]
 
 interface InlineSegment {
   text: string
@@ -151,57 +152,90 @@ function parseInline(text: string): InlineSegment[] {
   return segments
 }
 
-function renderInline(segments: InlineSegment[], key: string): PdfNode {
+function mergeTextStyle(
+  baseStyle?: PdfTextStyle,
+  overrideStyle?: PdfTextStyle
+): PdfTextStyle | undefined {
+  if (baseStyle && overrideStyle) {
+    return [baseStyle, overrideStyle]
+  }
+
+  return overrideStyle ?? baseStyle
+}
+
+function renderInline(segments: InlineSegment[], key: string, textStyle?: PdfTextStyle): PdfNode {
   return (
-    <Text key={key}>
+    <Text key={key} style={textStyle}>
       {segments.map((seg, i) => {
         const segKey = `${key}-s${i}`
         if (seg.link) {
           return (
             <Link key={segKey} src={seg.link} style={styles.link}>
-              <Text style={seg.bold ? styles.mdBold : undefined}>{seg.text}</Text>
+              <Text style={mergeTextStyle(textStyle, seg.bold ? styles.mdBold : undefined)}>
+                {seg.text}
+              </Text>
             </Link>
           )
         }
         if (seg.parLabel) {
           return (
-            <Text key={segKey} style={parStyles[seg.parLabel]}>
+            <Text key={segKey} style={mergeTextStyle(textStyle, parStyles[seg.parLabel])}>
               {seg.text}
             </Text>
           )
         }
         if (seg.bold && seg.code) {
           return (
-            <Text key={segKey} style={[styles.mdBold, styles.mdCode]}>
+            <Text key={segKey} style={mergeTextStyle(textStyle, [styles.mdBold, styles.mdCode])}>
               {seg.text}
             </Text>
           )
         }
         if (seg.bold) {
           return (
-            <Text key={segKey} style={styles.mdBold}>
+            <Text key={segKey} style={mergeTextStyle(textStyle, styles.mdBold)}>
               {seg.text}
             </Text>
           )
         }
         if (seg.code) {
           return (
-            <Text key={segKey} style={styles.mdCode}>
+            <Text key={segKey} style={mergeTextStyle(textStyle, styles.mdCode)}>
               {seg.text}
             </Text>
           )
         }
         if (seg.highlight) {
           return (
-            <Text key={segKey} style={styles.mdHighlight}>
+            <Text key={segKey} style={mergeTextStyle(textStyle, styles.mdHighlight)}>
               {seg.text}
             </Text>
           )
         }
-        return <Text key={segKey}>{seg.text}</Text>
+        return (
+          <Text key={segKey} style={textStyle}>
+            {seg.text}
+          </Text>
+        )
       })}
     </Text>
   )
+}
+
+interface MarkdownInlineToPdfOptions {
+  key?: string
+  textStyle?: PdfTextStyle
+}
+
+export function markdownInlineToPdf(
+  markdown: string,
+  options?: MarkdownInlineToPdfOptions
+): PdfNode {
+  const normalized = normalizeMarkdownForPdf(markdown)
+    .replace(/\s*\r?\n\s*/g, " ")
+    .trim()
+  const segments = parseInline(normalized)
+  return renderInline(segments, options?.key ?? "inline", options?.textStyle)
 }
 
 export function markdownToPdf(markdown: string): PdfNode[] {

@@ -6,7 +6,7 @@ const MOCK_PROJECTS = [
   {
     id: "exem-customer-dashboard",
     data: {
-      title: "고객 특화 DB 모니터링 대시보드 개발",
+      title: "인스턴스 통합 모니터링 대시보드 개발",
       techStack: ["React", "TypeScript", "TanStack Query"],
     },
   },

@@ -46,6 +46,16 @@ const VALID_STORY_THREAD = {
     "고밀도 화면 동선을 재설계했습니다.",
     "회귀 게이트를 릴리즈 표준으로 정착시켰습니다.",
   ],
+  implementationGroups: [
+    {
+      title: "Vue 단계",
+      items: ["폴링 객체 추상화", "상태 중앙화/버전 관리"],
+    },
+    {
+      title: "React 단계",
+      items: ["고밀도 그리드 전환", "알림 테스트 선행 마이그레이션"],
+    },
+  ],
   validationImpact: {
     measurementMethod: "Profiler와 Performance API로 동일 시나리오를 30회 반복 측정했습니다.",
     metrics: ["장애 인지 시간: 10초 -> 3초", "인터랙션 지연: 73~82% 감소"],
@@ -137,10 +147,48 @@ describe("projectStoryThreadSchema", () => {
     )
   })
 
-  it("제약 검증: decisions는 2~3개여야 한다", () => {
+  it("제약 검증: decisions는 2~4개여야 한다", () => {
     const input = {
       ...VALID_STORY_THREAD,
       decisions: [VALID_STORY_THREAD.decisions[0]],
+    }
+
+    const result = validateProjectStoryThread(input)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.decisions",
+        }),
+      ])
+    )
+  })
+
+  it("제약 검증: decisions가 5개면 invalid다", () => {
+    const input = {
+      ...VALID_STORY_THREAD,
+      decisions: [
+        ...VALID_STORY_THREAD.decisions,
+        {
+          title: "추가 의사결정 1",
+          whyThisChoice: "확장 시나리오 검증",
+          alternative: "A안 / B안",
+          tradeOff: "장단점 비교",
+        },
+        {
+          title: "추가 의사결정 2",
+          whyThisChoice: "상한 검증",
+          alternative: "A안 / B안",
+          tradeOff: "장단점 비교",
+        },
+        {
+          title: "추가 의사결정 3",
+          whyThisChoice: "최대치 초과",
+          alternative: "A안 / B안",
+          tradeOff: "장단점 비교",
+        },
+      ],
     }
 
     const result = validateProjectStoryThread(input)
@@ -173,10 +221,35 @@ describe("projectStoryThreadSchema", () => {
     )
   })
 
-  it("제약 검증: problemPoints는 3~4개여야 한다", () => {
+  it("제약 검증: problemPoints는 3~7개여야 한다", () => {
     const input = {
       ...VALID_STORY_THREAD,
       problemPoints: VALID_STORY_THREAD.problemPoints.slice(0, 2),
+    }
+
+    const result = validateProjectStoryThread(input)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.problemPoints",
+        }),
+      ])
+    )
+  })
+
+  it("제약 검증: problemPoints가 8개면 invalid다", () => {
+    const input = {
+      ...VALID_STORY_THREAD,
+      problemPoints: [
+        ...VALID_STORY_THREAD.problemPoints,
+        "문제 4",
+        "문제 5",
+        "문제 6",
+        "문제 7",
+        "문제 8",
+      ],
     }
 
     const result = validateProjectStoryThread(input)
@@ -229,6 +302,41 @@ describe("projectStoryThreadSchema", () => {
         expect.objectContaining({
           code: "invalid_value",
           path: "storyThread.lessonsLearned",
+        }),
+      ])
+    )
+  })
+
+  it("optional 필드: implementationGroups가 없어도 유효하다", () => {
+    const input = {
+      ...VALID_STORY_THREAD,
+      implementationGroups: undefined,
+    }
+
+    const result = validateProjectStoryThread(input)
+    expect(result.isValid).toBe(true)
+    expect(result.errors).toHaveLength(0)
+  })
+
+  it("제약 검증: implementationGroups는 최대 2개여야 한다", () => {
+    const input = {
+      ...VALID_STORY_THREAD,
+      implementationGroups: [
+        ...(VALID_STORY_THREAD.implementationGroups ?? []),
+        {
+          title: "추가 단계",
+          items: ["상한 초과 검증"],
+        },
+      ],
+    }
+
+    const result = validateProjectStoryThread(input)
+    expect(result.isValid).toBe(false)
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_value",
+          path: "storyThread.implementationGroups",
         }),
       ])
     )
