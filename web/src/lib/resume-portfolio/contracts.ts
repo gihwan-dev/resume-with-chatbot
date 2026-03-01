@@ -52,7 +52,6 @@ export interface ResumeSummaryBlock {
   hasPortfolio: boolean
   technologies: string[]
   accomplishments: string[]
-  evidenceIds: string[]
   ctaLabel?: string
   ctaHref?: string
 }
@@ -85,5 +84,4 @@ export interface ResumePortfolioContentItem {
   ctaLabel: string
   defaultSectionId: PortfolioSectionId
   sections: PortfolioSectionId[]
-  evidenceIds: string[]
 }

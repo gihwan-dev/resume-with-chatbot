@@ -35,7 +35,7 @@
 - 근거 기준:
   - 목표 구조/요건: `docs/resume-hiring-optimization-direction-2026-02-22.md:39`, `docs/resume-hiring-optimization-direction-2026-02-22.md:50`
 
-### AC-STR-02 Core Strength 4축
+### AC-STR-2 강점 4축
 
 - MUST:
 1. `Architecture/Performance/DX/협업` 4축이 Skills보다 앞에서 독립 섹션으로 노출되어야 한다.
@@ -165,8 +165,8 @@
 
 | Phase | 충족해야 할 AC 초점 | 완료 판정 포인트 |
 | --- | --- | --- |
-| Phase 2 | AC-STR-01, AC-STR-02, AC-CNT-03 기반 데이터 계약 확정 | optional 필드와 역호환 규칙 문서화 |
-| Phase 3 | AC-STR-01, AC-STR-02 | Hero/Core Strength 실제 노출 및 문구 반영 |
+| Phase 2 | AC-STR-01, AC-STR-2, AC-CNT-03 기반 데이터 계약 확정 | optional 필드와 역호환 규칙 문서화 |
+| Phase 3 | AC-STR-01, AC-STR-2 | Hero/강점 4축 실제 노출 및 문구 반영 |
 | Phase 4 | AC-STR-03, AC-STR-04 | Experience 중심 단일 동선 + Technical Writing 재정의 |
 | Phase 5 | AC-CNT-01, AC-CNT-02, AC-CNT-03, AC-CNT-05 | 4개 케이스 템플릿/문장 규칙 충족 |
 | Phase 6 | AC-STR-01~06의 UI 정합 | 섹션 ID/내비/scroll spy/analytics 정합성 확보 |

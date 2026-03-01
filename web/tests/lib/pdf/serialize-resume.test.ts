@@ -40,21 +40,6 @@ describe("serializeResumeData", () => {
                 url: "https://resume-with-ai.gihwan-dev.com",
                 summary: "summary",
                 profiles: [],
-                ...(includeOptionalFields
-                  ? {
-                      heroMetrics: [
-                        {
-                          value: "10초 -> 3초",
-                          label: "장애 인지 시간 단축",
-                          description: "운영 대응 시작 시점을 앞당겼습니다.",
-                        },
-                        {
-                          value: "90%",
-                          label: "DOM 감소",
-                        },
-                      ],
-                    }
-                  : {}),
               },
             },
           ] as never
@@ -68,8 +53,6 @@ describe("serializeResumeData", () => {
                 dateStart: new Date("2024-11-01"),
                 dateEnd: undefined,
                 isCurrent: true,
-                location: "Seoul",
-                summary: "work summary",
                 highlights: [],
               },
             },
@@ -81,8 +64,6 @@ describe("serializeResumeData", () => {
                 dateStart: new Date("2023-06-01"),
                 dateEnd: new Date("2023-12-01"),
                 isCurrent: false,
-                location: undefined,
-                summary: "freelance summary",
                 highlights: [
                   "총 12건의 프로젝트에서 요구사항 정의부터 배포까지 전 과정을 단독 수행",
                   "5점 만점 리뷰 9건 확보",
@@ -260,20 +241,6 @@ describe("serializeResumeData", () => {
             {
               data: {
                 categories: [{ name: "Frontend", items: ["React"] }],
-                ...(includeOptionalFields
-                  ? {
-                      coreStrengths: [
-                        {
-                          title: "대규모 렌더링 아키텍처",
-                          summary: "렌더링 경계를 재설계해 고밀도 화면을 안정화합니다.",
-                        },
-                        {
-                          title: "성능 최적화",
-                          summary: "측정 기반으로 병목을 제거하고 회귀를 방지합니다.",
-                        },
-                      ],
-                    }
-                  : {}),
               },
             },
           ] as never
@@ -303,7 +270,6 @@ describe("serializeResumeData", () => {
     expect(result.projects).toHaveLength(4)
     expect(result.projects[0].summary).toContain("장애 인지 시간을 70% 단축")
     expect(result.projects[0].accomplishments.length).toBeGreaterThan(0)
-    expect(result.projects[0].evidenceIds.length).toBeGreaterThan(0)
     expect(result.work).toHaveLength(2)
     expect(result.work[0].projectTitles).toEqual([])
     expect(result.work[0].projectCases).toHaveLength(4)
@@ -325,8 +291,6 @@ describe("serializeResumeData", () => {
       "총 12건의 프로젝트에서 요구사항 정의부터 배포까지 전 과정을 단독 수행",
       "5점 만점 리뷰 9건 확보",
     ])
-    expect(result.profile.heroMetrics).toBeUndefined()
-    expect(result.coreStrengths).toBeUndefined()
     for (const project of result.projects) {
       expect(project.architectureSummary).toBeUndefined()
       expect(project.measurementMethod).toBeUndefined()
@@ -349,27 +313,6 @@ describe("serializeResumeData", () => {
 
     const result = await serializeResumeData()
 
-    expect(result.profile.heroMetrics).toEqual([
-      {
-        value: "10초 -> 3초",
-        label: "장애 인지 시간 단축",
-        description: "운영 대응 시작 시점을 앞당겼습니다.",
-      },
-      {
-        value: "90%",
-        label: "DOM 감소",
-      },
-    ])
-    expect(result.coreStrengths).toEqual([
-      {
-        title: "대규모 렌더링 아키텍처",
-        summary: "렌더링 경계를 재설계해 고밀도 화면을 안정화합니다.",
-      },
-      {
-        title: "성능 최적화",
-        summary: "측정 기반으로 병목을 제거하고 회귀를 방지합니다.",
-      },
-    ])
     expect(result.work[0].projectCases).toHaveLength(4)
     const dashboardCase = result.work[0].projectCases?.[0]
     expect(dashboardCase?.projectId).toBe("exem-customer-dashboard")

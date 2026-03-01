@@ -67,26 +67,13 @@ function createMockResumeData(): SerializedResumeData {
       email: "test@example.com",
       summary: "profile summary",
       profiles: [],
-      heroMetrics: [
-        {
-          value: "10초 -> 3초",
-          label: "장애 인지 시간 단축",
-        },
-      ],
     },
-    coreStrengths: [
-      {
-        title: "대규모 렌더링 아키텍처",
-        summary: "구조 전환으로 대용량 UI를 안정화합니다.",
-      },
-    ],
     work: [
       {
         company: "Exem",
         role: "Frontend Engineer",
         dateStart: "2024-11-01T00:00:00.000Z",
         isCurrent: true,
-        summary: "work summary",
         projectCases: [
           {
             projectId: "exem-customer-dashboard",
@@ -106,7 +93,6 @@ function createMockResumeData(): SerializedResumeData {
         dateStart: "2023-06-01T00:00:00.000Z",
         dateEnd: "2023-12-01T00:00:00.000Z",
         isCurrent: false,
-        summary: "freelance summary",
         projectTitles: [],
         highlights: ["프로젝트 전 과정을 단독 수행했습니다."],
       },
@@ -119,7 +105,6 @@ function createMockResumeData(): SerializedResumeData {
         hasPortfolio: false,
         technologies: [],
         accomplishments: [],
-        evidenceIds: [],
       },
     ],
     blogPosts: [
@@ -165,11 +150,10 @@ describe("ResumeDocument", () => {
     viewWrapValues.length = 0
   })
 
-  it("섹션 순서를 profile -> core-strength -> experience -> technical writing -> awards -> certificates -> skills로 렌더링한다", () => {
+  it("섹션 순서를 profile -> experience -> technical writing -> awards -> certificates -> skills로 렌더링한다", () => {
     const { container } = render(<ResumeDocument data={createMockResumeData()} />)
     const text = container.textContent ?? ""
 
-    expect(text).toContain("장애 인지 시간 단축")
     expect(text).toContain("Measurement:")
     expect(text).toContain("Trade-off:")
     expect(text).toContain("매핑 누락 프로젝트")
@@ -177,7 +161,6 @@ describe("ResumeDocument", () => {
 
     const expectedOrder = [
       "최기환",
-      "Core Strength",
       "Experience",
       "Technical Writing",
       "Awards",
@@ -210,7 +193,6 @@ describe("ResumeDocument", () => {
       role: "Frontend Engineer",
       dateStart: "2024-01-01T00:00:00.000Z",
       isCurrent: true,
-      summary: "second work summary",
       projectCases: [
         {
           projectId: "example-case",
@@ -241,7 +223,6 @@ describe("ResumeDocument", () => {
 
   it("Experience 렌더에서 wrap=false를 사용하지 않아 페이지 분할을 허용한다", () => {
     const data = createMockResumeData()
-    data.coreStrengths = undefined
     data.blogPosts = []
     data.certificates = []
     data.awards = []

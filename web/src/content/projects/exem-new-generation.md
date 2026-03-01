@@ -4,7 +4,6 @@ title: "차세대 데이터베이스 성능 모니터링 제품 개발"
 company: "Exem"
 description: "도메인 기반 폼 아키텍처와 상태 지역화, i18n 검증 자동화를 통해 확장성과 운영 안정성을 동시에 확보한 제품 구조 설계 사례"
 dateStart: 2025-01-01
-updatedAt: 2026-02-22
 techStack: ["React", "TypeScript", "Zustand", "Vite", "TanStack Query"]
 priority: 3
 storyThread:

@@ -28,14 +28,57 @@ interface Props {
 
 const { experiences } = Astro.props as Props
 
+interface ParsedOutcomeBullet {
+  main: string
+  criteria?: string
+}
+
 function selectOutcomeBullets(accomplishments: string[]): string[] {
   const outcomes = accomplishments.filter((accomplishment) => accomplishment.trim().startsWith("→"))
 
-  if (outcomes.length > 0) {
+  if (outcomes.length >= 2) {
     return outcomes.slice(0, 2)
   }
 
+  if (outcomes.length === 1) {
+    const fallback = accomplishments.find(
+      (accomplishment) => !accomplishment.trim().startsWith("→")
+    )
+
+    if (fallback) {
+      return [outcomes[0], fallback]
+    }
+
+    return outcomes
+  }
+
   return accomplishments.slice(0, 2)
+}
+
+function parseOutcomeBullet(accomplishment: string): ParsedOutcomeBullet {
+  const withoutPrefix = accomplishment.trim().replace(/^→\s*/, "")
+  const criteriaStartIndex = withoutPrefix.lastIndexOf("(기준:")
+
+  if (criteriaStartIndex === -1) {
+    return { main: withoutPrefix }
+  }
+
+  const criteria = withoutPrefix.slice(criteriaStartIndex).trim()
+
+  if (!criteria.endsWith(")")) {
+    return { main: withoutPrefix }
+  }
+
+  const main = withoutPrefix.slice(0, criteriaStartIndex).trim()
+
+  if (main.length === 0) {
+    return { main: withoutPrefix }
+  }
+
+  return {
+    main,
+    criteria,
+  }
 }
 ---
 
@@ -67,14 +110,18 @@ function selectOutcomeBullets(accomplishments: string[]): string[] {
               {entry.data.dateStart.toLocaleDateString("en-US", {
                 month: "short",
                 year: "numeric",
-              })}{" "}
-              -
-              {entry.data.isCurrent
-                ? "Present"
-                : entry.data.dateEnd?.toLocaleDateString("en-US", {
-                    month: "short",
-                    year: "numeric",
-                  })}
+              })}
+              {(entry.data.isCurrent || entry.data.dateEnd) && (
+                <>
+                  {" - "}
+                  {entry.data.isCurrent
+                    ? "Present"
+                    : entry.data.dateEnd?.toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}
+                </>
+              )}
             </span>
           </div>
 
@@ -92,31 +139,50 @@ function selectOutcomeBullets(accomplishments: string[]): string[] {
                 >
                   <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
                   {project.summary && (
-                    <p class="mt-2 text-sm leading-relaxed text-resume-text-main/90">
+                    <p class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90">
                       {project.summary}
                     </p>
                   )}
 
                   {project.accomplishments && project.accomplishments.length > 0 && (
-                    <ul class="mt-3 space-y-1.5">
-                      {selectOutcomeBullets(project.accomplishments).map((accomplishment) => (
-                        <li class="text-sm font-semibold leading-relaxed text-resume-primary">
-                          <Markdown of={accomplishment} />
-                        </li>
-                      ))}
+                    <ul class="mt-5 space-y-2.5">
+                      {selectOutcomeBullets(project.accomplishments).map((accomplishment) => {
+                        const parsedAccomplishment = parseOutcomeBullet(accomplishment)
+
+                        return (
+                          <li class="flex items-start gap-2.5">
+                            <span
+                              aria-hidden="true"
+                              class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-resume-primary/70"
+                            />
+                            <div class="min-w-0">
+                              <div class="text-sm font-bold leading-relaxed text-resume-primary [&_p]:m-0">
+                                <Markdown of={parsedAccomplishment.main} />
+                              </div>
+                              {parsedAccomplishment.criteria && (
+                                <p class="mt-1 text-sm font-medium leading-relaxed text-resume-text-main/90">
+                                  {parsedAccomplishment.criteria}
+                                </p>
+                              )}
+                            </div>
+                          </li>
+                        )
+                      })}
                     </ul>
                   )}
 
                   {project.href && (
-                    <div class="pt-5">
+                    <div class="mt-6 border-t border-resume-border/70 pt-4">
                       <a
                         href={project.href}
-                        class="group/btn inline-flex items-center gap-1.5 rounded-sm text-sm font-semibold text-resume-text-muted transition-colors duration-200 hover:text-resume-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-card-bg"
+                        class="group/btn inline-flex cursor-pointer items-center gap-1.5 rounded-sm text-sm font-semibold text-resume-primary underline-offset-4 transition-colors duration-200 hover:text-resume-secondary hover:underline focus-visible:text-resume-secondary focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-card-bg"
                         data-ga-event="project_portfolio_click"
                         data-ga-project={project.title}
                       >
                         {project.ctaLabel ?? "상세 케이스 스터디 보기"}
                         <svg
+                          aria-hidden="true"
+                          focusable="false"
                           xmlns="http://www.w3.org/2000/svg"
                           width="16"
                           height="16"
@@ -126,7 +192,7 @@ function selectOutcomeBullets(accomplishments: string[]): string[] {
                           stroke-width="2"
                           stroke-linecap="round"
                           stroke-linejoin="round"
-                          class="h-4 w-4 opacity-80 transition-opacity duration-200 group-hover/btn:opacity-100"
+                          class="h-4 w-4 opacity-90 transition-all duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:opacity-100 group-focus-visible/btn:translate-x-0.5 group-focus-visible/btn:opacity-100"
                         >
                           <path d="M5 12h14" />
                           <path d="m12 5 7 7-7 7" />

@@ -4,7 +4,6 @@ title: "고객 특화 DB 모니터링 대시보드 개발"
 company: "Exem"
 description: "고객별 운영 시나리오를 단일 대시보드 구조로 통합해 장애 인지 시간을 10초에서 3초로 단축한 아키텍처 전환 사례"
 dateStart: 2025-01-01
-updatedAt: 2026-02-22
 techStack: ["React", "TypeScript", "TanStack Table", "TanStack Query", "React Grid Layout", "Zustand", "Vite", "Playwright"]
 priority: 1
 storyThread:

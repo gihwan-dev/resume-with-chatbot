@@ -17,7 +17,7 @@
 - [x] **수용 기준(AC) 선언**
   - 목표: "30초 스캔 적합성"을 릴리즈 판단 가능한 기준으로 만든다.
   - 검증:
-    - Hero/Core Strength/Experience 통합 기준이 정의된다.
+    - Hero/Experience 통합 기준이 정의된다.
     - 주도성/트레이드오프/측정 방식 문장 기준이 정의된다.
     - 문서 품질 게이트와 구현 검증 게이트가 분리된다.
 
@@ -26,7 +26,7 @@
 - [x] **콘텐츠 확장 필드 계약 정의**
   - 목표: 신규 필드를 optional로 도입해 하위 호환을 유지한다.
   - 검증:
-    - `basics.heroMetrics[]`, `skills.coreStrengths[]` 확장안이 문서화된다.
+    - `basics.profiles[]`, `skills.categories[]` 계약이 문서화된다.
     - `ProjectStoryThread.architectureSummary?`, `ProjectStoryThread.measurementMethod?`, `StoryThreadItem.tradeOff?` 확장안이 문서화된다.
     - 신규 필드 미존재 시 기존 렌더 유지 정책이 확정된다.
 
@@ -37,7 +37,7 @@
     - `web/src/lib/pdf/serialize-resume.ts` 매핑 우선순위가 정의된다.
     - 역호환 처리 기준(신규 필드 없는 데이터)까지 명시된다.
 
-## Phase 3. [PARALLEL:PG-1] Hero + Core Strength 재작성
+## Phase 3. [PARALLEL:PG-1] Hero + 역량 프레임 재작성(현재 제거됨)
 
 - [x] **Hero 정체성/신뢰 지표 재작성**
   - 목표: 첫 화면 10초 내 정체성과 신뢰를 전달한다.
@@ -46,7 +46,7 @@
     - 수치 지표 3~4개가 근거 기반으로 배치된다.
     - 요약 문장이 문제-해결-영향 관점으로 정리된다.
 
-- [x] **Core Strength 4축 섹션 신설**
+- [x] **역량 프레임 4축 섹션 신설(현재 제거됨)**
   - 목표: 스택보다 능력 프레임이 먼저 읽히도록 구조를 바꾼다.
   - 검증:
     - 대규모 렌더링 아키텍처/성능 최적화/아키텍처 설계/DX 자동화 4축이 고정된다.
@@ -88,7 +88,7 @@
 ## Phase 6. [SEQUENTIAL] 랜딩 섹션·내비게이션 정합성
 
 - [x] **메인 섹션 순서 및 앵커 재정렬**
-  - 목표: 목표 정보 구조(Hero -> Core Strength -> Experience -> Technical Writing -> Awards & Certificates -> AI Assistant)를 실제 화면에 반영한다.
+  - 목표: 목표 정보 구조(Hero -> Experience -> Technical Writing -> Awards & Certificates -> AI Assistant)를 실제 화면에 반영한다.
   - 검증:
     - 섹션 ID 및 내비게이션 활성 상태가 새 순서와 일치한다.
     - 스크롤 스파이/해시 이동이 회귀 없이 동작한다.
@@ -108,7 +108,7 @@
 - [x] **웹- PDF 섹션 우선순위 동기화**
   - 목표: PDF도 웹과 동일한 메시지 우선순위를 갖게 만든다.
   - 검증:
-    - Hero 지표/Core Strength/통합 Experience 핵심 문구가 반영된다.
+    - Hero 지표/통합 Experience 핵심 문구가 반영된다.
     - PDF 출력에서 텍스트 밀도와 가독성이 유지된다.
     - 기존 PDF 다운로드/파일명/응답 헤더 동작이 회귀하지 않는다.
 
@@ -135,8 +135,8 @@
 아래 변경은 **제안 스펙**이며, 실제 적용 시 Phase 2에서 확정한다.
 
 1. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/content.config.ts`
-  - `basics.heroMetrics[]` optional
-  - `skills.coreStrengths[]` optional
+  - `basics.profiles[].network/url` 스키마 유지
+  - `skills.categories[]` optional
 
 2. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/resume-portfolio/contracts.ts`
   - `PORTFOLIO_SECTION_IDS`를 `tldr/problem-definition/key-decisions/implementation-highlights/validation-impact/learned`로 전환
@@ -144,7 +144,7 @@
   - `DecisionItem` 및 `ValidationImpact` 타입 추가
 
 3. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/pdf/types.ts`
-  - Hero/Core Strength/통합 Experience 대응 optional 직렬화 필드 확장
+  - Hero/통합 Experience 대응 optional 직렬화 필드 확장
 
 4. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/pdf/serialize-resume.ts`
   - `coreApproach -> architectureSummary`, `validationImpact.measurementMethod -> measurementMethod`, `decisions[].tradeOff -> tradeOffs` 파생 규칙 적용
@@ -170,7 +170,7 @@
   - 4개 질문 노출, 클릭 시 append, 이벤트 유지 확인
 
 5. PDF/인쇄 테스트
-  - Hero 지표/Core Strength/통합 Experience 반영 및 print-flow 안정성 검증
+  - Hero 지표/통합 Experience 반영 및 print-flow 안정성 검증
 
 6. 접근성 테스트
   - 키보드 내비게이션, heading 계층, 대비, 모달 접근성 회귀 없음 확인
@@ -248,10 +248,10 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-phase2-pdf-serialization-rules-2026-02-22.md`
 
 - 코드 계약 확정:
-  - `web/src/content.config.ts`에 `basics.heroMetrics[]`, `skills.coreStrengths[]` optional 스키마(1~4개) 추가
+  - `web/src/content.config.ts`에 `basics.profiles[].network/url` 스키마를 명시
   - `web/src/lib/resume-portfolio/contracts.ts`에 `architectureSummary?`, `measurementMethod?`, `tradeOff?` 추가
   - `web/src/lib/resume-portfolio/story-thread-schema.ts`에 신규 optional 필드 검증 규칙(빈 문자열 금지) 추가
-  - `web/src/lib/pdf/types.ts`에 Hero/Core Strength/Project 확장 직렬화 타입 추가
+  - `web/src/lib/pdf/types.ts`에 Hero/Project 확장 직렬화 타입 추가
   - `web/src/lib/pdf/serialize-resume.ts`에 `resumeItemId -> projectId` 매핑 기반 신규 필드 직렬화 추가
 
 - 테스트 확장:
@@ -269,7 +269,7 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 
 - 완료 처리:
   - Phase 2의 두 체크박스를 `[x]`로 업데이트.
-  - 다음 미완료 Phase는 `Phase 3. [PARALLEL:PG-1] Hero + Core Strength 재작성`.
+  - 다음 미완료 Phase는 `Phase 3. [PARALLEL:PG-1] Hero + 역량 프레임 재작성(현재 제거됨)`.
 
 ### 2026-02-22 — Phase 3 실행 및 완료
 
@@ -279,19 +279,19 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
     - Hero summary를 문제 정의/구조 전환/영향 관점으로 리라이팅
     - 근거 기반 지표 4개(`10초→3초`, `DOM 90%`, `22ms→0.5ms`, `3분→5초`) 추가
   - `web/src/content/skills/skills.json`
-    - `coreStrengths` 4축(대규모 렌더링 아키텍처/성능 최적화/아키텍처 설계/DX 자동화·협업) 추가
+    - 역량 카드 데이터 추가(현재 제거됨)
   - `web/src/pages/_sections/hero-section.astro`
-    - `heroMetrics` optional 렌더링 추가
+    - Hero 기본 정보 렌더링(이름/직무/연락처/요약) 유지
     - Problem/Action/Result 요약 블록 추가
-  - `web/src/pages/_sections/core-strength-section.astro` 신규 생성
-    - Core Strength 4축 카드형 섹션 신설
+  - `web/src/pages/_sections/capability-section.astro` 신규 생성(현재 제거됨)
+    - 역량 카드형 섹션 신설(현재 제거됨)
   - `web/src/pages/_sections/skills-section.astro`
     - 섹션 제목/설명을 보조 정보 톤으로 조정
   - `web/src/pages/index.astro`
-    - 섹션 순서를 `Hero -> Core Strength -> Experience -> Skills -> Projects -> Blog -> Certificates -> Awards`로 재배치
+    - 섹션 순서를 `Hero -> Experience -> Skills -> Projects -> Blog -> Certificates -> Awards`로 재배치
     - `section_view` 대상 ID 집계 로직은 변경하지 않음(Phase 6 이관)
-  - `web/e2e/resume-hero-core-strength.spec.ts` 신규 생성
-    - Hero 지표 4개, Core Strength 4축, 섹션 순서(코어스트렝스/익스피리언스/스킬) 수용 테스트 추가
+  - `web/e2e/resume-hero-capability.spec.ts` 신규 생성(현재 제거됨)
+    - Hero 지표 4개, 역량 카드, 섹션 순서 수용 테스트 추가
 
 - 검증 결과:
   - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과 (3회 게이트 확인, 0 error)
@@ -299,7 +299,7 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
   - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/chat-utils.test.ts tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts` 통과 (4 files, 30 tests)
   - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts --project=chromium` 통과 (30 passed)
     - 1차 실행 시 `http://localhost:4321 is already used`로 실패 후 포트 점유 프로세스 정리 후 재실행 통과
-  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/resume-hero-core-strength.spec.ts --project=chromium` 통과 (3 passed)
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/resume-hero-capability.spec.ts --project=chromium` 통과 (3 passed)
 
 - Phase 6 이관 항목:
   - Navigation(`web/src/components/navigation/section-nav.tsx`) 항목 정합성 변경
@@ -314,12 +314,12 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 - 반영 내용:
   - Hero 영역의 `Problem·Action·Result` 카드 제거
   - Hero 영역의 `Key Metrics` 카드 UI 제거
-  - `web/e2e/resume-hero-core-strength.spec.ts`를 최신 요구사항 기준(카드 미노출)으로 갱신
+  - `web/e2e/resume-hero-capability.spec.ts`를 최신 요구사항 기준(카드 미노출)으로 갱신
 
 - 검증 결과:
   - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck` 통과
   - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint` 통과
-  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/resume-hero-core-strength.spec.ts --project=chromium` 통과 (3 passed)
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/resume-hero-capability.spec.ts --project=chromium` 통과 (3 passed)
 
 ### 2026-02-22 — Phase 4 실행 및 완료
 
@@ -452,15 +452,15 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
   - `web/src/components/navigation/section-nav.tsx`
   - `web/src/components/navigation/navigation.tsx`
   - `web/e2e/accessibility.spec.ts`
-  - `web/e2e/resume-hero-core-strength.spec.ts`
+  - `web/e2e/resume-hero-capability.spec.ts` (현재 제거됨)
   - `web/e2e/resume-section-view-analytics.spec.ts` (신규)
 
 - 핵심 반영:
-  - 랜딩 섹션 순서를 `profile -> core-strength -> experience -> blog -> awards -> certificates -> skills`로 재배치
-  - `section_view` 관찰 대상을 `#profile, #core-strength, #experience, #blog, #awards, #certificates`로 동기화 (`skills` 제외)
-  - Resume 내비게이션 순서를 `profile -> core-strength -> experience -> blog -> awards -> certificates`로 고정
+  - 랜딩 섹션 순서를 `profile -> capability -> experience -> blog -> awards -> certificates -> skills`로 재배치(현재 capability 제거됨)
+  - `section_view` 관찰 대상을 `#profile, #capability, #experience, #blog, #awards, #certificates`로 동기화(`skills` 제외, 현재 capability 제거됨)
+  - Resume 내비게이션 순서를 `profile -> capability -> experience -> blog -> awards -> certificates`로 고정(현재 capability 제거됨)
   - Resume 모드에서 DOM에 실제 존재하는 섹션만 nav 대상으로 사용하는 필터를 추가해 scroll spy/해시 정합성 강화
-  - 접근성 E2E에서 데스크톱/모바일 `Core Strength -> Technical Writing` 해시 이동 경로를 검증
+  - 접근성 E2E에서 데스크톱/모바일 `Experience -> Technical Writing` 해시 이동 경로를 검증
   - 신규 E2E로 `section_view` 이벤트 집계에서 `skills` 제외와 새 섹션 ID 집합을 검증
 
 - 검증 결과:
@@ -471,7 +471,7 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
     - 1차 실행 실패: `e2e/resume-section-view-analytics.spec.ts` 포맷 불일치
     - 조치: biome 제안 포맷으로 정렬 후 재실행 통과
   - `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:run` 통과 (19 files, 188 tests)
-  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/accessibility.spec.ts e2e/resume-hero-core-strength.spec.ts e2e/resume-section-view-analytics.spec.ts e2e/portfolio-resume-return-flow.spec.ts --project=chromium` 통과 (20 passed)
+  - `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/accessibility.spec.ts e2e/resume-hero-capability.spec.ts e2e/resume-section-view-analytics.spec.ts e2e/portfolio-resume-return-flow.spec.ts --project=chromium` 통과 (20 passed)
 
 - 완료 처리:
   - Phase 6 체크박스를 `[x]`로 업데이트.
@@ -519,7 +519,7 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
 
 - 실행 방식 (Layer):
   - Layer 1: PDF 직렬화 타입/매핑 확장 (`projectCases` 추가, company 우선순위 반영, fallback 유지)
-  - Layer 2: PDF 문서 트리 재구성 (Hero Metrics, Core Strength, Experience case 카드, 섹션 순서 재정렬)
+  - Layer 2: PDF 문서 트리 재구성 (Hero Metrics, Experience case 카드, 섹션 순서 재정렬)
   - Layer 3: PDF 스타일/테스트/검증 스크립트 보강 + API 헤더 테스트 추가
   - Layer 4: typecheck/lint/vitest/phase8:verify 실행 및 결과 기록
 
@@ -541,7 +541,7 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
     - `projectId/title/summary/accomplishments(최대 2)/architectureSummary/measurementMethod/tradeOffs` 직렬화
     - company 프로젝트 우선순위(`priority`) 순서 유지
     - `projectTitles/highlights` fallback 필드 유지
-  - PDF 렌더 순서를 `Profile -> Core Strength -> Experience -> Technical Writing -> Awards -> Certificates -> Skills`로 고정
+  - PDF 렌더 순서를 `Profile -> Experience -> Technical Writing -> Awards -> Certificates -> Skills`로 고정
   - `Projects`, `Education` 섹션을 PDF 렌더 트리에서 제거
   - Experience에서 `projectCases` 우선 카드 렌더, 미존재 시 기존 `projectTitles/highlights` fallback 렌더
   - `phase8:verify`에 `tests/lib/pdf/serialize-resume.test.ts` 추가

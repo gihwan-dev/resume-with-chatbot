@@ -86,9 +86,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       url: profile.url,
       summary: profile.summary,
       profiles: profile.profiles,
-      heroMetrics: profile.heroMetrics,
     },
-    coreStrengths: skills[0]?.data.coreStrengths,
     work: workWithCompanyId.map(({ entry: w, companyId }) => {
       const companyProjects = companyProjectsByCompanyId.get(companyId) ?? []
       const projectCases = companyProjects.flatMap((project) => {
@@ -120,8 +118,6 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
         dateStart: w.data.dateStart.toISOString(),
         dateEnd: w.data.dateEnd?.toISOString(),
         isCurrent: w.data.isCurrent,
-        location: w.data.location,
-        summary: w.data.summary,
         projectCases: projectCases.length > 0 ? projectCases : undefined,
         projectTitles: unmappedProjectTitles,
         highlights: w.data.highlights ?? [],
@@ -138,7 +134,6 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
         hasPortfolio: summaryBlock.hasPortfolio,
         technologies: summaryBlock.technologies,
         accomplishments: summaryBlock.accomplishments,
-        evidenceIds: summaryBlock.evidenceIds,
         architectureSummary: toOptionalText(storyThread?.coreApproach),
         measurementMethod: toOptionalText(storyThread?.validationImpact?.measurementMethod),
         tradeOffs: extractTradeOffs(storyThread?.decisions),

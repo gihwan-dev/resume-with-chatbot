@@ -46,7 +46,7 @@ pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run phase9:verif
 
 - 30초 목표 자체가 기준 문서에 명시되어 있다.
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-hiring-optimization-direction-2026-02-22.md:12`
-- 목표 정보 구조(Hero -> Core Strength -> Experience -> Technical Writing -> Awards/Certificates -> AI Assistant)가 명시되어 있다.
+- 30초 스캔용 목표 정보 구조 정의가 기준 문서에 명시되어 있다.
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-hiring-optimization-direction-2026-02-22.md:39`
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-hiring-optimization-direction-2026-02-22.md:44`
 - 랜딩 페이지 렌더 순서와 `section_view` 대상이 구조 기준과 정합하다.

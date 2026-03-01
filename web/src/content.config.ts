@@ -6,8 +6,6 @@ const companyIdSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "companyId must be kebab-case")
 
-const nonEmptyText = z.string().trim().min(1)
-
 const basics = defineCollection({
   loader: glob({ pattern: "profile.json", base: "./src/content/basics" }),
   schema: z.object({
@@ -19,21 +17,9 @@ const basics = defineCollection({
     profiles: z.array(
       z.object({
         network: z.string(),
-        username: z.string(),
         url: z.string().url(),
       })
     ),
-    heroMetrics: z
-      .array(
-        z.object({
-          value: nonEmptyText,
-          label: nonEmptyText,
-          description: nonEmptyText.optional(),
-        })
-      )
-      .min(1)
-      .max(4)
-      .optional(),
   }),
 })
 
@@ -45,10 +31,7 @@ const work = defineCollection({
     role: z.string(),
     dateStart: z.coerce.date(),
     dateEnd: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
     isCurrent: z.boolean().default(false),
-    location: z.string().optional(),
-    summary: z.string(),
     highlights: z.array(z.string().min(1)).optional(),
   }),
 })
@@ -96,7 +79,6 @@ const projects = defineCollection({
     github: z.string().url().optional(),
     dateStart: z.coerce.date(),
     dateEnd: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
     priority: z.number(),
     storyThread: projectStoryThreadSchema.optional(),
   }),
@@ -111,16 +93,6 @@ const skills = defineCollection({
         items: z.array(z.string()),
       })
     ),
-    coreStrengths: z
-      .array(
-        z.object({
-          title: nonEmptyText,
-          summary: nonEmptyText,
-        })
-      )
-      .min(1)
-      .max(4)
-      .optional(),
   }),
 })
 

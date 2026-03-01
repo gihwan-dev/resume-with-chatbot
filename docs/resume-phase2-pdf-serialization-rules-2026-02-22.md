@@ -2,7 +2,7 @@
 
 ## 1) 목적
 
-- 목표: 웹 정보 우선순위(Hero/Core Strength/Experience 맥락)를 PDF 직렬화 계약에 반영하고, 신규 필드 미존재 시 기존 출력과의 호환성을 유지한다.
+- 목표: 웹 정보 우선순위(Hero/Experience 맥락)를 PDF 직렬화 계약에 반영하고, 신규 필드 미존재 시 기존 출력과의 호환성을 유지한다.
 - 적용 범위:
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/pdf/types.ts`
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/pdf/serialize-resume.ts`
@@ -11,20 +11,11 @@
 
 ### 2.1 Profile 직렬화 타입
 
-- `SerializedProfile.heroMetrics?: SerializedHeroMetric[]`
-- `SerializedHeroMetric`
-  - `value: string`
-  - `label: string`
-  - `description?: string`
+- `SerializedProfile.profiles[]`
+  - `network: string`
+  - `url: string`
 
-### 2.2 Resume 루트 타입
-
-- `SerializedResumeData.coreStrengths?: SerializedCoreStrength[]`
-- `SerializedCoreStrength`
-  - `title: string`
-  - `summary: string`
-
-### 2.3 Project 직렬화 타입
+### 2.2 Project 직렬화 타입
 
 - `SerializedProject.architectureSummary?: string`
 - `SerializedProject.measurementMethod?: string`
@@ -32,19 +23,13 @@
 
 ## 3) 매핑 우선순위 규칙
 
-### 3.1 Hero 지표
+### 3.1 Profile 링크
 
-1. 소스: `basics[0].data.heroMetrics`
-2. 직렬화 경로: `result.profile.heroMetrics`
-3. 미존재 시: `undefined`
+1. 소스: `basics[0].data.profiles[]`
+2. 직렬화 경로: `result.profile.profiles[]`
+3. 필드: `network`, `url`
 
-### 3.2 Core Strength
-
-1. 소스: `skills[0].data.coreStrengths`
-2. 직렬화 경로: `result.coreStrengths`
-3. 미존재 시: `undefined`
-
-### 3.3 Project 확장 필드
+### 3.2 Project 확장 필드
 
 1. `buildResumePortfolioContracts(projects)`에서 `mappings` 획득
 2. `resumeItemId -> portfolioCaseId(projectId)` 매핑 구성
@@ -60,18 +45,17 @@
 
 ## 4) 역호환 규칙
 
-1. 신규 필드 미존재 시 기존 필드(`summary/accomplishments/evidenceIds/cta`) 파생 로직은 변경하지 않는다.
+1. 신규 필드 미존재 시 기존 필드(`summary/accomplishments/cta`) 파생 로직은 변경하지 않는다.
 2. 신규 필드만 `undefined`로 유지하며 기존 PDF 다운로드 경로, 파일명, 응답 헤더 계약은 유지한다.
 3. 신규 필드 추가로 기존 콘텐츠 파일 수정을 강제하지 않는다.
 
 ## 5) 검증 시나리오(Phase 2 반영)
 
 1. 필드 미존재 시나리오
-- `profile.heroMetrics`, `coreStrengths`, `projects[].architectureSummary/measurementMethod/tradeOffs`는 `undefined`
+- `projects[].architectureSummary/measurementMethod/tradeOffs`는 `undefined`
 - 기존 프로젝트/경력 직렬화 결과 유지
 
 2. 필드 존재 시나리오
-- `heroMetrics`/`coreStrengths`가 그대로 직렬화된다.
 - `resumeItemId` 매핑을 통해 프로젝트별 확장 필드가 반영된다.
 - 동일 tradeOff 중복 입력 시 단일 값으로 직렬화된다.
 

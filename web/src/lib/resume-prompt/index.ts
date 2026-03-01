@@ -60,9 +60,12 @@ ${profile.summary}`)
 
     const workSection = sortedWork.map((w) => {
       const dateRange = formatDateRange(w.data.dateStart, w.data.dateEnd, w.data.isCurrent)
-      return `### ${w.data.company} (${dateRange})
-- 직무: ${w.data.role}
-- ${w.data.summary}`
+      const highlights = w.data.highlights ?? []
+      const lines = [`### ${w.data.company} (${dateRange})`, `- 직무: ${w.data.role}`]
+      for (const highlight of highlights) {
+        lines.push(`- ${highlight}`)
+      }
+      return lines.join("\n")
     })
 
     sections.push(`## 경력

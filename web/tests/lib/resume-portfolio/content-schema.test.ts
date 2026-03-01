@@ -44,7 +44,6 @@ describe("resume portfolio content schema", () => {
 
     const firstSummaryBlock = contracts.summaryBlocks[0]
     expect(firstSummaryBlock.ctaHref).toBe("/portfolio/exem-customer-dashboard#tldr")
-    expect(firstSummaryBlock.evidenceIds.length).toBeGreaterThan(0)
   })
 
   it("실패 케이스: projectId에 해당하는 프로젝트가 없으면 예외를 던진다", () => {
@@ -64,18 +63,6 @@ describe("resume portfolio content schema", () => {
 
     expect(() => buildResumePortfolioContracts(MOCK_PROJECTS, duplicatedContent)).toThrow(
       "Duplicate resumeItemId in resume portfolio content"
-    )
-  })
-
-  it("실패 케이스: hasPortfolio=true인데 evidenceIds가 비어 있으면 예외를 던진다", () => {
-    const invalidEvidenceContent = RESUME_PORTFOLIO_CONTENT_V2.map((item) => ({ ...item }))
-    invalidEvidenceContent[0] = {
-      ...invalidEvidenceContent[0],
-      evidenceIds: [],
-    }
-
-    expect(() => buildResumePortfolioContracts(MOCK_PROJECTS, invalidEvidenceContent)).toThrow(
-      "Evidence IDs are required for hasPortfolio=true"
     )
   })
 
