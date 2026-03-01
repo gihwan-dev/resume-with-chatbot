@@ -2,7 +2,7 @@ import { Link, Text, View } from "@react-pdf/renderer"
 import { styles } from "./styles"
 
 type PdfNode = React.JSX.Element
-type PdfTextStyle = React.ComponentProps<typeof Text>["style"]
+type PdfTextStyle = React.ComponentProps<typeof View>["style"]
 
 interface InlineSegment {
   text: string
@@ -156,11 +156,23 @@ function mergeTextStyle(
   baseStyle?: PdfTextStyle,
   overrideStyle?: PdfTextStyle
 ): PdfTextStyle | undefined {
-  if (baseStyle && overrideStyle) {
-    return [baseStyle, overrideStyle]
+  const base = Array.isArray(baseStyle) ? baseStyle : baseStyle ? [baseStyle] : []
+  const override = Array.isArray(overrideStyle)
+    ? overrideStyle
+    : overrideStyle
+      ? [overrideStyle]
+      : []
+  const merged = [...base, ...override]
+
+  if (merged.length === 0) {
+    return undefined
   }
 
-  return overrideStyle ?? baseStyle
+  if (merged.length === 1) {
+    return merged[0]
+  }
+
+  return merged
 }
 
 function renderInline(segments: InlineSegment[], key: string, textStyle?: PdfTextStyle): PdfNode {
