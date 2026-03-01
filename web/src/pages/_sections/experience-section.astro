@@ -147,6 +147,7 @@ function parseOutcomeBullet(accomplishment: string): ParsedOutcomeBullet {
                   {project.accomplishments && project.accomplishments.length > 0 && (
                     <ul class="mt-5 space-y-2.5">
                       {selectOutcomeBullets(project.accomplishments).map((accomplishment) => {
+                        const isOutcome = accomplishment.trim().startsWith("→")
                         const parsedAccomplishment = parseOutcomeBullet(accomplishment)
 
                         return (
@@ -156,7 +157,14 @@ function parseOutcomeBullet(accomplishment: string): ParsedOutcomeBullet {
                               class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-resume-primary/70"
                             />
                             <div class="min-w-0">
-                              <div class="text-sm font-bold leading-relaxed text-resume-primary [&_p]:m-0">
+                              <div
+                                class:list={[
+                                  "text-sm leading-relaxed [&_p]:m-0",
+                                  isOutcome
+                                    ? "font-bold text-resume-primary"
+                                    : "text-resume-text-main/90",
+                                ]}
+                              >
                                 <Markdown of={parsedAccomplishment.main} />
                               </div>
                               {parsedAccomplishment.criteria && (
