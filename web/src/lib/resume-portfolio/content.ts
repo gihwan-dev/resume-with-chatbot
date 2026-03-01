@@ -21,7 +21,6 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
       "validation-impact",
       "learned",
     ],
-    evidenceIds: ["ACH-20260206-001"],
   },
   {
     projectId: "exem-data-grid",
@@ -43,7 +42,6 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
       "validation-impact",
       "learned",
     ],
-    evidenceIds: ["ACH-20260213-001"],
   },
   {
     projectId: "exem-new-generation",
@@ -65,7 +63,6 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
       "validation-impact",
       "learned",
     ],
-    evidenceIds: ["ACH-20260211-001"],
   },
   {
     projectId: "exem-dx-improvement",
@@ -87,6 +84,5 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
       "validation-impact",
       "learned",
     ],
-    evidenceIds: ["ACH-20260128-001"],
   },
 ]

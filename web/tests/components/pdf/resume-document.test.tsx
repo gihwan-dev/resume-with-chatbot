@@ -67,12 +67,6 @@ function createMockResumeData(): SerializedResumeData {
       email: "test@example.com",
       summary: "profile summary",
       profiles: [],
-      heroMetrics: [
-        {
-          value: "10초 -> 3초",
-          label: "장애 인지 시간 단축",
-        },
-      ],
     },
     work: [
       {
@@ -80,7 +74,6 @@ function createMockResumeData(): SerializedResumeData {
         role: "Frontend Engineer",
         dateStart: "2024-11-01T00:00:00.000Z",
         isCurrent: true,
-        summary: "work summary",
         projectCases: [
           {
             projectId: "exem-customer-dashboard",
@@ -100,7 +93,6 @@ function createMockResumeData(): SerializedResumeData {
         dateStart: "2023-06-01T00:00:00.000Z",
         dateEnd: "2023-12-01T00:00:00.000Z",
         isCurrent: false,
-        summary: "freelance summary",
         projectTitles: [],
         highlights: ["프로젝트 전 과정을 단독 수행했습니다."],
       },
@@ -113,7 +105,6 @@ function createMockResumeData(): SerializedResumeData {
         hasPortfolio: false,
         technologies: [],
         accomplishments: [],
-        evidenceIds: [],
       },
     ],
     blogPosts: [
@@ -163,7 +154,6 @@ describe("ResumeDocument", () => {
     const { container } = render(<ResumeDocument data={createMockResumeData()} />)
     const text = container.textContent ?? ""
 
-    expect(text).toContain("장애 인지 시간 단축")
     expect(text).toContain("Measurement:")
     expect(text).toContain("Trade-off:")
     expect(text).toContain("매핑 누락 프로젝트")
@@ -203,7 +193,6 @@ describe("ResumeDocument", () => {
       role: "Frontend Engineer",
       dateStart: "2024-01-01T00:00:00.000Z",
       isCurrent: true,
-      summary: "second work summary",
       projectCases: [
         {
           projectId: "example-case",

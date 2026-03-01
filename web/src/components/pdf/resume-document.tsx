@@ -46,28 +46,6 @@ function ProfileSection({ profile }: { profile: SerializedResumeData["profile"] 
   )
 }
 
-function HeroMetricsSection({
-  heroMetrics,
-}: {
-  heroMetrics: SerializedResumeData["profile"]["heroMetrics"]
-}) {
-  if (!heroMetrics || heroMetrics.length === 0) return null
-
-  return (
-    <View style={styles.heroMetricsSection}>
-      {heroMetrics.map((metric) => (
-        <View key={`${metric.label}-${metric.value}`} style={styles.heroMetricCard}>
-          <Text style={styles.heroMetricValue}>{metric.value}</Text>
-          <Text style={styles.heroMetricLabel}>{metric.label}</Text>
-          {metric.description && (
-            <Text style={styles.heroMetricDescription}>{metric.description}</Text>
-          )}
-        </View>
-      ))}
-    </View>
-  )
-}
-
 function SkillsSection({ skills }: { skills: SerializedResumeData["skills"] }) {
   if (!skills || skills.length === 0) return null
   return (
@@ -232,7 +210,6 @@ export function ResumeDocument({ data }: { data: SerializedResumeData }) {
     >
       <Page size="A4" style={styles.page} wrap>
         <ProfileSection profile={data.profile} />
-        <HeroMetricsSection heroMetrics={data.profile.heroMetrics} />
         <ExperienceSection work={data.work} />
         <BlogSection blogPosts={data.blogPosts} />
         <AwardSection awards={data.awards} />

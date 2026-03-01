@@ -26,7 +26,7 @@
 - [x] **콘텐츠 확장 필드 계약 정의**
   - 목표: 신규 필드를 optional로 도입해 하위 호환을 유지한다.
   - 검증:
-    - `basics.heroMetrics[]`, `skills.categories[]` 계약이 문서화된다.
+    - `basics.profiles[]`, `skills.categories[]` 계약이 문서화된다.
     - `ProjectStoryThread.architectureSummary?`, `ProjectStoryThread.measurementMethod?`, `StoryThreadItem.tradeOff?` 확장안이 문서화된다.
     - 신규 필드 미존재 시 기존 렌더 유지 정책이 확정된다.
 
@@ -135,7 +135,7 @@
 아래 변경은 **제안 스펙**이며, 실제 적용 시 Phase 2에서 확정한다.
 
 1. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/content.config.ts`
-  - `basics.heroMetrics[]` optional
+  - `basics.profiles[].network/url` 스키마 유지
   - `skills.categories[]` optional
 
 2. `/Users/choegihwan/Documents/Projects/resume-with-ai/web/src/lib/resume-portfolio/contracts.ts`
@@ -248,7 +248,7 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-phase2-pdf-serialization-rules-2026-02-22.md`
 
 - 코드 계약 확정:
-  - `web/src/content.config.ts`에 `basics.heroMetrics[]` optional 스키마(1~4개) 추가
+  - `web/src/content.config.ts`에 `basics.profiles[].network/url` 스키마를 명시
   - `web/src/lib/resume-portfolio/contracts.ts`에 `architectureSummary?`, `measurementMethod?`, `tradeOff?` 추가
   - `web/src/lib/resume-portfolio/story-thread-schema.ts`에 신규 optional 필드 검증 규칙(빈 문자열 금지) 추가
   - `web/src/lib/pdf/types.ts`에 Hero/Project 확장 직렬화 타입 추가
@@ -281,7 +281,7 @@ CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwr
   - `web/src/content/skills/skills.json`
     - 역량 카드 데이터 추가(현재 제거됨)
   - `web/src/pages/_sections/hero-section.astro`
-    - `heroMetrics` optional 렌더링 추가
+    - Hero 기본 정보 렌더링(이름/직무/연락처/요약) 유지
     - Problem/Action/Result 요약 블록 추가
   - `web/src/pages/_sections/capability-section.astro` 신규 생성(현재 제거됨)
     - 역량 카드형 섹션 신설(현재 제거됨)

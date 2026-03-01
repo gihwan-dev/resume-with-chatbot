@@ -50,37 +50,6 @@ export const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 4,
   },
-  heroMetricsSection: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 6,
-    marginTop: 8,
-    marginBottom: 6,
-  },
-  heroMetricCard: {
-    width: "48.8%",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  heroMetricValue: {
-    fontSize: 11,
-    fontWeight: 700,
-    color: colors.primary,
-    marginBottom: 1,
-  },
-  heroMetricLabel: {
-    fontSize: 8,
-    fontWeight: 600,
-    marginBottom: 2,
-  },
-  heroMetricDescription: {
-    fontSize: 8,
-    color: colors.muted,
-    lineHeight: 1.4,
-  },
   link: {
     color: colors.linkText,
     textDecoration: "none",

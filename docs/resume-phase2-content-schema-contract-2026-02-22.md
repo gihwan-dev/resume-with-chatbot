@@ -2,7 +2,7 @@
 
 ## 1) 목적
 
-- 목표: Hero/Story Thread의 확장 필드를 optional로 도입해 하위 호환을 유지하면서, Phase 3~8 구현의 계약 기반을 고정한다.
+- 목표: Story Thread 확장 필드를 optional로 도입해 하위 호환을 유지하면서, Phase 3~8 구현의 계약 기반을 고정한다.
 - 기준 문서:
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-hiring-optimization-direction-2026-02-22.md`
   - `/Users/choegihwan/Documents/Projects/resume-with-ai/docs/resume-engineering-guide-2025.md`
@@ -15,16 +15,12 @@
 
 ## 3) 확정된 필드 계약
 
-### 3.1 Basics 컬렉션
+### 3.1 Basics 컬렉션 링크 필드
 
-- `heroMetrics?: HeroMetric[]`
-- `HeroMetric`
-  - `value: string` (필수)
-  - `label: string` (필수)
-  - `description?: string` (선택)
+- `profiles[].network: string` (필수)
+- `profiles[].url: string` (필수, URL)
 - 제약:
-  - 배열 길이 `1..4`
-  - 문자열은 trim 후 빈 문자열 불가
+  - `profiles[]` 항목은 `network/url`만 유지한다.
 
 ### 3.2 Story Thread 계약
 

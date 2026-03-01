@@ -4,7 +4,6 @@ title: "개발 생산성 향상 및 자동화 인프라 구축"
 company: "Exem"
 description: "폐쇄망·레거시 제약 환경에서 검증 루프와 리뷰 흐름을 자동화해 리포트 접근 시간 97% 개선, 온보딩 5분화를 달성한 DX 아키텍처 사례"
 dateStart: 2025-02-01
-updatedAt: 2026-02-22
 techStack: ["Nest.js", "TypeScript", "React", "MinIO", "N8N", "Docker"]
 priority: 4
 storyThread:

@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest"
-import type { ResumeSummaryBlock } from "@/lib/resume-portfolio/contracts"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import { validateResumePortfolioMapping } from "@/lib/resume-portfolio/validation"
 
@@ -248,48 +247,6 @@ describe("validateResumePortfolioMapping", () => {
     expect(result.isValid).toBe(false)
     expect(result.errors).toEqual(
       expect.arrayContaining([expect.stringContaining("CTA href의 sectionId가 매핑과 다릅니다")])
-    )
-  })
-
-  it("근거 누락 케이스: evidenceIds가 비어 있으면 오류를 반환한다", () => {
-    const contracts = createContracts()
-    const brokenSummaryBlocks = contracts.summaryBlocks.map((item) => ({ ...item }))
-    brokenSummaryBlocks[0] = {
-      ...brokenSummaryBlocks[0],
-      evidenceIds: [],
-    }
-
-    const result = validateResumePortfolioMapping({
-      resumeItems: contracts.resumeItems,
-      mappings: contracts.mappings,
-      cases: contracts.cases,
-      summaryBlocks: brokenSummaryBlocks,
-    })
-
-    expect(result.isValid).toBe(false)
-    expect(result.errors).toEqual(
-      expect.arrayContaining([expect.stringContaining("evidenceIds가 누락된 resumeItemId")])
-    )
-  })
-
-  it("근거 중복 케이스: evidenceIds가 중복되면 오류를 반환한다", () => {
-    const contracts = createContracts()
-    const brokenSummaryBlocks = contracts.summaryBlocks.map((item) => ({ ...item }))
-    brokenSummaryBlocks[0] = {
-      ...brokenSummaryBlocks[0],
-      evidenceIds: ["ACH-20260206-001", "ACH-20260206-001"],
-    }
-
-    const result = validateResumePortfolioMapping({
-      resumeItems: contracts.resumeItems,
-      mappings: contracts.mappings,
-      cases: contracts.cases,
-      summaryBlocks: brokenSummaryBlocks as ResumeSummaryBlock[],
-    })
-
-    expect(result.isValid).toBe(false)
-    expect(result.errors).toEqual(
-      expect.arrayContaining([expect.stringContaining("evidenceIds가 중복된 resumeItemId")])
     )
   })
 })
