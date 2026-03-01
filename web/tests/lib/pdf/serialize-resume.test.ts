@@ -145,7 +145,7 @@ describe("serializeResumeData", () => {
               id: "exem-data-grid",
               data: {
                 companyId: "exem",
-                title: "데이터 그리드 개발",
+                title: "20+ 기능의 고성능 데이터 그리드 개발",
                 company: "Exem",
                 description: "project summary",
                 techStack: ["React", "TanStack Table", "TanStack Virtual"],
@@ -280,7 +280,10 @@ describe("serializeResumeData", () => {
       "exem-dx-improvement",
     ])
     for (const projectCase of result.work[0].projectCases ?? []) {
-      if (projectCase.projectId === "exem-customer-dashboard") {
+      if (
+        projectCase.projectId === "exem-customer-dashboard" ||
+        projectCase.projectId === "exem-data-grid"
+      ) {
         expect(projectCase.accomplishments.length).toBe(7)
       } else {
         expect(projectCase.accomplishments.length).toBeLessThanOrEqual(2)

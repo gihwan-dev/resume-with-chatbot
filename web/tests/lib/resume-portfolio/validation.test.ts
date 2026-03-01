@@ -13,7 +13,7 @@ const MOCK_PROJECTS = [
   {
     id: "exem-data-grid",
     data: {
-      title: "데이터 그리드 개발",
+      title: "20+ 기능의 고성능 데이터 그리드 개발",
       techStack: ["React", "TanStack Table", "TanStack Virtual"],
     },
   },
