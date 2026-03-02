@@ -1,5 +1,5 @@
 import { Document, Link, Page, Text, View } from "@react-pdf/renderer"
-import { markdownToPdf } from "@/lib/pdf/markdown-to-pdf"
+import { markdownInlineToPdf, markdownToPdf } from "@/lib/pdf/markdown-to-pdf"
 import { styles } from "@/lib/pdf/styles"
 import type { SerializedResumeData } from "@/lib/pdf/types"
 
@@ -15,6 +15,28 @@ function formatDateRange(start: string, end?: string, isCurrent?: boolean): stri
   if (isCurrent) return `${s} ~ 현재`
   if (end) return `${s} ~ ${formatDate(end)}`
   return `${s}~`
+}
+
+function selectOutcomeBullets(accomplishments: string[]): string[] {
+  const outcomes = accomplishments.filter((accomplishment) => accomplishment.trim().startsWith("→"))
+
+  if (outcomes.length >= 2) {
+    return outcomes.slice(0, 2)
+  }
+
+  if (outcomes.length === 1) {
+    const fallback = accomplishments.find(
+      (accomplishment) => !accomplishment.trim().startsWith("→")
+    )
+
+    if (fallback) {
+      return [outcomes[0], fallback]
+    }
+
+    return outcomes
+  }
+
+  return accomplishments
 }
 
 function ProfileSection({ profile }: { profile: SerializedResumeData["profile"] }) {
@@ -97,13 +119,21 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
                     style={styles.experienceCaseCard}
                   >
                     <Text style={styles.experienceCaseTitle}>{projectCase.title}</Text>
-                    <Text style={styles.experienceCaseSummary}>{projectCase.summary}</Text>
-                    {projectCase.accomplishments.slice(0, 2).map((accomplishment) => (
-                      <View key={accomplishment} style={styles.experienceCaseBulletRow}>
-                        <Text style={styles.experienceCaseBullet}>•</Text>
-                        <Text style={styles.experienceCaseBulletText}>{accomplishment}</Text>
-                      </View>
-                    ))}
+                    {markdownInlineToPdf(projectCase.summary, {
+                      key: `${w.company}-${projectCase.projectId}-summary`,
+                      textStyle: styles.experienceCaseSummary,
+                    })}
+                    {selectOutcomeBullets(projectCase.accomplishments).map(
+                      (accomplishment, index) => (
+                        <View key={accomplishment} style={styles.experienceCaseBulletRow}>
+                          <Text style={styles.experienceCaseBullet}>•</Text>
+                          {markdownInlineToPdf(accomplishment, {
+                            key: `${w.company}-${projectCase.projectId}-accomplishment-${index}`,
+                            textStyle: styles.experienceCaseBulletText,
+                          })}
+                        </View>
+                      )
+                    )}
                     {projectCase.measurementMethod && (
                       <Text style={styles.experienceCaseMetaText}>
                         <Text style={styles.experienceCaseMetaLabel}>Measurement: </Text>

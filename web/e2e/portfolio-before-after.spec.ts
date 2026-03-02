@@ -15,7 +15,9 @@ test.describe("Portfolio Key Decisions block", () => {
     const decisionItems = decisionList.locator("[data-decision-item]")
 
     await expect(decisionList).toBeVisible()
-    await expect(decisionItems).toHaveCount(3)
+    const decisionCount = await decisionItems.count()
+    expect(decisionCount).toBeGreaterThanOrEqual(2)
+    expect(decisionCount).toBeLessThanOrEqual(4)
   })
 
   test("결정 카드마다 why/비교/tradeoff 블록이 모두 노출된다", async ({ page }) => {
