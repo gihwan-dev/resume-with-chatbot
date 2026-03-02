@@ -18,10 +18,6 @@ if (!storyThread) {
 
 type StoryDecision = NonNullable<typeof storyThread>["decisions"][number]
 
-function toDecisionNarrative(decision: StoryDecision) {
-  return `${decision.whyThisChoice} ${decision.alternative} ${decision.tradeOff}`
-}
-
 function toChoiceSummary(decision: StoryDecision) {
   return decision.alternative
 }
@@ -223,15 +219,9 @@ const learnedLines = toLearnedLines(storyThread.lessonsLearned)
                   >
                     {decision.title}
                   </h3>
-                  {index === 0 ? (
-                    <p class="text-xs text-resume-text-muted">
-                      우선 확인할 핵심 의사결정
-                    </p>
-                  ) : (
-                    <p class="break-words text-xs leading-relaxed text-resume-text-muted">
-                      {decision.alternative}
-                    </p>
-                  )}
+                  <p class="break-words text-xs leading-relaxed text-resume-text-muted">
+                    {decision.alternative}
+                  </p>
                 </div>
                 <span class="mt-0.5 shrink-0 text-sm font-semibold text-resume-text-muted" aria-hidden>
                   <span class="group-open/decision:hidden">+</span>
@@ -245,22 +235,26 @@ const learnedLines = toLearnedLines(storyThread.lessonsLearned)
                 class="break-words text-sm leading-relaxed text-resume-text-main/90 sm:text-[15px] print:text-slate-800"
                 data-decision-why
               >
-                {toDecisionNarrative(decision)}
+                {decision.whyThisChoice}
+              </p>
+
+              <p
+                class="break-words text-sm leading-relaxed text-resume-text-main/85 sm:text-[15px] print:text-slate-800"
+                data-decision-tradeoff
+              >
+                {decision.tradeOff}
               </p>
             </div>
 
             {index === 0 ? (
-              <p class="sr-only" data-decision-alternative-fallback>
+              <p class="hidden" aria-hidden="true" data-decision-alternative-fallback>
                 {decision.alternative}
               </p>
             ) : (
-              <p class="sr-only" data-decision-choice-summary>{toChoiceSummary(decision)}</p>
+              <p class="hidden" aria-hidden="true" data-decision-choice-summary>
+                {toChoiceSummary(decision)}
+              </p>
             )}
-
-            <p class="sr-only" data-decision-alternative>
-              {decision.alternative}
-            </p>
-            <p class="sr-only" data-decision-tradeoff>{decision.tradeOff}</p>
           </details>
         </li>
       ))}
