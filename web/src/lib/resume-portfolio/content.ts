@@ -82,8 +82,9 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     resumeSummary:
       "폐쇄망 환경에서 TypeScript 기반 CI/CD 리포트 뷰어와 온보딩 CLI를 자동화해 검증·온보딩 병목을 줄였습니다.",
     accomplishments: [
-      "→ 리포트 접근 3분 -> 5초, 97% 단축 (기준: 동일 검증 시나리오 30회 측정)",
-      "→ 온보딩 수 시간 -> 5분 (기준: 사내 표준 체크리스트 5회 완료 시간)",
+      "다운로드 중심 리포트 접근으로 검증 착수 자체가 늦어지는 문제를 확인하고, **CLI → Nest.js API → MinIO → 정적 서빙** 파이프라인으로 내부 리포트 허브를 구축해 접근 시간을 3분에서 5초로 단축했습니다.",
+      "코드 리뷰 중 외부 AI 도구로 문맥 전환이 반복되는 문제를 **GitLab Webhook + N8N 워크플로**로 MR 내 자동 응답 흐름에 통합해 리뷰 중 외부 이동을 제거했습니다.",
+      "레거시 환경 설정 난도로 온보딩이 개인 숙련도에 의존하는 문제를 **환경 구성과 로컬 실행을 묶은 온보딩 CLI**로 도구화해 수 시간 걸리던 초기 세팅을 5분으로 줄였습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
