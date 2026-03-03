@@ -17,28 +17,6 @@ function formatDateRange(start: string, end?: string, isCurrent?: boolean): stri
   return `${s}~`
 }
 
-function selectOutcomeBullets(accomplishments: string[]): string[] {
-  const outcomes = accomplishments.filter((accomplishment) => accomplishment.trim().startsWith("→"))
-
-  if (outcomes.length >= 2) {
-    return outcomes.slice(0, 2)
-  }
-
-  if (outcomes.length === 1) {
-    const fallback = accomplishments.find(
-      (accomplishment) => !accomplishment.trim().startsWith("→")
-    )
-
-    if (fallback) {
-      return [outcomes[0], fallback]
-    }
-
-    return outcomes
-  }
-
-  return accomplishments
-}
-
 function ProfileSection({ profile }: { profile: SerializedResumeData["profile"] }) {
   const links = [
     profile.url ? { label: "Website", url: profile.url } : null,
@@ -123,17 +101,15 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
                       key: `${w.company}-${projectCase.projectId}-summary`,
                       textStyle: styles.experienceCaseSummary,
                     })}
-                    {selectOutcomeBullets(projectCase.accomplishments).map(
-                      (accomplishment, index) => (
-                        <View key={accomplishment} style={styles.experienceCaseBulletRow}>
-                          <Text style={styles.experienceCaseBullet}>•</Text>
-                          {markdownInlineToPdf(accomplishment, {
-                            key: `${w.company}-${projectCase.projectId}-accomplishment-${index}`,
-                            textStyle: styles.experienceCaseBulletText,
-                          })}
-                        </View>
-                      )
-                    )}
+                    {projectCase.accomplishments.map((accomplishment, index) => (
+                      <View key={accomplishment} style={styles.experienceCaseBulletRow}>
+                        <Text style={styles.experienceCaseBullet}>•</Text>
+                        {markdownInlineToPdf(accomplishment, {
+                          key: `${w.company}-${projectCase.projectId}-accomplishment-${index}`,
+                          textStyle: styles.experienceCaseBulletText,
+                        })}
+                      </View>
+                    ))}
                     {projectCase.measurementMethod && (
                       <Text style={styles.experienceCaseMetaText}>
                         <Text style={styles.experienceCaseMetaLabel}>Measurement: </Text>

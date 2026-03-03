@@ -57,10 +57,12 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     projectId: "exem-new-generation",
     resumeItemId: "project-exem-new-generation",
     resumeSummary:
-      "차세대 폼 아키텍처에 어댑터 패턴과 Zustand 스토어 팩토리를 적용해 기능 확장 시 변경 범위를 도메인 단위로 국소화했습니다.",
+      "77개+ 엔터프라이즈 고객 대상 차세대 DB 모니터링 제품에서 **도메인 분리 폼 아키텍처**와 **Zustand 스토어 팩토리**로 기능 확장 범위를 국소화하고, **Service Adapter 패턴**으로 다중 DB 서비스(Oracle/PostgreSQL/Tibero) 런타임 교체 구조를 설계했습니다.",
     accomplishments: [
-      "→ 차트 타입 5종을 핵심 로직 변경 없이 확장 (기준: line/bar/area/scatter/table 동일 인터페이스 적용)",
-      "→ 보일러플레이트 약 70% 감소 (기준: 동일 기능 추가 시 평균 코드 라인 수 비교)",
+      "단일 공통 스키마에서 차트 타입 추가마다 중앙 변경 범위가 커지는 문제를 확인하고, **차트 타입별 스키마·UI·어댑터 계층을 도메인 단위로 분리**해 5종(line/bar/area/scatter/table)을 핵심 로직 변경 없이 확장할 수 있는 구조를 만들었습니다.",
+      "전역 상태 잔존으로 화면 전환 시 수동 초기화 코드가 누적되는 문제를 **Provider 생명주기 기반 지역 스토어 팩토리**로 전환하고, 생성·정리 규칙을 표준화해 보일러플레이트를 약 70% 줄였습니다.",
+      "i18n 키 누락이 런타임에서 발견되던 문제를 **번역 JSON → TypeScript 타입 자동 생성**과 **배포 전 키 스캔**으로 빌드 단계에서 차단하고, Vitest/Playwright 회귀 시나리오를 운영 기준으로 고정해 런타임 장애 0건을 유지했습니다.",
+      "DB 서비스 전환 시 코어 모듈의 import를 수동 변경해야 하는 확장 병목을 분석하고, **Service Adapter 패턴**으로 코어-서비스 계층을 분리해 **환경변수 기반 런타임 DB 서비스 교체** 아키텍처를 설계했습니다. As-Is/To-Be 의존성 다이어그램과 4단계 구현 로드맵을 포함한 RFC 문서를 함께 작성했습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
@@ -80,8 +82,9 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     resumeSummary:
       "폐쇄망 환경에서 TypeScript 기반 CI/CD 리포트 뷰어와 온보딩 CLI를 자동화해 검증·온보딩 병목을 줄였습니다.",
     accomplishments: [
-      "→ 리포트 접근 3분 -> 5초, 97% 단축 (기준: 동일 검증 시나리오 30회 측정)",
-      "→ 온보딩 수 시간 -> 5분 (기준: 사내 표준 체크리스트 5회 완료 시간)",
+      "다운로드 중심 리포트 접근으로 검증 착수 자체가 늦어지는 문제를 확인하고, **CLI → Nest.js API → MinIO → 정적 서빙** 파이프라인으로 내부 리포트 허브를 구축해 접근 시간을 3분에서 5초로 단축했습니다.",
+      "코드 리뷰 중 외부 AI 도구로 문맥 전환이 반복되는 문제를 **GitLab Webhook + N8N 워크플로**로 MR 내 자동 응답 흐름에 통합해 리뷰 중 외부 이동을 제거했습니다.",
+      "레거시 환경 설정 난도로 온보딩이 개인 숙련도에 의존하는 문제를 **환경 구성과 로컬 실행을 묶은 온보딩 CLI**로 도구화해 수 시간 걸리던 초기 세팅을 5분으로 줄였습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
