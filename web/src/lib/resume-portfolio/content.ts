@@ -57,10 +57,33 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     projectId: "exem-new-generation",
     resumeItemId: "project-exem-new-generation",
     resumeSummary:
-      "차세대 폼 아키텍처에 어댑터 패턴과 Zustand 스토어 팩토리를 적용해 기능 확장 시 변경 범위를 도메인 단위로 국소화했습니다.",
+      "77개+ 엔터프라이즈 고객 대상 차세대 DB 모니터링 제품에서 **도메인 분리 폼 아키텍처**와 **Zustand 스토어 팩토리**로 기능 확장 범위를 국소화하고, **Service Adapter 패턴**으로 다중 DB 서비스(Oracle/PostgreSQL/Tibero) 런타임 교체 구조를 설계했습니다.",
     accomplishments: [
       "→ 차트 타입 5종을 핵심 로직 변경 없이 확장 (기준: line/bar/area/scatter/table 동일 인터페이스 적용)",
       "→ 보일러플레이트 약 70% 감소 (기준: 동일 기능 추가 시 평균 코드 라인 수 비교)",
+      "Service Adapter 패턴으로 코어-서비스 계층을 분리해 **환경변수 기반 런타임 DB 서비스 교체** 아키텍처를 설계하고, As-Is/To-Be 의존성 다이어그램과 4단계 구현 로드맵을 포함한 **RFC 문서를 작성**했습니다.",
+    ],
+    hasPortfolio: true,
+    ctaLabel: "상세 케이스 스터디 보기",
+    defaultSectionId: "tldr",
+    sections: [
+      "tldr",
+      "problem-definition",
+      "key-decisions",
+      "implementation-highlights",
+      "validation-impact",
+      "learned",
+    ],
+  },
+  {
+    projectId: "exem-team-standards",
+    resumeItemId: "project-exem-team-standards",
+    resumeSummary:
+      "7인 FE팀의 **코딩·테스팅·상태관리·리뷰 컨벤션 4종**을 체계화하고, **4단계 테스트 전략**·**Storybook + Vitepress 이원화 문서**·**디자인 시스템 npm 배포**를 구축했습니다. 축적된 아키텍처 패턴을 타팀에 전수해 조직 표준화에 기여했습니다.",
+    accomplishments: [
+      "→ 4종 컨벤션 공식 문서화 (코딩·테스팅·상태관리·코드리뷰)",
+      "→ 4단계 테스트 전략 정립 (유닛→통합→E2E→VRT, Browser Mode 전환)",
+      "FSD·어댑터·플러그인·차트·상태관리 가이드 **6건을 타팀(LLM플랫폼팀)에 전수**해 조직 프론트엔드 아키텍처 표준화에 기여했습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
