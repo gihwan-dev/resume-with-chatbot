@@ -1,5 +1,5 @@
 import { Document, Link, Page, Text, View } from "@react-pdf/renderer"
-import { markdownToPdf } from "@/lib/pdf/markdown-to-pdf"
+import { markdownInlineToPdf, markdownToPdf } from "@/lib/pdf/markdown-to-pdf"
 import { styles } from "@/lib/pdf/styles"
 import type { SerializedResumeData } from "@/lib/pdf/types"
 
@@ -97,11 +97,17 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
                     style={styles.experienceCaseCard}
                   >
                     <Text style={styles.experienceCaseTitle}>{projectCase.title}</Text>
-                    <Text style={styles.experienceCaseSummary}>{projectCase.summary}</Text>
-                    {projectCase.accomplishments.slice(0, 2).map((accomplishment) => (
+                    {markdownInlineToPdf(projectCase.summary, {
+                      key: `${w.company}-${projectCase.projectId}-summary`,
+                      textStyle: styles.experienceCaseSummary,
+                    })}
+                    {projectCase.accomplishments.map((accomplishment, index) => (
                       <View key={accomplishment} style={styles.experienceCaseBulletRow}>
                         <Text style={styles.experienceCaseBullet}>•</Text>
-                        <Text style={styles.experienceCaseBulletText}>{accomplishment}</Text>
+                        {markdownInlineToPdf(accomplishment, {
+                          key: `${w.company}-${projectCase.projectId}-accomplishment-${index}`,
+                          textStyle: styles.experienceCaseBulletText,
+                        })}
                       </View>
                     ))}
                     {projectCase.measurementMethod && (

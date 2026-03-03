@@ -28,6 +28,11 @@ export interface ValidationImpact {
   operationalImpact: string
 }
 
+export interface ImplementationGroup {
+  title: string
+  items: string[]
+}
+
 export interface ProjectStoryThread {
   tldrSummary: string
   keyMetrics: ImpactItem[]
@@ -36,6 +41,7 @@ export interface ProjectStoryThread {
   problemPoints: string[]
   decisions: DecisionItem[]
   implementationHighlights: string[]
+  implementationGroups?: ImplementationGroup[]
   validationImpact: ValidationImpact
   lessonsLearned: string
 }

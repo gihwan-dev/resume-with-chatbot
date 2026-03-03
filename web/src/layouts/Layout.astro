@@ -85,6 +85,11 @@ const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
     </a>
     <Navigation client:load initialPathname={Astro.url.pathname} />
     <slot />
+    <footer class="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 pt-8 border-t border-resume-border mt-12">
+      <p class="text-sm text-resume-text-muted text-center">
+        &copy; {new Date().getFullYear()} 최기환 &middot; AI 기반 인터랙티브 이력서
+      </p>
+    </footer>
     <ChatWidget client:load />
   </body>
 </html>

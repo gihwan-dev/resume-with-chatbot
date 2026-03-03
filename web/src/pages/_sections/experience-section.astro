@@ -27,59 +27,6 @@ interface Props {
 }
 
 const { experiences } = Astro.props as Props
-
-interface ParsedOutcomeBullet {
-  main: string
-  criteria?: string
-}
-
-function selectOutcomeBullets(accomplishments: string[]): string[] {
-  const outcomes = accomplishments.filter((accomplishment) => accomplishment.trim().startsWith("→"))
-
-  if (outcomes.length >= 2) {
-    return outcomes.slice(0, 2)
-  }
-
-  if (outcomes.length === 1) {
-    const fallback = accomplishments.find(
-      (accomplishment) => !accomplishment.trim().startsWith("→")
-    )
-
-    if (fallback) {
-      return [outcomes[0], fallback]
-    }
-
-    return outcomes
-  }
-
-  return accomplishments.slice(0, 2)
-}
-
-function parseOutcomeBullet(accomplishment: string): ParsedOutcomeBullet {
-  const withoutPrefix = accomplishment.trim().replace(/^→\s*/, "")
-  const criteriaStartIndex = withoutPrefix.lastIndexOf("(기준:")
-
-  if (criteriaStartIndex === -1) {
-    return { main: withoutPrefix }
-  }
-
-  const criteria = withoutPrefix.slice(criteriaStartIndex).trim()
-
-  if (!criteria.endsWith(")")) {
-    return { main: withoutPrefix }
-  }
-
-  const main = withoutPrefix.slice(0, criteriaStartIndex).trim()
-
-  if (main.length === 0) {
-    return { main: withoutPrefix }
-  }
-
-  return {
-    main,
-    criteria,
-  }
-}
 ---
 
 <section
@@ -139,35 +86,24 @@ function parseOutcomeBullet(accomplishment: string): ParsedOutcomeBullet {
                 >
                   <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
                   {project.summary && (
-                    <p class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90">
-                      {project.summary}
-                    </p>
+                    <div class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
+                      <Markdown of={project.summary} />
+                    </div>
                   )}
 
                   {project.accomplishments && project.accomplishments.length > 0 && (
                     <ul class="mt-5 space-y-2.5">
-                      {selectOutcomeBullets(project.accomplishments).map((accomplishment) => {
-                        const parsedAccomplishment = parseOutcomeBullet(accomplishment)
-
-                        return (
-                          <li class="flex items-start gap-2.5">
-                            <span
-                              aria-hidden="true"
-                              class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-resume-primary/70"
-                            />
-                            <div class="min-w-0">
-                              <div class="text-sm font-bold leading-relaxed text-resume-primary [&_p]:m-0">
-                                <Markdown of={parsedAccomplishment.main} />
-                              </div>
-                              {parsedAccomplishment.criteria && (
-                                <p class="mt-1 text-sm font-medium leading-relaxed text-resume-text-main/90">
-                                  {parsedAccomplishment.criteria}
-                                </p>
-                              )}
-                            </div>
-                          </li>
-                        )
-                      })}
+                      {project.accomplishments.map((accomplishment) => (
+                        <li class="flex items-start gap-2.5">
+                          <span
+                            aria-hidden="true"
+                            class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-resume-primary/70"
+                          />
+                          <div class="text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
+                            <Markdown of={accomplishment} />
+                          </div>
+                        </li>
+                      ))}
                     </ul>
                   )}
 

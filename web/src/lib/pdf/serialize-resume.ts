@@ -100,7 +100,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
             projectId: project.projectId,
             title: summaryBlock.title,
             summary: summaryBlock.summary,
-            accomplishments: summaryBlock.accomplishments.slice(0, 2),
+            accomplishments: summaryBlock.accomplishments,
             architectureSummary: toOptionalText(storyThread?.coreApproach),
             measurementMethod: toOptionalText(storyThread?.validationImpact?.measurementMethod),
             tradeOffs: extractTradeOffs(storyThread?.decisions),

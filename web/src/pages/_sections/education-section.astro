@@ -1,0 +1,53 @@
+---
+interface EducationEntry {
+  data: {
+    institution: string
+    area: string
+    studyType: string
+    dateStart: Date
+    dateEnd?: Date
+    score?: string
+  }
+}
+
+interface Props {
+  education: EducationEntry[]
+}
+
+const { education } = Astro.props
+---
+
+<section id="education">
+  <h2 class="text-2xl font-bold text-resume-text-main mb-6 tracking-tight">
+    Education
+  </h2>
+  <div class="space-y-4">
+    {
+      education.map((entry) => (
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1">
+          <div>
+            <span class="font-medium text-resume-text-main">
+              {entry.data.institution}
+            </span>
+            <span class="text-resume-text-muted ml-2">
+              {entry.data.area}
+            </span>
+          </div>
+          <span class="text-sm text-resume-text-muted font-mono whitespace-nowrap">
+            {entry.data.dateStart.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+            })}
+            {" - "}
+            {entry.data.dateEnd
+              ? entry.data.dateEnd.toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                })
+              : "Present"}
+          </span>
+        </div>
+      ))
+    }
+  </div>
+</section>

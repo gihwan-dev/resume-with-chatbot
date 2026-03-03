@@ -56,6 +56,7 @@ vi.mock("@react-pdf/renderer", async () => {
 })
 
 vi.mock("@/lib/pdf/markdown-to-pdf", () => ({
+  markdownInlineToPdf: (markdown: string) => markdown,
   markdownToPdf: (markdown: string) => markdown,
 }))
 
@@ -77,7 +78,7 @@ function createMockResumeData(): SerializedResumeData {
         projectCases: [
           {
             projectId: "exem-customer-dashboard",
-            title: "고객 특화 DB 모니터링 대시보드 개발",
+            title: "인스턴스 통합 모니터링 대시보드 개발",
             summary: "중앙 폴링 아키텍처로 병목을 줄였습니다.",
             accomplishments: ["인지 시간 단축", "인터랙션 지연 개선"],
             measurementMethod: "React Profiler 동일 시나리오 30회 평균",
@@ -214,11 +215,11 @@ describe("ResumeDocument", () => {
 
   it("동명 프로젝트여도 fallback title이 누락되지 않는다", () => {
     const data = createMockResumeData()
-    data.work[0].projectTitles = ["고객 특화 DB 모니터링 대시보드 개발"]
+    data.work[0].projectTitles = ["인스턴스 통합 모니터링 대시보드 개발"]
 
     render(<ResumeDocument data={data} />)
 
-    expect(screen.getAllByText("고객 특화 DB 모니터링 대시보드 개발")).toHaveLength(2)
+    expect(screen.getAllByText("인스턴스 통합 모니터링 대시보드 개발")).toHaveLength(2)
   })
 
   it("Experience 렌더에서 wrap=false를 사용하지 않아 페이지 분할을 허용한다", () => {

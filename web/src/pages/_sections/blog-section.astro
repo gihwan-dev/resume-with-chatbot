@@ -14,7 +14,7 @@ const { featuredPost, latestPosts } = curateTechnicalWritingPosts(posts)
 
 function formatDate(iso: string): string {
   const date = new Date(iso)
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -35,7 +35,7 @@ function formatDate(iso: string): string {
           <article class="group bg-resume-card-bg rounded-sm border border-resume-primary/40 p-5 transition-all duration-300 hover:border-resume-primary/60 hover:bg-resume-highlight/30">
             <div class="mb-2">
               <span class="inline-flex items-center rounded-full border border-resume-primary/40 px-2.5 py-1 text-xs font-semibold tracking-wide text-resume-primary">
-                Representative Writing
+                대표 글
               </span>
             </div>
             <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -65,7 +65,7 @@ function formatDate(iso: string): string {
         {latestPosts.length > 0 && (
           <>
             <h3 class="text-sm font-semibold uppercase tracking-wider text-resume-text-muted pt-2">
-              Latest Writing
+              최신 글
             </h3>
             {latestPosts.map((post) => (
               <article class="group bg-resume-card-bg rounded-sm border border-resume-border p-5 transition-all duration-300 hover:border-resume-primary/50 hover:bg-resume-highlight/30">
@@ -109,7 +109,7 @@ function formatDate(iso: string): string {
       data-ga-event="blog_all_posts_click"
       data-ga-source="obsidian"
     >
-      View all posts
+      모든 글 보기
     </a>
   </div>
 </section>

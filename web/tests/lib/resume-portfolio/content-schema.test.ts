@@ -6,14 +6,14 @@ const MOCK_PROJECTS = [
   {
     id: "exem-customer-dashboard",
     data: {
-      title: "고객 특화 DB 모니터링 대시보드 개발",
+      title: "인스턴스 통합 모니터링 대시보드 개발",
       techStack: ["React", "TypeScript", "TanStack Query"],
     },
   },
   {
     id: "exem-data-grid",
     data: {
-      title: "데이터 그리드 개발",
+      title: "20+ 기능의 고성능 데이터 그리드 개발",
       techStack: ["React", "TanStack Table", "TanStack Virtual"],
     },
   },

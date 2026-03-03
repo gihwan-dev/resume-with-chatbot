@@ -1,5 +1,11 @@
 import { z } from "zod"
-import type { DecisionItem, ImpactItem, ProjectStoryThread, ValidationImpact } from "./contracts"
+import type {
+  DecisionItem,
+  ImpactItem,
+  ImplementationGroup,
+  ProjectStoryThread,
+  ValidationImpact,
+} from "./contracts"
 
 const nonEmptyText = z
   .string({
@@ -25,6 +31,16 @@ export const decisionItemSchema: z.ZodType<DecisionItem> = z.object({
   whyThisChoice: nonEmptyText,
   alternative: nonEmptyText,
   tradeOff: nonEmptyText,
+})
+
+export const implementationGroupSchema: z.ZodType<ImplementationGroup> = z.object({
+  title: nonEmptyText,
+  items: z
+    .array(nonEmptyText, {
+      required_error: "implementationGroups.items 필드가 누락되었습니다.",
+      invalid_type_error: "implementationGroups.items는 문자열 배열이어야 합니다.",
+    })
+    .min(1, "implementationGroups.items는 최소 1개 이상이어야 합니다."),
 })
 
 export const validationImpactSchema: z.ZodType<ValidationImpact> = z.object({
@@ -56,14 +72,14 @@ export const projectStoryThreadSchema: z.ZodType<ProjectStoryThread> = z.object(
       invalid_type_error: "problemPoints는 문자열 배열이어야 합니다.",
     })
     .min(3, "problemPoints는 최소 3개 이상이어야 합니다.")
-    .max(4, "problemPoints는 최대 4개까지 허용됩니다."),
+    .max(7, "problemPoints는 최대 7개까지 허용됩니다."),
   decisions: z
     .array(decisionItemSchema, {
       required_error: "decisions 필드가 누락되었습니다.",
       invalid_type_error: "decisions는 배열이어야 합니다.",
     })
     .min(2, "decisions는 최소 2개 이상이어야 합니다.")
-    .max(3, "decisions는 최대 3개까지 허용됩니다."),
+    .max(4, "decisions는 최대 4개까지 허용됩니다."),
   implementationHighlights: z
     .array(nonEmptyText, {
       required_error: "implementationHighlights 필드가 누락되었습니다.",
@@ -71,6 +87,14 @@ export const projectStoryThreadSchema: z.ZodType<ProjectStoryThread> = z.object(
     })
     .min(3, "implementationHighlights는 최소 3개 이상이어야 합니다.")
     .max(4, "implementationHighlights는 최대 4개까지 허용됩니다."),
+  implementationGroups: z
+    .array(implementationGroupSchema, {
+      required_error: "implementationGroups 필드가 누락되었습니다.",
+      invalid_type_error: "implementationGroups는 배열이어야 합니다.",
+    })
+    .min(1, "implementationGroups는 최소 1개 이상이어야 합니다.")
+    .max(2, "implementationGroups는 최대 2개까지 허용됩니다.")
+    .optional(),
   validationImpact: validationImpactSchema,
   lessonsLearned: maxThreeLinesText,
 })
