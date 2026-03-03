@@ -16,8 +16,6 @@ const colors = {
   parResultBg: "#ecfdf5",
   highlight: "#fef9c3",
   linkText: "#4338ca",
-  timelineLine: "#c7d2fe",
-  timelineDot: "#4338ca",
   bulletDot: "#6366f1",
 }
 
@@ -110,30 +108,6 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1.5,
     borderBottomColor: colors.primary,
     letterSpacing: 0.3,
-  },
-
-  // Experience timeline
-  experienceTimelineItem: {
-    paddingLeft: 14,
-    marginBottom: 14,
-    position: "relative",
-  },
-  experienceTimelineLine: {
-    position: "absolute",
-    left: 4,
-    top: 0,
-    bottom: 0,
-    width: 1.5,
-    backgroundColor: colors.timelineLine,
-  },
-  experienceTimelineDot: {
-    position: "absolute",
-    left: 0,
-    top: 3,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: colors.timelineDot,
   },
 
   // Experience / Project item

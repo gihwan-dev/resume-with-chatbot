@@ -101,10 +101,7 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
   return (
     <View>
       <Text style={styles.sectionTitle}>Experience</Text>
-      {work.map((w, index) => {
-        const isFirst = index === 0
-        const isLast = index === work.length - 1
-
+      {work.map((w) => {
         const fallbackProjectItems =
           w.projectTitles.length > 0
             ? w.projectTitles
@@ -115,18 +112,9 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
         return (
           <View
             key={`${w.company}-${w.dateStart}`}
-            style={styles.experienceTimelineItem}
+            style={styles.itemSeparator}
             minPresenceAhead={80}
           >
-            <View
-              style={[
-                styles.experienceTimelineLine,
-                isFirst ? { top: 6 } : {},
-                isLast ? { bottom: undefined, height: 12 } : {},
-              ]}
-            />
-            <View style={styles.experienceTimelineDot} />
-
             <View style={styles.itemHeader}>
               <Text style={styles.itemTitle}>{w.role}</Text>
               <Text style={styles.itemDate}>
