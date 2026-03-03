@@ -76,28 +76,6 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     ],
   },
   {
-    projectId: "exem-team-standards",
-    resumeItemId: "project-exem-team-standards",
-    resumeSummary:
-      "7인 FE팀의 **코딩·테스팅·상태관리·리뷰 컨벤션 4종**을 체계화하고, **4단계 테스트 전략**·**Storybook + Vitepress 이원화 문서**·**디자인 시스템 npm 배포**를 구축했습니다. 축적된 아키텍처 패턴을 타팀에 전수해 조직 표준화에 기여했습니다.",
-    accomplishments: [
-      "→ 4종 컨벤션 공식 문서화 (코딩·테스팅·상태관리·코드리뷰)",
-      "→ 4단계 테스트 전략 정립 (유닛→통합→E2E→VRT, Browser Mode 전환)",
-      "FSD·어댑터·플러그인·차트·상태관리 가이드 **6건을 타팀(LLM플랫폼팀)에 전수**해 조직 프론트엔드 아키텍처 표준화에 기여했습니다.",
-    ],
-    hasPortfolio: true,
-    ctaLabel: "상세 케이스 스터디 보기",
-    defaultSectionId: "tldr",
-    sections: [
-      "tldr",
-      "problem-definition",
-      "key-decisions",
-      "implementation-highlights",
-      "validation-impact",
-      "learned",
-    ],
-  },
-  {
     projectId: "exem-dx-improvement",
     resumeItemId: "project-exem-dx-improvement",
     resumeSummary:
