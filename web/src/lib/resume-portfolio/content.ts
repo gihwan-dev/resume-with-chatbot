@@ -61,7 +61,7 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     accomplishments: [
       "→ 차트 타입 5종을 핵심 로직 변경 없이 확장 (기준: line/bar/area/scatter/table 동일 인터페이스 적용)",
       "→ 보일러플레이트 약 70% 감소 (기준: 동일 기능 추가 시 평균 코드 라인 수 비교)",
-      "Service Adapter 패턴으로 코어-서비스 계층을 분리해 **환경변수 기반 런타임 DB 서비스 교체** 아키텍처를 설계하고, As-Is/To-Be 의존성 다이어그램과 4단계 구현 로드맵을 포함한 **RFC 문서를 작성**했습니다.",
+      "→ i18n 키 누락 런타임 장애 0건 (기준: 타입 자동 생성 + 배포 전 스캔, 20회 회귀)",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
