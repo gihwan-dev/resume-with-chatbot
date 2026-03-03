@@ -1,5 +1,5 @@
 import { Document, Link, Page, Text, View } from "@react-pdf/renderer"
-import { markdownInlineToPdf, markdownToPdf } from "@/lib/pdf/markdown-to-pdf"
+import { markdownInlineToPdf } from "@/lib/pdf/markdown-to-pdf"
 import { styles } from "@/lib/pdf/styles"
 import type { SerializedResumeData } from "@/lib/pdf/types"
 
@@ -110,18 +110,6 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
                         })}
                       </View>
                     ))}
-                    {projectCase.measurementMethod && (
-                      <Text style={styles.experienceCaseMetaText}>
-                        <Text style={styles.experienceCaseMetaLabel}>Measurement: </Text>
-                        {projectCase.measurementMethod}
-                      </Text>
-                    )}
-                    {projectCase.tradeOffs?.map((tradeOff) => (
-                      <Text key={tradeOff} style={styles.experienceCaseMetaText}>
-                        <Text style={styles.experienceCaseMetaLabel}>Trade-off: </Text>
-                        {tradeOff}
-                      </Text>
-                    ))}
                   </View>
                 ))}
               </View>
@@ -199,7 +187,6 @@ function AwardSection({ awards }: { awards: SerializedResumeData["awards"] }) {
           </View>
           <Text style={styles.itemSubtitle}>{a.issuer}</Text>
           {a.summary && <Text style={styles.itemSummary}>{a.summary}</Text>}
-          {a.body && <View>{markdownToPdf(a.body)}</View>}
         </View>
       ))}
     </View>

@@ -155,8 +155,6 @@ describe("ResumeDocument", () => {
     const { container } = render(<ResumeDocument data={createMockResumeData()} />)
     const text = container.textContent ?? ""
 
-    expect(text).toContain("Measurement:")
-    expect(text).toContain("Trade-off:")
     expect(text).toContain("매핑 누락 프로젝트")
     expect(text).toContain("프로젝트 전 과정을 단독 수행했습니다.")
 
@@ -185,6 +183,16 @@ describe("ResumeDocument", () => {
     expect(text).not.toContain("Education")
     expect(text).not.toContain("숨김 프로젝트")
     expect(text).not.toContain("숨김 대학")
+  })
+
+  it("measurementMethod와 tradeOffs를 PDF에 렌더링하지 않는다", () => {
+    const { container } = render(<ResumeDocument data={createMockResumeData()} />)
+    const text = container.textContent ?? ""
+
+    expect(text).not.toContain("Measurement:")
+    expect(text).not.toContain("Trade-off:")
+    expect(text).not.toContain("React Profiler 동일 시나리오 30회 평균")
+    expect(text).not.toContain("초기 구현 복잡도는 증가했지만 운영 일관성을 확보했습니다.")
   })
 
   it("부분 매핑에서도 unmatched projectTitles fallback을 함께 렌더링한다", () => {
