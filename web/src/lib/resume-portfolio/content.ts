@@ -59,9 +59,10 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     resumeSummary:
       "77개+ 엔터프라이즈 고객 대상 차세대 DB 모니터링 제품에서 **도메인 분리 폼 아키텍처**와 **Zustand 스토어 팩토리**로 기능 확장 범위를 국소화하고, **Service Adapter 패턴**으로 다중 DB 서비스(Oracle/PostgreSQL/Tibero) 런타임 교체 구조를 설계했습니다.",
     accomplishments: [
-      "→ 차트 타입 5종을 핵심 로직 변경 없이 확장 (기준: line/bar/area/scatter/table 동일 인터페이스 적용)",
-      "→ 보일러플레이트 약 70% 감소 (기준: 동일 기능 추가 시 평균 코드 라인 수 비교)",
-      "→ i18n 키 누락 런타임 장애 0건 (기준: 타입 자동 생성 + 배포 전 스캔, 20회 회귀)",
+      "단일 공통 스키마에서 차트 타입 추가마다 중앙 변경 범위가 커지는 문제를 확인하고, **차트 타입별 스키마·UI·어댑터 계층을 도메인 단위로 분리**해 5종(line/bar/area/scatter/table)을 핵심 로직 변경 없이 확장할 수 있는 구조를 만들었습니다.",
+      "전역 상태 잔존으로 화면 전환 시 수동 초기화 코드가 누적되는 문제를 **Provider 생명주기 기반 지역 스토어 팩토리**로 전환하고, 생성·정리 규칙을 표준화해 보일러플레이트를 약 70% 줄였습니다.",
+      "i18n 키 누락이 런타임에서 발견되던 문제를 **번역 JSON → TypeScript 타입 자동 생성**과 **배포 전 키 스캔**으로 빌드 단계에서 차단하고, Vitest/Playwright 회귀 시나리오를 운영 기준으로 고정해 런타임 장애 0건을 유지했습니다.",
+      "DB 서비스 전환 시 코어 모듈의 import를 수동 변경해야 하는 확장 병목을 분석하고, **Service Adapter 패턴**으로 코어-서비스 계층을 분리해 **환경변수 기반 런타임 DB 서비스 교체** 아키텍처를 설계했습니다. As-Is/To-Be 의존성 다이어그램과 4단계 구현 로드맵을 포함한 RFC 문서를 함께 작성했습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
