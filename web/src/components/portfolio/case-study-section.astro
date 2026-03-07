@@ -1,6 +1,5 @@
 ---
 import type { CollectionEntry } from "astro:content"
-import ImpactBadgeCards from "@/components/portfolio/impact-badge-cards.astro"
 import { Badge } from "@/components/ui/badge"
 import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
 
@@ -102,17 +101,7 @@ const learnedLines = toLearnedLines(storyThread.lessonsLearned)
         data-tldr-summary
         data-tldr-description
       >
-        {storyThread.tldrSummary}
-      </p>
-
-      <ImpactBadgeCards impacts={storyThread.keyMetrics} />
-
-      <p
-        class="break-words text-sm leading-relaxed text-resume-text-main/90 sm:text-[15px] print:text-slate-800"
-        data-core-approach
-      >
-        <span class="font-semibold text-resume-text-heading print:text-slate-900">핵심 접근:</span>
-        {storyThread.coreApproach}
+        {project.data.description}
       </p>
     </section>
 

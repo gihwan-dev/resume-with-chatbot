@@ -73,7 +73,7 @@ const projects = defineCollection({
     companyId: companyIdSchema,
     title: z.string(),
     company: z.string().optional(), // Link to work history
-    description: z.string(),
+    description: z.string().trim().min(1),
     techStack: z.array(z.string()),
     link: z.string().url().optional(),
     github: z.string().url().optional(),
