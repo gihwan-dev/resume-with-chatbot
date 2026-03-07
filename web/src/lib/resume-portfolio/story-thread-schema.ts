@@ -86,7 +86,7 @@ export const projectStoryThreadSchema: z.ZodType<ProjectStoryThread> = z.object(
       invalid_type_error: "implementationHighlights는 문자열 배열이어야 합니다.",
     })
     .min(3, "implementationHighlights는 최소 3개 이상이어야 합니다.")
-    .max(4, "implementationHighlights는 최대 4개까지 허용됩니다."),
+    .max(5, "implementationHighlights는 최대 5개까지 허용됩니다."),
   implementationGroups: z
     .array(implementationGroupSchema, {
       required_error: "implementationGroups 필드가 누락되었습니다.",
