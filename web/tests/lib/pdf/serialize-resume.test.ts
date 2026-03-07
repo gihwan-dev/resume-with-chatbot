@@ -279,15 +279,17 @@ describe("serializeResumeData", () => {
       "exem-new-generation",
       "exem-dx-improvement",
     ])
+    const expectedAccomplishmentCounts = {
+      "exem-customer-dashboard": 7,
+      "exem-data-grid": 7,
+      "exem-new-generation": 3,
+      "exem-dx-improvement": 3,
+    } as const
+
     for (const projectCase of result.work[0].projectCases ?? []) {
-      if (
-        projectCase.projectId === "exem-customer-dashboard" ||
-        projectCase.projectId === "exem-data-grid"
-      ) {
-        expect(projectCase.accomplishments.length).toBe(7)
-      } else {
-        expect(projectCase.accomplishments.length).toBeLessThanOrEqual(2)
-      }
+      expect(projectCase.accomplishments.length).toBe(
+        expectedAccomplishmentCounts[projectCase.projectId]
+      )
       expect(projectCase.architectureSummary).toBeUndefined()
       expect(projectCase.measurementMethod).toBeUndefined()
       expect(projectCase.tradeOffs).toBeUndefined()

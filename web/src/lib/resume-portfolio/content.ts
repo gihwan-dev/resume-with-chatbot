@@ -57,12 +57,11 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     projectId: "exem-new-generation",
     resumeItemId: "project-exem-new-generation",
     resumeSummary:
-      "77개+ 엔터프라이즈 고객 대상 차세대 DB 모니터링 제품에서 **도메인 분리 폼 아키텍처**와 **Zustand 스토어 팩토리**로 기능 확장 범위를 국소화하고, **Service Adapter 패턴**으로 다중 DB 서비스(Oracle/PostgreSQL/Tibero) 런타임 교체 구조를 설계했습니다.",
+      "77개+ 엔터프라이즈 고객 대상 차세대 DB 모니터링 제품에서 **Zustand storeFactory**, **Widget Builder 확장성 아키텍처**, **Oracle SQL 분석형 UI**를 설계해 복잡한 데이터 화면의 확장 비용과 탐색 흐름을 구조적으로 정리했습니다.",
     accomplishments: [
-      "단일 공통 스키마에서 차트 타입 추가마다 중앙 변경 범위가 커지는 문제를 확인하고, **차트 타입별 스키마·UI·어댑터 계층을 도메인 단위로 분리**해 5종(line/bar/area/scatter/table)을 핵심 로직 변경 없이 확장할 수 있는 구조를 만들었습니다.",
-      "전역 상태 잔존으로 화면 전환 시 수동 초기화 코드가 누적되는 문제를 **Provider 생명주기 기반 지역 스토어 팩토리**로 전환하고, 생성·정리 규칙을 표준화해 보일러플레이트를 약 70% 줄였습니다.",
-      "i18n 키 누락이 런타임에서 발견되던 문제를 **번역 JSON → TypeScript 타입 자동 생성**과 **배포 전 키 스캔**으로 빌드 단계에서 차단하고, Vitest/Playwright 회귀 시나리오를 운영 기준으로 고정해 런타임 장애 0건을 유지했습니다.",
-      "DB 서비스 전환 시 코어 모듈의 import를 수동 변경해야 하는 확장 병목을 분석하고, **Service Adapter 패턴**으로 코어-서비스 계층을 분리해 **환경변수 기반 런타임 DB 서비스 교체** 아키텍처를 설계했습니다. As-Is/To-Be 의존성 다이어그램과 4단계 구현 로드맵을 포함한 RFC 문서를 함께 작성했습니다.",
+      "화면 단위 상태가 전역처럼 남고 초기화 보일러플레이트가 반복되던 문제를 해결하기 위해 `storeFactory`를 설계해 Provider-local/global/persist를 단일 인터페이스로 통합하고, `initialState` 생성 시점 주입으로 20개 스토어의 생성 규약을 표준화했습니다.",
+      "하나의 Widget Builder에 line·area·bar·scatter·table 요구사항이 누적되던 병목을 줄이기 위해, `visualization` 기준 registry + Zod 판별 유니온 + preview adapter 구조를 설계해 차트별 폼·검증·미리보기 변경 범위를 메인 셸 밖으로 격리했습니다.",
+      "Oracle SQL 성능 분석 화면을 개발하며, 긴 상세 페이지 안에서 실행계획 비교, SQL 전문 탐색, 오브젝트 메타데이터 조회를 연결하고 drag-and-drop 비교 전환, 동기 스크롤, 바인드 변수 하이라이팅, 동적 컬럼 기반 탐색을 구현했습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
