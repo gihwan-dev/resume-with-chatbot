@@ -91,9 +91,9 @@ function normalizeExperienceMarkdown(text: string): string {
                 >
                   <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
                   {project.summary && (
-                    <div class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
-                      <Markdown of={normalizeExperienceMarkdown(project.summary)} />
-                    </div>
+                    <p class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90">
+                      {project.summary}
+                    </p>
                   )}
 
                   {project.accomplishments && project.accomplishments.length > 0 && (
