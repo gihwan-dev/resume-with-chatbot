@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 import { NAVIGATION_READY_EVENT } from "@/lib/layer-events"
-import { PORTFOLIO_SECTION_IDS, type PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
 import { DesktopNav } from "./desktop-nav"
 import { MobileNav } from "./mobile-nav"
 import {
@@ -12,21 +11,6 @@ import {
 } from "./section-nav"
 import { ThemeProvider } from "./theme-provider"
 
-const PORTFOLIO_SECTION_LABELS: Record<PortfolioSectionId, string> = {
-  tldr: "TL;DR",
-  "problem-definition": "문제 정의",
-  "key-decisions": "핵심 의사결정",
-  "implementation-highlights": "구현 전략",
-  "validation-impact": "검증 및 결과",
-  learned: "회고",
-}
-
-const DEFAULT_PORTFOLIO_SECTION_ITEMS: readonly SectionNavItem[] = PORTFOLIO_SECTION_IDS.map(
-  (sectionId) => ({
-    id: sectionId,
-    label: PORTFOLIO_SECTION_LABELS[sectionId],
-  })
-)
 const DEFAULT_RESUME_SECTION_ITEMS: readonly SectionNavItem[] = RESUME_SECTION_NAV_ITEMS
 
 type NavigationMode = "resume" | "portfolio-detail"
@@ -48,7 +32,7 @@ function getInitialNavigationState(pathname: string): NavigationState {
   if (isPortfolioDetailPathname(pathname)) {
     return {
       mode: "portfolio-detail",
-      sections: DEFAULT_PORTFOLIO_SECTION_ITEMS,
+      sections: [],
     }
   }
 
@@ -59,11 +43,26 @@ function getInitialNavigationState(pathname: string): NavigationState {
 }
 
 function getPortfolioSectionsFromDocument() {
-  const visibleSections = DEFAULT_PORTFOLIO_SECTION_ITEMS.filter((section) =>
-    Boolean(document.getElementById(section.id))
+  const sectionElements = Array.from(
+    document.querySelectorAll<HTMLElement>("[data-portfolio-section]")
   )
 
-  return visibleSections.length > 0 ? visibleSections : DEFAULT_PORTFOLIO_SECTION_ITEMS
+  const sections = sectionElements
+    .map((element) => {
+      const id = element.id || element.getAttribute("data-portfolio-section") || ""
+      const heading =
+        element.getAttribute("data-portfolio-section-heading") ||
+        element.querySelector("h2, h1")?.textContent ||
+        id
+
+      return {
+        id: id.trim(),
+        label: heading.trim(),
+      }
+    })
+    .filter((section) => section.id.length > 0 && section.label.length > 0)
+
+  return sections
 }
 
 function getResumeSectionsFromDocument() {

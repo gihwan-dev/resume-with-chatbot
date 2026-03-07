@@ -1,6 +1,5 @@
 ---
 import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
-import { PORTFOLIO_SECTION_IDS } from "@/lib/resume-portfolio/contracts"
 
 interface Props {
   portfolioCase: PortfolioCaseContract
@@ -8,17 +7,7 @@ interface Props {
 
 const { portfolioCase } = Astro.props
 
-const SECTION_LABELS: Record<string, string> = {
-  tldr: "TL;DR",
-  "problem-definition": "문제 정의",
-  "key-decisions": "핵심 의사결정",
-  "implementation-highlights": "구현 전략",
-  "validation-impact": "검증 및 결과",
-  learned: "What I Learned",
-}
-
-// Ensure we only show sections defined in the contract for this case
-const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sections.includes(id))
+const activeSections = portfolioCase.sections
 ---
 
 <nav class="sticky top-24 pt-4 pb-8 max-h-[calc(100vh-6rem)] overflow-y-auto w-[250px] xl:w-[300px] border-r border-resume-border print:hidden pr-6">
@@ -34,14 +23,14 @@ const activeSections = PORTFOLIO_SECTION_IDS.filter((id) => portfolioCase.sectio
   <h2 class="text-xs font-bold text-resume-text-muted uppercase tracking-wider mb-6">목차</h2>
 
   <ul class="space-y-4 toc-list">
-    {activeSections.map((sectionId) => (
+    {activeSections.map((section) => (
       <li>
-        <a 
-          href={`#${sectionId}`} 
-          data-section-id={sectionId}
+        <a
+          href={`#${section.id}`}
+          data-section-id={section.id}
           class="toc-link block text-sm font-medium text-resume-text-muted hover:text-resume-text-heading transition-colors py-1 border-l-2 border-transparent pl-4"
         >
-          {SECTION_LABELS[sectionId] || sectionId}
+          {section.heading}
         </a>
       </li>
     ))}

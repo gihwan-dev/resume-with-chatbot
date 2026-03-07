@@ -6,6 +6,49 @@ function isPortfolioCasePath(href: string): boolean {
   return /^\/portfolio\/[a-z0-9-]+$/.test(href)
 }
 
+function getCaseIdFromHref(href: string): string | null {
+  const match = href.match(/^\/portfolio\/([a-z0-9-]+)$/)
+  return match ? match[1] : null
+}
+
+const CASE_SECTION_MAP: Record<string, readonly string[]> = {
+  "exem-customer-dashboard": [
+    "tldr",
+    "problem-definition",
+    "key-decisions",
+    "implementation-highlights",
+    "validation-impact",
+    "learned",
+  ],
+  "exem-data-grid": [
+    "tldr",
+    "problem-definition",
+    "key-decisions",
+    "implementation-highlights",
+    "validation-impact",
+    "learned",
+  ],
+  "exem-dx-improvement": [
+    "tldr",
+    "problem-definition",
+    "key-decisions",
+    "implementation-highlights",
+    "validation-impact",
+    "learned",
+  ],
+  "exem-new-generation": [
+    "tldr",
+    "shared-tension",
+    "complexity-axes",
+    "chart-extensibility",
+    "state-lifecycle",
+    "sql-analysis-ux",
+    "overall-change",
+    "verification",
+    "learned",
+  ],
+}
+
 test.describe("Portfolio PRD acceptance", () => {
   test.beforeEach(async ({ page }) => {
     await mockApiRoutes(page)
@@ -30,18 +73,14 @@ test.describe("Portfolio PRD acceptance", () => {
     const targetCaseHrefs = caseHrefs.filter((href) => isPortfolioCasePath(href))
     expect(targetCaseHrefs.length).toBeGreaterThan(0)
 
-    const sectionIds = [
-      "tldr",
-      "problem-definition",
-      "key-decisions",
-      "implementation-highlights",
-      "validation-impact",
-      "learned",
-    ]
-
     for (const href of targetCaseHrefs) {
       await page.goto(href)
       await waitForUiReady(page)
+
+      const caseId = getCaseIdFromHref(href)
+      expect(caseId).toBeTruthy()
+      const sectionIds = CASE_SECTION_MAP[caseId ?? ""]
+      expect(sectionIds).toBeTruthy()
 
       const tldrSection = page.locator('[data-portfolio-section="tldr"]')
       await expect(tldrSection).toBeVisible()

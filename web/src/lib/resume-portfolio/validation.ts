@@ -1,9 +1,8 @@
-import {
-  PORTFOLIO_SECTION_IDS,
-  type PortfolioCaseContract,
-  type ResumeItemContract,
-  type ResumePortfolioMappingEntry,
-  type ResumeSummaryBlock,
+import type {
+  PortfolioCaseContract,
+  ResumeItemContract,
+  ResumePortfolioMappingEntry,
+  ResumeSummaryBlock,
 } from "./contracts"
 import { parsePortfolioCtaHref } from "./hash"
 
@@ -67,7 +66,7 @@ export function validateResumePortfolioMapping(
     resumeItems.filter((item) => !item.hasPortfolio).map((item) => item.resumeItemId)
   )
   const caseIdSet = new Set(input.cases.map((item) => item.caseId))
-  const sectionIdSet = new Set(PORTFOLIO_SECTION_IDS)
+  const caseByCaseId = new Map(input.cases.map((item) => [item.caseId, item]))
 
   const resumeItemCount = new Map<string, number>()
   const caseCount = new Map<string, number>()
@@ -99,7 +98,11 @@ export function validateResumePortfolioMapping(
       )
     }
 
-    if (!sectionIdSet.has(mapping.defaultSectionId)) {
+    const matchedCase = caseByCaseId.get(mapping.portfolioCaseId)
+    if (!matchedCase) continue
+
+    const matchedSectionIds = new Set(matchedCase.sections.map((section) => section.id))
+    if (!matchedSectionIds.has(mapping.defaultSectionId)) {
       pushUnique(
         errors,
         `허용되지 않은 sectionId가 매핑에 포함되어 있습니다: ${mapping.defaultSectionId}`

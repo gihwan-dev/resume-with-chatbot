@@ -2,7 +2,7 @@
 import type { CollectionEntry } from "astro:content"
 import { Markdown } from "@astropub/md"
 import { Badge } from "@/components/ui/badge"
-import type { PortfolioCaseContract, PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
+import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
 import { parsePortfolioCaseBody } from "@/lib/resume-portfolio/portfolio-case-body"
 
 interface Props {
@@ -11,7 +11,10 @@ interface Props {
 }
 
 const { portfolioCase, project } = Astro.props
-const parsedBody = parsePortfolioCaseBody(project.body ?? "", { caseId: portfolioCase.caseId })
+const parsedBody = parsePortfolioCaseBody(project.body ?? "", {
+  caseId: portfolioCase.caseId,
+  sections: portfolioCase.sections,
+})
 
 const sectionById = new Map(parsedBody.sections.map((section) => [section.id, section]))
 const tldrSection = sectionById.get("tldr")
@@ -22,18 +25,6 @@ if (!tldrSection) {
 const visibleTechStack = project.data.techStack?.slice(0, 3) ?? []
 const hiddenTechStack = project.data.techStack?.slice(3) ?? []
 const bodySections = parsedBody.sections.filter((section) => section.id !== "tldr")
-
-function getSectionClass(sectionId: PortfolioSectionId) {
-  if (sectionId === "key-decisions") {
-    return "scroll-mt-24 space-y-5 print:break-inside-avoid sm:space-y-6"
-  }
-
-  if (sectionId === "implementation-highlights") {
-    return "scroll-mt-24 space-y-4 print:break-inside-avoid sm:space-y-5"
-  }
-
-  return "scroll-mt-24 space-y-4 print:break-inside-avoid sm:space-y-5"
-}
 ---
 
 <article
@@ -45,6 +36,7 @@ function getSectionClass(sectionId: PortfolioSectionId) {
     id="tldr"
     class="scroll-mt-24 space-y-6 print:break-inside-avoid sm:space-y-7"
     data-portfolio-section="tldr"
+    data-portfolio-section-heading={tldrSection.heading}
   >
     <div class="space-y-3">
       <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-resume-primary/85">
@@ -104,7 +96,12 @@ function getSectionClass(sectionId: PortfolioSectionId) {
   </section>
 
   {bodySections.map((section) => (
-    <section id={section.id} class={getSectionClass(section.id)} data-portfolio-section={section.id}>
+    <section
+      id={section.id}
+      class="scroll-mt-24 space-y-4 print:break-inside-avoid sm:space-y-5"
+      data-portfolio-section={section.id}
+      data-portfolio-section-heading={section.heading}
+    >
       <h2 class="text-xl font-bold tracking-tight text-resume-text-heading sm:text-2xl print:text-slate-900">
         {section.heading}
       </h2>

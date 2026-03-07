@@ -1,5 +1,9 @@
 import { type CollectionEntry, getCollection } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
+import {
+  DEFAULT_PORTFOLIO_SECTIONS,
+  findPortfolioSectionsByCaseId,
+} from "@/lib/resume-portfolio/content"
 import { parsePortfolioCaseBody } from "@/lib/resume-portfolio/portfolio-case-body"
 
 /**
@@ -92,7 +96,8 @@ ${workSection.join("\n\n")}`)
       const dateRange = formatDateRange(p.data.dateStart)
       const techStack = p.data.techStack.join(", ")
       const body = p.body?.trim()
-      const parsedBody = parsePortfolioCaseBody(p.body ?? "", { caseId: p.id })
+      const sections = findPortfolioSectionsByCaseId(p.id) ?? DEFAULT_PORTFOLIO_SECTIONS
+      const parsedBody = parsePortfolioCaseBody(p.body ?? "", { caseId: p.id, sections })
 
       let section = `### ${index + 1}. ${p.data.title}
 - 기간: ${dateRange}

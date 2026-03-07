@@ -1,12 +1,12 @@
 import { RESUME_PORTFOLIO_CONTENT_V2 } from "./content"
 import type {
   PortfolioCaseContract,
+  PortfolioSectionDefinition,
   ResumeItemContract,
   ResumePortfolioContentItem,
   ResumePortfolioMappingEntry,
   ResumeSummaryBlock,
 } from "./contracts"
-import { PORTFOLIO_SECTION_IDS } from "./contracts"
 import { buildPortfolioCtaHref } from "./hash"
 
 type ProjectEntryLike = {
@@ -36,19 +36,42 @@ function assertNoDuplicates(items: readonly string[], label: string) {
 }
 
 function validateSectionContract(item: ResumePortfolioContentItem) {
-  const hasExactSectionContract =
-    item.sections.length === PORTFOLIO_SECTION_IDS.length &&
-    item.sections.every((section, index) => section === PORTFOLIO_SECTION_IDS[index])
-
-  if (!hasExactSectionContract) {
-    throw new Error(`sections must exactly match portfolio section contract: ${item.resumeItemId}`)
+  if (item.sections.length === 0) {
+    throw new Error(`sections must not be empty: ${item.resumeItemId}`)
   }
 
-  if (!item.sections.includes(item.defaultSectionId)) {
+  const sectionIdSet = new Set<string>()
+  for (const section of item.sections) {
+    if (!section.id.trim()) {
+      throw new Error(`section id must not be empty: ${item.resumeItemId}`)
+    }
+
+    if (!section.heading.trim()) {
+      throw new Error(`section heading must not be empty: ${item.resumeItemId}`)
+    }
+
+    if (sectionIdSet.has(section.id)) {
+      throw new Error(`Duplicate section id in resume portfolio content: ${item.resumeItemId}`)
+    }
+
+    sectionIdSet.add(section.id)
+  }
+
+  if (!sectionIdSet.has(item.defaultSectionId)) {
     throw new Error(
       `defaultSectionId must be included in sections: ${item.resumeItemId} (${item.defaultSectionId})`
     )
   }
+}
+
+function cloneSections(
+  sections: readonly PortfolioSectionDefinition[]
+): PortfolioSectionDefinition[] {
+  return sections.map((section) => ({
+    id: section.id,
+    heading: section.heading,
+    legacyAliases: section.legacyAliases ? [...section.legacyAliases] : undefined,
+  }))
 }
 
 export function buildResumePortfolioContracts<TProjectEntry extends ProjectEntryLike>(
@@ -110,7 +133,7 @@ export function buildResumePortfolioContracts<TProjectEntry extends ProjectEntry
       caseId: item.projectId,
       routePath: "/portfolio",
       title: project.data.title,
-      sections: [...PORTFOLIO_SECTION_IDS],
+      sections: cloneSections(item.sections),
       ctaLabel: item.ctaLabel,
     })
 
