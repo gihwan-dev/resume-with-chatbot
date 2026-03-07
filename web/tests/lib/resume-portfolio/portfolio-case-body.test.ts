@@ -14,10 +14,11 @@ const DEFAULT_SECTIONS: readonly PortfolioSectionDefinition[] = [
 const NEW_GENERATION_SECTIONS: readonly PortfolioSectionDefinition[] = [
   { id: "tldr", heading: "TL;DR" },
   { id: "shared-tension", heading: "왜 이 문제를 먼저 풀어야 했나" },
-  { id: "complexity-axes", heading: "내가 해결한 복잡성은 세 가지였다" },
+  { id: "complexity-axes", heading: "내가 해결한 복잡성은 네 가지였다" },
   { id: "chart-extensibility", heading: "주제 1. 차트 추가 비용을 줄이기 위한 구조 정리" },
   { id: "state-lifecycle", heading: "주제 2. 상태 생성과 초기화를 한 패턴으로 맞추기" },
-  { id: "sql-analysis-ux", heading: "주제 3. 복잡한 SQL 분석을 실제로 탐색 가능한 UX로 만들기" },
+  { id: "storage-migration", heading: "주제 3. 대시보드 레이아웃 저장소를 webEnv로 전환하기" },
+  { id: "sql-analysis-ux", heading: "주제 4. SQL 분석 화면 핵심 상호작용 구현" },
   { id: "overall-change", heading: "그래서 전체적으로 무엇이 달라졌나" },
   { id: "verification", heading: "어떻게 확인했나" },
   { id: "learned", heading: "What I Learned" },
@@ -188,16 +189,16 @@ describe("parsePortfolioCaseBody", () => {
     expect(result.sections).toHaveLength(6)
   })
 
-  it("정상 케이스: 케이스별 9섹션 계약으로 파싱한다", () => {
+  it("정상 케이스: 케이스별 10섹션 계약으로 파싱한다", () => {
     const newGenerationBody = `
 ## TL;DR
-복잡성을 세 축으로 정리했습니다.
+복잡성을 네 축으로 정리했습니다.
 
 ## 왜 이 문제를 먼저 풀어야 했나
 공통 긴장감 설명
 
-## 내가 해결한 복잡성은 세 가지였다
-세 축 요약
+## 내가 해결한 복잡성은 네 가지였다
+네 축 요약
 
 ## 주제 1. 차트 추가 비용을 줄이기 위한 구조 정리
 내용 1
@@ -205,8 +206,11 @@ describe("parsePortfolioCaseBody", () => {
 ## 주제 2. 상태 생성과 초기화를 한 패턴으로 맞추기
 내용 2
 
-## 주제 3. 복잡한 SQL 분석을 실제로 탐색 가능한 UX로 만들기
+## 주제 3. 대시보드 레이아웃 저장소를 webEnv로 전환하기
 내용 3
+
+## 주제 4. SQL 분석 화면 핵심 상호작용 구현
+내용 4
 
 ## 그래서 전체적으로 무엇이 달라졌나
 통합 변화
@@ -223,13 +227,14 @@ describe("parsePortfolioCaseBody", () => {
       sections: NEW_GENERATION_SECTIONS,
     })
 
-    expect(result.sections).toHaveLength(9)
+    expect(result.sections).toHaveLength(10)
     expect(result.sections.map((section) => section.id)).toEqual([
       "tldr",
       "shared-tension",
       "complexity-axes",
       "chart-extensibility",
       "state-lifecycle",
+      "storage-migration",
       "sql-analysis-ux",
       "overall-change",
       "verification",

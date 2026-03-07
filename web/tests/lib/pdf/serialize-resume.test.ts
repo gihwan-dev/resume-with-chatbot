@@ -212,8 +212,18 @@ describe("serializeResumeData", () => {
     expect(mockGetObsidianBlogPosts).toHaveBeenCalledWith({ limit: 5 })
     expect(result.blogPosts).toEqual(blogPosts)
     expect(result.projects).toHaveLength(4)
-    expect(result.projects[0].summary).toContain("운영 대시보드의 병목을 갱신 구조")
-    expect(result.projects[0].accomplishments.length).toBeGreaterThan(0)
+    const customerDashboardProject = result.projects.find(
+      (project) => project.resumeItemId === "project-exem-customer-dashboard"
+    )
+    const expectedCustomerDashboard = RESUME_PORTFOLIO_CONTENT_V2.find(
+      (item) => item.resumeItemId === "project-exem-customer-dashboard"
+    )
+    expect(customerDashboardProject).toBeDefined()
+    expect(expectedCustomerDashboard).toBeDefined()
+    expect(customerDashboardProject?.summary).toBe(expectedCustomerDashboard?.resumeSummary)
+    expect(customerDashboardProject?.accomplishments.length).toBe(
+      expectedCustomerDashboard?.accomplishments.length
+    )
     expect(result.work).toHaveLength(2)
     expect(result.work[0].projectTitles).toEqual([])
     expect(result.work[0].projectCases).toHaveLength(4)
