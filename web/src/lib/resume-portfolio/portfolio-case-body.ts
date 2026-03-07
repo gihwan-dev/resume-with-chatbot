@@ -1,21 +1,7 @@
-import type { PortfolioSectionId } from "./contracts"
-
-interface PortfolioBodySectionDefinition {
-  id: PortfolioSectionId
-  heading: string
-}
-
-const PORTFOLIO_BODY_SECTIONS: readonly PortfolioBodySectionDefinition[] = [
-  { id: "tldr", heading: "TL;DR" },
-  { id: "problem-definition", heading: "문제 정의" },
-  { id: "key-decisions", heading: "핵심 의사결정" },
-  { id: "implementation-highlights", heading: "구현 전략" },
-  { id: "validation-impact", heading: "검증 및 결과" },
-  { id: "learned", heading: "What I Learned" },
-] as const
+import type { PortfolioSectionDefinition } from "./contracts"
 
 export interface PortfolioCaseBodySection {
-  id: PortfolioSectionId
+  id: string
   heading: string
   markdown: string
 }
@@ -28,6 +14,11 @@ export interface ParsedPortfolioCaseBody {
 interface FenceState {
   character: "`" | "~"
   length: number
+}
+
+interface ParsePortfolioCaseBodyOptions {
+  caseId?: string
+  sections: readonly PortfolioSectionDefinition[]
 }
 
 function sectionContext(caseId?: string): string {
@@ -121,9 +112,53 @@ function extractSummaryFromTldr(markdown: string, caseId?: string): string {
   return summary
 }
 
-function toSectionIdMap(caseId?: string): Map<string, PortfolioSectionId> {
+function ensureSectionContract(
+  sections: readonly PortfolioSectionDefinition[],
+  caseId?: string
+): readonly PortfolioSectionDefinition[] {
+  if (sections.length === 0) {
+    throw new Error(`Portfolio section contract is empty${sectionContext(caseId)}`)
+  }
+
+  const idSet = new Set<string>()
+  const headingSet = new Set<string>()
+
+  for (const section of sections) {
+    if (!section.id.trim()) {
+      throw new Error(`Section id must not be empty${sectionContext(caseId)}`)
+    }
+
+    if (!section.heading.trim()) {
+      throw new Error(`Section heading must not be empty${sectionContext(caseId)}`)
+    }
+
+    if (idSet.has(section.id)) {
+      throw new Error(`Duplicate section id in contract: ${section.id}${sectionContext(caseId)}`)
+    }
+
+    if (headingSet.has(section.heading)) {
+      throw new Error(
+        `Duplicate section heading in contract: ${section.heading}${sectionContext(caseId)}`
+      )
+    }
+
+    idSet.add(section.id)
+    headingSet.add(section.heading)
+  }
+
+  if (!idSet.has("tldr")) {
+    throw new Error(`Section contract must include "tldr"${sectionContext(caseId)}`)
+  }
+
+  return sections
+}
+
+function toSectionHeadingMap(
+  sections: readonly PortfolioSectionDefinition[],
+  caseId?: string
+): Map<string, string> {
   return new Map(
-    PORTFOLIO_BODY_SECTIONS.map((section) => {
+    sections.map((section) => {
       if (!section.heading.trim()) {
         throw new Error(`Invalid portfolio section heading configuration${sectionContext(caseId)}`)
       }
@@ -135,7 +170,7 @@ function toSectionIdMap(caseId?: string): Map<string, PortfolioSectionId> {
 
 export function parsePortfolioCaseBody(
   body: string,
-  options: { caseId?: string } = {}
+  options: ParsePortfolioCaseBodyOptions
 ): ParsedPortfolioCaseBody {
   const { caseId } = options
   const normalizedBody = body.replace(/\r\n/g, "\n").trim()
@@ -143,11 +178,12 @@ export function parsePortfolioCaseBody(
     throw new Error(`Portfolio body is empty${sectionContext(caseId)}`)
   }
 
-  const headingToId = toSectionIdMap(caseId)
+  const sections = ensureSectionContract(options.sections, caseId)
+  const headingToId = toSectionHeadingMap(sections, caseId)
   const lines = normalizedBody.split("\n")
-  const sectionMarkdownMap = new Map<PortfolioSectionId, string>()
+  const sectionMarkdownMap = new Map<string, string>()
 
-  let activeSectionId: PortfolioSectionId | null = null
+  let activeSectionId: string | null = null
   let activeSectionHeading = ""
   let activeBuffer: string[] = []
   let expectedSectionIndex = 0
@@ -182,7 +218,7 @@ export function parsePortfolioCaseBody(
     if (openingFenceState) {
       if (!activeSectionId) {
         throw new Error(
-          `Portfolio body must start with "## ${PORTFOLIO_BODY_SECTIONS[0].heading}"${sectionContext(caseId)}`
+          `Portfolio body must start with "## ${sections[0].heading}"${sectionContext(caseId)}`
         )
       }
 
@@ -195,7 +231,7 @@ export function parsePortfolioCaseBody(
     if (headingMatch) {
       const headingText = headingMatch[1].trim()
       const sectionId = headingToId.get(headingText)
-      const expectedSection = PORTFOLIO_BODY_SECTIONS[expectedSectionIndex]
+      const expectedSection = sections[expectedSectionIndex]
 
       if (!sectionId) {
         throw new Error(`Unexpected H2 heading "${headingText}"${sectionContext(caseId)}`)
@@ -218,7 +254,7 @@ export function parsePortfolioCaseBody(
     if (!activeSectionId) {
       if (line.trim().length === 0) continue
       throw new Error(
-        `Portfolio body must start with "## ${PORTFOLIO_BODY_SECTIONS[0].heading}"${sectionContext(caseId)}`
+        `Portfolio body must start with "## ${sections[0].heading}"${sectionContext(caseId)}`
       )
     }
 
@@ -227,17 +263,16 @@ export function parsePortfolioCaseBody(
 
   flushSection()
 
-  if (sectionMarkdownMap.size !== PORTFOLIO_BODY_SECTIONS.length) {
-    const missingHeadings = PORTFOLIO_BODY_SECTIONS.filter(
-      (section) => !sectionMarkdownMap.has(section.id)
-    )
+  if (sectionMarkdownMap.size !== sections.length) {
+    const missingHeadings = sections
+      .filter((section) => !sectionMarkdownMap.has(section.id))
       .map((section) => section.heading)
       .join(", ")
 
     throw new Error(`Missing required sections: ${missingHeadings}${sectionContext(caseId)}`)
   }
 
-  const sections = PORTFOLIO_BODY_SECTIONS.map((section) => {
+  const resolvedSections = sections.map((section) => {
     const markdown = sectionMarkdownMap.get(section.id)
     if (!markdown) {
       throw new Error(
@@ -251,6 +286,7 @@ export function parsePortfolioCaseBody(
       markdown,
     }
   })
+
   const tldrMarkdown = sectionMarkdownMap.get("tldr")
   if (!tldrMarkdown) {
     throw new Error(`Missing TL;DR section${sectionContext(caseId)}`)
@@ -258,6 +294,6 @@ export function parsePortfolioCaseBody(
 
   return {
     summary: extractSummaryFromTldr(tldrMarkdown, caseId),
-    sections,
+    sections: resolvedSections,
   }
 }

@@ -69,6 +69,16 @@ test.describe("Portfolio deep link routing", () => {
       .toBe("#tldr")
   })
 
+  test("new-generation 레거시 섹션 해시는 alias로 정규화된다", async ({ page }) => {
+    await page.goto("/portfolio/exem-new-generation#problem-definition")
+
+    await expect
+      .poll(async () => page.evaluate(() => window.location.hash), {
+        message: "Legacy hash should normalize to #shared-tension",
+      })
+      .toBe("#shared-tension")
+  })
+
   test("유효하지 않은 hash 접근 시 #tldr로 폴백한다", async ({ page }) => {
     await page.goto("/portfolio/exem-data-grid#invalid")
 

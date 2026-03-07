@@ -28,8 +28,11 @@ describe("resume-portfolio hash", () => {
     })
   })
 
-  it("parsePortfolioCtaHref: 허용되지 않은 section이면 null을 반환한다", () => {
-    expect(parsePortfolioCtaHref("/portfolio/exem-data-grid#overview")).toBeNull()
+  it("parsePortfolioCtaHref: section 형식만 맞으면 문자열로 파싱한다", () => {
+    expect(parsePortfolioCtaHref("/portfolio/exem-data-grid#overview")).toEqual({
+      caseId: "exem-data-grid",
+      sectionId: "overview",
+    })
   })
 
   it("parsePortfolioCtaHref: 레거시 /portfolio#case.section 포맷은 null을 반환한다", () => {
@@ -50,8 +53,11 @@ describe("resume-portfolio hash", () => {
     })
   })
 
-  it("parsePortfolioPath: 허용되지 않은 section이면 null을 반환한다", () => {
-    expect(parsePortfolioPath("/exem-data-grid#threads")).toBeNull()
+  it("parsePortfolioPath: section 형식만 맞으면 문자열로 파싱한다", () => {
+    expect(parsePortfolioPath("/exem-data-grid#threads")).toEqual({
+      caseId: "exem-data-grid",
+      sectionId: "threads",
+    })
   })
 
   it("parsePortfolioPath: section이 없으면 null을 반환한다", () => {

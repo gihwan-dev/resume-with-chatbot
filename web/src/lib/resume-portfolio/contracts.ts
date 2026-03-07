@@ -1,13 +1,8 @@
-export const PORTFOLIO_SECTION_IDS = [
-  "tldr",
-  "problem-definition",
-  "key-decisions",
-  "implementation-highlights",
-  "validation-impact",
-  "learned",
-] as const
-
-export type PortfolioSectionId = (typeof PORTFOLIO_SECTION_IDS)[number]
+export interface PortfolioSectionDefinition {
+  id: string
+  heading: string
+  legacyAliases?: string[]
+}
 
 export interface ImpactItem {
   value: string
@@ -17,7 +12,7 @@ export interface ImpactItem {
 
 export interface PortfolioAnchor {
   caseId: string
-  sectionId: PortfolioSectionId
+  sectionId: string
 }
 
 export interface ResumeSummaryBlock {
@@ -34,7 +29,7 @@ export interface ResumeSummaryBlock {
 export interface ResumePortfolioMappingEntry {
   resumeItemId: string
   portfolioCaseId: string
-  defaultSectionId: PortfolioSectionId
+  defaultSectionId: string
 }
 
 export interface ResumeItemContract {
@@ -46,7 +41,7 @@ export interface PortfolioCaseContract {
   caseId: string
   routePath: "/portfolio"
   title: string
-  sections: PortfolioSectionId[]
+  sections: PortfolioSectionDefinition[]
   ctaLabel: string
 }
 
@@ -57,6 +52,6 @@ export interface ResumePortfolioContentItem {
   accomplishments: string[]
   hasPortfolio: boolean
   ctaLabel: string
-  defaultSectionId: PortfolioSectionId
-  sections: PortfolioSectionId[]
+  defaultSectionId: string
+  sections: PortfolioSectionDefinition[]
 }

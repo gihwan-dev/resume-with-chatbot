@@ -36,6 +36,29 @@ test.describe("Portfolio TOC behavior", () => {
     }
   })
 
+  test("new-generation 케이스는 9개 목차 섹션을 노출한다", async ({ page }) => {
+    await gotoPortfolioDetail(page, "/portfolio/exem-new-generation#tldr")
+
+    const links = page.locator(".toc-link")
+    await expect(links).toHaveCount(9)
+
+    const expectedSectionIds = [
+      "tldr",
+      "shared-tension",
+      "complexity-axes",
+      "chart-extensibility",
+      "state-lifecycle",
+      "sql-analysis-ux",
+      "overall-change",
+      "verification",
+      "learned",
+    ]
+
+    for (const sectionId of expectedSectionIds) {
+      await expect(page.locator(`#${sectionId}`)).toHaveCount(1)
+    }
+  })
+
   test("레거시 딥링크 진입 시 기본 섹션으로 폴백하고 목차 active가 동기화된다", async ({
     page,
   }) => {

@@ -70,11 +70,27 @@ describe("resume portfolio content schema", () => {
     const brokenContent = RESUME_PORTFOLIO_CONTENT_V2.map((item) => ({ ...item }))
     brokenContent[0] = {
       ...brokenContent[0],
-      sections: ["tldr", "problem-definition"],
+      defaultSectionId: "problem-definition",
+      sections: [{ id: "tldr", heading: "TL;DR" }],
     }
 
     expect(() => buildResumePortfolioContracts(MOCK_PROJECTS, brokenContent)).toThrow(
-      "sections must exactly match portfolio section contract"
+      "defaultSectionId must be included in sections"
+    )
+  })
+
+  it("실패 케이스: sections 내 id가 중복되면 예외를 던진다", () => {
+    const brokenContent = RESUME_PORTFOLIO_CONTENT_V2.map((item) => ({ ...item }))
+    brokenContent[1] = {
+      ...brokenContent[1],
+      sections: [
+        { id: "tldr", heading: "TL;DR" },
+        { id: "tldr", heading: "중복" },
+      ],
+    }
+
+    expect(() => buildResumePortfolioContracts(MOCK_PROJECTS, brokenContent)).toThrow(
+      "Duplicate section id in resume portfolio content"
     )
   })
 })

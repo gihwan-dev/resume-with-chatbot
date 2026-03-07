@@ -2,7 +2,7 @@
 import { type CollectionEntry, getCollection } from "astro:content"
 import CaseStudySection from "@/components/portfolio/case-study-section.astro"
 import Layout from "@/layouts/Layout.astro"
-import type { PortfolioCaseContract, PortfolioSectionId } from "@/lib/resume-portfolio/contracts"
+import type { PortfolioCaseContract } from "@/lib/resume-portfolio/contracts"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 
 export async function getStaticPaths() {
@@ -33,7 +33,7 @@ interface PortfolioSlugPageProps {
   portfolioCase: PortfolioCaseContract
   project: CollectionEntry<"projects">
   resumeItemId: string | null
-  defaultSectionId: PortfolioSectionId
+  defaultSectionId: string
 }
 
 const { portfolioCase, project, resumeItemId, defaultSectionId } =
@@ -43,6 +43,10 @@ if (!project) {
   throw new Error(`Project not found for caseId: ${portfolioCase.caseId}`)
 }
 
+const allowedSectionIds = portfolioCase.sections.map((section) => section.id)
+const legacyAliasPairs = portfolioCase.sections.flatMap((section) =>
+  (section.legacyAliases ?? []).map((alias) => ({ alias, target: section.id }))
+)
 const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
 ---
 
@@ -64,11 +68,14 @@ const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
     <script
       is:inline
       data-astro-rerun
-      define:vars={{ allowedSectionIds: portfolioCase.sections, defaultSectionId, caseId: portfolioCase.caseId }}
+      define:vars={{ allowedSectionIds, defaultSectionId, caseId: portfolioCase.caseId, legacyAliasPairs }}
     >
       const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
       const PORTFOLIO_RETURN_PENDING_KEY = "__resume_portfolio_return_pending"
-      const sectionIdSet = new Set(allowedSectionIds)
+      const sectionIdSet = new Set(allowedSectionIds.map((id) => id.toLowerCase()))
+      const sectionAliasMap = new Map(
+        legacyAliasPairs.map(({ alias, target }) => [alias.toLowerCase(), target.toLowerCase()])
+      )
       const expectedPathname = `/portfolio/${caseId}`
 
       const portfolioWindow = window
@@ -86,7 +93,15 @@ const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
 
       function normalizeSectionId(sectionId) {
         if (!sectionId) return null
-        if (sectionIdSet.has(sectionId)) return sectionId
+        const normalizedSectionId = sectionId.trim().toLowerCase()
+        if (!normalizedSectionId) return null
+        if (sectionIdSet.has(normalizedSectionId)) return normalizedSectionId
+
+        const aliasedSectionId = sectionAliasMap.get(normalizedSectionId)
+        if (aliasedSectionId && sectionIdSet.has(aliasedSectionId)) {
+          return aliasedSectionId
+        }
+
         return null
       }
 

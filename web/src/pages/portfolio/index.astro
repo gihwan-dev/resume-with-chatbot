@@ -13,7 +13,10 @@ const portfolioProjects = cases
     const project = projectByCaseId.get(portfolioCase.caseId)
     if (!project) return null
 
-    const parsedBody = parsePortfolioCaseBody(project.body ?? "", { caseId: portfolioCase.caseId })
+    const parsedBody = parsePortfolioCaseBody(project.body ?? "", {
+      caseId: portfolioCase.caseId,
+      sections: portfolioCase.sections,
+    })
 
     return { portfolioCase, project, summary: parsedBody.summary }
   })

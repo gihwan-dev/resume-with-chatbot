@@ -1,7 +1,6 @@
-import { PORTFOLIO_SECTION_IDS, type PortfolioAnchor, type PortfolioSectionId } from "./contracts"
+import type { PortfolioAnchor } from "./contracts"
 
 const CASE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-const SECTION_ID_SET = new Set<PortfolioSectionId>(PORTFOLIO_SECTION_IDS)
 
 function normalizeCaseId(caseId: string): string {
   const normalizedCaseId = caseId.trim().toLowerCase()
@@ -13,18 +12,18 @@ function normalizeCaseId(caseId: string): string {
   return normalizedCaseId
 }
 
-export function buildPortfolioCtaHref(caseId: string, sectionId: PortfolioSectionId): string {
-  const normalizedCaseId = normalizeCaseId(caseId)
-  return `/portfolio/${normalizedCaseId}#${sectionId}`
+function normalizeSectionId(sectionId: string): string | null {
+  const normalizedSectionId = sectionId.trim().toLowerCase()
+  return normalizedSectionId.length > 0 ? normalizedSectionId : null
 }
 
-function normalizeSectionId(sectionId: string): PortfolioSectionId | null {
-  const normalizedSectionId = sectionId.trim().toLowerCase()
-  if (!normalizedSectionId) return null
-
-  return SECTION_ID_SET.has(normalizedSectionId as PortfolioSectionId)
-    ? (normalizedSectionId as PortfolioSectionId)
-    : null
+export function buildPortfolioCtaHref(caseId: string, sectionId: string): string {
+  const normalizedCaseId = normalizeCaseId(caseId)
+  const normalizedSectionId = normalizeSectionId(sectionId)
+  if (!normalizedSectionId) {
+    throw new Error(`Invalid sectionId format: ${sectionId}`)
+  }
+  return `/portfolio/${normalizedCaseId}#${normalizedSectionId}`
 }
 
 export function parsePortfolioCtaHref(href: string): PortfolioAnchor | null {
@@ -49,9 +48,13 @@ export function parsePortfolioCtaHref(href: string): PortfolioAnchor | null {
 }
 
 // Backward-compatible aliases kept for existing call sites and tests.
-export function buildPortfolioPath(caseId: string, sectionId: PortfolioSectionId): string {
+export function buildPortfolioPath(caseId: string, sectionId: string): string {
   const normalizedCaseId = normalizeCaseId(caseId)
-  return `/${normalizedCaseId}#${sectionId}`
+  const normalizedSectionId = normalizeSectionId(sectionId)
+  if (!normalizedSectionId) {
+    throw new Error(`Invalid sectionId format: ${sectionId}`)
+  }
+  return `/${normalizedCaseId}#${normalizedSectionId}`
 }
 
 export function parsePortfolioPath(pathAndHash: string): PortfolioAnchor | null {
