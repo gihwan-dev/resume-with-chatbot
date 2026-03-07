@@ -84,9 +84,10 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
       "공용 그리드에서 table 태그 기반 구조의 레이아웃 제약이 커져, 통합 테스트로 기존 동작을 고정한 뒤 div 기반 렌더링으로 마이그레이션했습니다. Row absolute + Cell flex 구조를 정착시켜 DOM 노드 90% 감소와 리사이즈 처리 22ms→0.5ms 개선을 확인했습니다.",
     accomplishments: [
       "table 태그 기반 구조는 레이아웃 제약이 많아 기능 확장 비용이 커졌고, 리팩토링 전후 동작을 통합 테스트로 고정한 뒤 div 기반 렌더링으로 마이그레이션했습니다.",
-      "리사이즈 스펙 변경에 맞춰 Cell absolute 1차 구조에서 Row absolute + Cell flex 2차 구조로 재설계해 열 조작 동작과 레이아웃 제약을 일치시켰습니다.",
+      "리사이즈 스펙 변경에 맞춰 Cell absolute 1차 구조에서 Row absolute + Cell flex 2차 구조로 재설계해 열 조작 동작과 레이아웃 제약을 일치시켰고, DOM 노드 90% 감소와 리사이즈 처리 22ms→0.5ms 개선을 확인했습니다.",
       "빈 공간 최소화, 영향 방향, 리프 헤더 핸들, 그룹 헤더 합산 등 제약 조건을 규칙으로 명시하고 예외 시나리오는 별도 테스트로 관리해 조합 회귀를 줄였습니다.",
-      "Core - State - UI 분리와 호환표 기반 검증 체계를 운영해 DOM 노드 90% 감소, 리사이즈 처리 22ms→0.5ms 개선을 확인했습니다.",
+      "Core - State - UI 계층으로 분리해 제어/비제어 인터페이스를 일관화하고 테스트 가능성, 확장성, 변경 영향 분리 기준을 정착시켰습니다.",
+      "기능 호환표를 기준으로 Storybook 시나리오, 브라우저 통합 테스트, 회귀 타깃 문서를 함께 운영해 기능 조합 회귀를 관리했습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
