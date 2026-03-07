@@ -3,9 +3,6 @@ export interface SerializedWorkProjectCase {
   title: string
   summary: string
   accomplishments: string[]
-  architectureSummary?: string
-  measurementMethod?: string
-  tradeOffs?: string[]
 }
 
 export interface SerializedProfile {
@@ -35,9 +32,6 @@ export interface SerializedProject {
   hasPortfolio: boolean
   technologies: string[]
   accomplishments: string[]
-  architectureSummary?: string
-  measurementMethod?: string
-  tradeOffs?: string[]
   ctaLabel?: string
   ctaHref?: string
 }

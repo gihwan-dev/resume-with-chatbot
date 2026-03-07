@@ -189,7 +189,6 @@ test.describe("Portfolio TOC behavior", () => {
         implementationHighlights: document.getElementById("implementation-highlights"),
         validationImpact: document.getElementById("validation-impact"),
         learned: document.getElementById("learned"),
-        firstDecisionItem: document.querySelector("#key-decisions ol > li"),
       }
 
       const resultEntries = Object.entries(targets).map(([key, element]) => {
@@ -216,7 +215,6 @@ test.describe("Portfolio TOC behavior", () => {
       "implementationHighlights",
       "validationImpact",
       "learned",
-      "firstDecisionItem",
     ] as const) {
       const styleEntry = styleMap?.[selector]
       expect(styleEntry, `${selector} selector style is required`).toBeTruthy()

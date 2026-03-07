@@ -1,5 +1,6 @@
-import { getCollection, type CollectionEntry } from "astro:content"
+import { type CollectionEntry, getCollection } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
+import { parsePortfolioCaseBody } from "@/lib/resume-portfolio/portfolio-case-body"
 
 /**
  * 날짜를 YYYY.MM 형식으로 변환
@@ -88,14 +89,15 @@ ${workSection.join("\n\n")}`)
     )
 
     const projectSections = sortedProjects.map((p, index) => {
-      const dateRange = formatDateRange(p.data.dateStart, p.data.dateEnd)
+      const dateRange = formatDateRange(p.data.dateStart)
       const techStack = p.data.techStack.join(", ")
       const body = p.body?.trim()
+      const parsedBody = parsePortfolioCaseBody(p.body ?? "", { caseId: p.id })
 
       let section = `### ${index + 1}. ${p.data.title}
 - 기간: ${dateRange}
 - 기술: ${techStack}
-- 요약: ${p.data.description}`
+- 요약: ${parsedBody.summary}`
 
       if (body) {
         section += `\n\n${body}`

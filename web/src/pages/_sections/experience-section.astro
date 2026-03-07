@@ -30,10 +30,7 @@ const { experiences } = Astro.props as Props
 
 function normalizeExperienceMarkdown(text: string): string {
   // CommonMark parser does not close strong emphasis for patterns like `**text**를`.
-  return text.replace(
-    /(^|[^\p{L}\p{N}*])\*\*([^*]+)\*\*(?=[가-힣])/gu,
-    "$1<strong>$2</strong>"
-  )
+  return text.replace(/(^|[^\p{L}\p{N}*])\*\*([^*]+)\*\*(?=[가-힣])/gu, "$1<strong>$2</strong>")
 }
 ---
 
