@@ -15,37 +15,6 @@ export interface ImpactItem {
   description: string
 }
 
-export interface DecisionItem {
-  title: string
-  whyThisChoice: string
-  alternative: string
-  tradeOff: string
-}
-
-export interface ValidationImpact {
-  measurementMethod: string
-  metrics: string[]
-  operationalImpact: string
-}
-
-export interface ImplementationGroup {
-  title: string
-  items: string[]
-}
-
-export interface ProjectStoryThread {
-  tldrSummary: string
-  keyMetrics: ImpactItem[]
-  coreApproach: string
-  problemDefinition: string
-  problemPoints: string[]
-  decisions: DecisionItem[]
-  implementationHighlights: string[]
-  implementationGroups?: ImplementationGroup[]
-  validationImpact: ValidationImpact
-  lessonsLearned: string
-}
-
 export interface PortfolioAnchor {
   caseId: string
   sectionId: PortfolioSectionId

@@ -6,6 +6,7 @@ import type {
   ResumePortfolioMappingEntry,
   ResumeSummaryBlock,
 } from "./contracts"
+import { PORTFOLIO_SECTION_IDS } from "./contracts"
 import { buildPortfolioCtaHref } from "./hash"
 
 type ProjectEntryLike = {
@@ -35,6 +36,14 @@ function assertNoDuplicates(items: readonly string[], label: string) {
 }
 
 function validateSectionContract(item: ResumePortfolioContentItem) {
+  const hasExactSectionContract =
+    item.sections.length === PORTFOLIO_SECTION_IDS.length &&
+    item.sections.every((section, index) => section === PORTFOLIO_SECTION_IDS[index])
+
+  if (!hasExactSectionContract) {
+    throw new Error(`sections must exactly match portfolio section contract: ${item.resumeItemId}`)
+  }
+
   if (!item.sections.includes(item.defaultSectionId)) {
     throw new Error(
       `defaultSectionId must be included in sections: ${item.resumeItemId} (${item.defaultSectionId})`
@@ -101,7 +110,7 @@ export function buildResumePortfolioContracts<TProjectEntry extends ProjectEntry
       caseId: item.projectId,
       routePath: "/portfolio",
       title: project.data.title,
-      sections: [...item.sections],
+      sections: [...PORTFOLIO_SECTION_IDS],
       ctaLabel: item.ctaLabel,
     })
 

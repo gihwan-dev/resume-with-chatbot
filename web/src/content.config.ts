@@ -1,6 +1,5 @@
 import { defineCollection, z } from "astro:content"
 import { glob } from "astro/loaders"
-import { projectStoryThreadSchema } from "./lib/resume-portfolio/story-thread-schema"
 
 const companyIdSchema = z
   .string()
@@ -68,20 +67,16 @@ const awards = defineCollection({
 })
 
 const projects = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/projects" }),
-  schema: z.object({
-    companyId: companyIdSchema,
-    title: z.string(),
-    company: z.string().optional(), // Link to work history
-    description: z.string().trim().min(1),
-    techStack: z.array(z.string()),
-    link: z.string().url().optional(),
-    github: z.string().url().optional(),
-    dateStart: z.coerce.date(),
-    dateEnd: z.coerce.date().optional(),
-    priority: z.number(),
-    storyThread: projectStoryThreadSchema.optional(),
-  }),
+  loader: glob({ pattern: "**/*.md", base: "./src/content/projects" }),
+  schema: z
+    .object({
+      companyId: companyIdSchema,
+      title: z.string(),
+      techStack: z.array(z.string()),
+      dateStart: z.coerce.date(),
+      priority: z.number(),
+    })
+    .strict(),
 })
 
 const skills = defineCollection({

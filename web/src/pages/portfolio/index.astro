@@ -3,6 +3,7 @@ import { getCollection } from "astro:content"
 import { Badge } from "@/components/ui/badge"
 import Layout from "@/layouts/Layout.astro"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
+import { parsePortfolioCaseBody } from "@/lib/resume-portfolio/portfolio-case-body"
 
 const projects = await getCollection("projects")
 const { cases, projectByCaseId } = buildResumePortfolioContracts(projects)
@@ -12,7 +13,9 @@ const portfolioProjects = cases
     const project = projectByCaseId.get(portfolioCase.caseId)
     if (!project) return null
 
-    return { portfolioCase, project }
+    const parsedBody = parsePortfolioCaseBody(project.body ?? "", { caseId: portfolioCase.caseId })
+
+    return { portfolioCase, project, summary: parsedBody.summary }
   })
   .filter((result): result is NonNullable<typeof result> => result !== null)
 ---
@@ -47,7 +50,7 @@ const portfolioProjects = cases
               </h2>
               
               <p class="text-resume-text-main/80 mb-6 line-clamp-3 leading-relaxed">
-                {data.project.data.description}
+                {data.summary}
               </p>
 
               {data.project.data.techStack && data.project.data.techStack.length > 0 && (

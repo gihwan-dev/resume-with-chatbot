@@ -1,4 +1,4 @@
-import { getCollection, type CollectionEntry } from "astro:content"
+import { type CollectionEntry, getCollection } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
 import { resolveProjectCompanyId, resolveWorkCompanyId } from "@/lib/experience/company-id"
 import {
@@ -7,21 +7,6 @@ import {
 } from "@/lib/experience/company-projects"
 import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import type { SerializedResumeData } from "./types"
-
-function toOptionalText(value: string | undefined): string | undefined {
-  const normalized = value?.trim()
-  return normalized ? normalized : undefined
-}
-
-function extractTradeOffs(decisions: { tradeOff: string }[] | undefined): string[] | undefined {
-  if (!decisions || decisions.length === 0) return undefined
-
-  const uniqueTradeOffs = [
-    ...new Set(decisions.map((decision) => toOptionalText(decision.tradeOff))),
-  ].filter((tradeOff): tradeOff is string => Boolean(tradeOff))
-
-  return uniqueTradeOffs.length > 0 ? uniqueTradeOffs : undefined
-}
 
 export async function serializeResumeData(): Promise<SerializedResumeData> {
   const [basics, work, projects, education, certificates, awards, skills, blogPosts]: [
@@ -75,9 +60,6 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
   })
 
   const { summaryBlocks, mappings } = buildResumePortfolioContracts(projects)
-  const projectById = new Map<string, CollectionEntry<"projects">>(
-    projects.map((project) => [project.id, project])
-  )
   const projectIdByResumeItemId = new Map(
     mappings.map((mapping) => [mapping.resumeItemId, mapping.portfolioCaseId])
   )
@@ -106,17 +88,12 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
         const summaryBlock = summaryBlockByProjectId.get(project.projectId)
         if (!summaryBlock) return []
 
-        const storyThread = projectById.get(project.projectId)?.data.storyThread
-
         return [
           {
             projectId: project.projectId,
             title: summaryBlock.title,
             summary: summaryBlock.summary,
             accomplishments: summaryBlock.accomplishments,
-            architectureSummary: toOptionalText(storyThread?.coreApproach),
-            measurementMethod: toOptionalText(storyThread?.validationImpact?.measurementMethod),
-            tradeOffs: extractTradeOffs(storyThread?.decisions),
           },
         ]
       })
@@ -137,9 +114,6 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
       }
     }),
     projects: summaryBlocks.map((summaryBlock) => {
-      const projectId = projectIdByResumeItemId.get(summaryBlock.resumeItemId)
-      const storyThread = projectId ? projectById.get(projectId)?.data.storyThread : undefined
-
       return {
         resumeItemId: summaryBlock.resumeItemId,
         title: summaryBlock.title,
@@ -147,9 +121,6 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
         hasPortfolio: summaryBlock.hasPortfolio,
         technologies: summaryBlock.technologies,
         accomplishments: summaryBlock.accomplishments,
-        architectureSummary: toOptionalText(storyThread?.coreApproach),
-        measurementMethod: toOptionalText(storyThread?.validationImpact?.measurementMethod),
-        tradeOffs: extractTradeOffs(storyThread?.decisions),
         ctaLabel: summaryBlock.ctaLabel,
         ctaHref: summaryBlock.ctaHref,
       }

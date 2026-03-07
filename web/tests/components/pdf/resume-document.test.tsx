@@ -81,8 +81,6 @@ function createMockResumeData(): SerializedResumeData {
             title: "인스턴스 통합 모니터링 대시보드 개발",
             summary: "중앙 폴링 아키텍처로 병목을 줄였습니다.",
             accomplishments: ["인지 시간 단축", "인터랙션 지연 개선"],
-            measurementMethod: "React Profiler 동일 시나리오 30회 평균",
-            tradeOffs: ["초기 구현 복잡도는 증가했지만 운영 일관성을 확보했습니다."],
           },
         ],
         projectTitles: ["매핑 누락 프로젝트"],
@@ -183,16 +181,6 @@ describe("ResumeDocument", () => {
     expect(text).not.toContain("Education")
     expect(text).not.toContain("숨김 프로젝트")
     expect(text).not.toContain("숨김 대학")
-  })
-
-  it("measurementMethod와 tradeOffs를 PDF에 렌더링하지 않는다", () => {
-    const { container } = render(<ResumeDocument data={createMockResumeData()} />)
-    const text = container.textContent ?? ""
-
-    expect(text).not.toContain("Measurement:")
-    expect(text).not.toContain("Trade-off:")
-    expect(text).not.toContain("React Profiler 동일 시나리오 30회 평균")
-    expect(text).not.toContain("초기 구현 복잡도는 증가했지만 운영 일관성을 확보했습니다.")
   })
 
   it("부분 매핑에서도 unmatched projectTitles fallback을 함께 렌더링한다", () => {

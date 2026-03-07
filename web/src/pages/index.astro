@@ -165,17 +165,50 @@ const awardsWithContent = await Promise.all(
 <script>
   const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
   const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+  const PORTFOLIO_RETURN_PENDING_KEY = "__resume_portfolio_return_pending"
+  const PORTFOLIO_RETURN_DIRECT_SCROLL_KEY = "__resume_portfolio_return_scroll_direct"
+  const PORTFOLIO_RETURN_STABLE_SCROLL_KEY = "__resume_portfolio_return_stable_scroll"
+  const PORTFOLIO_RETURN_STABLE_SCROLL_DEBOUNCE_MS = 24
 
   type ResumePageWindow = Window & {
     __resumeAnalyticsClickBound?: boolean
     __resumeSectionObserver?: IntersectionObserver
     __resumePortfolioClickBound?: boolean
+    __resumePortfolioScrollTrackingBound?: boolean
+    __resumePortfolioStableScrollTimeoutId?: number
     __resumePdfDownloadBound?: boolean
     gtag?: (command: string, eventName: string, params?: Record<string, string>) => void
   }
 
   function buildPortfolioReturnScrollKey(historyIndex: number): string {
     return `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${historyIndex}`
+  }
+
+  function persistStablePortfolioReturnScroll(scrollY: number = Math.round(window.scrollY)) {
+    sessionStorage.setItem(PORTFOLIO_RETURN_STABLE_SCROLL_KEY, Math.max(0, scrollY).toString())
+  }
+
+  function setupPortfolioReturnScrollTracking() {
+    const resumeWindow = window as ResumePageWindow
+    if (resumeWindow.__resumePortfolioScrollTrackingBound) {
+      persistStablePortfolioReturnScroll()
+      return
+    }
+
+    const scheduleStableScrollPersist = () => {
+      if (typeof resumeWindow.__resumePortfolioStableScrollTimeoutId === "number") {
+        window.clearTimeout(resumeWindow.__resumePortfolioStableScrollTimeoutId)
+      }
+
+      resumeWindow.__resumePortfolioStableScrollTimeoutId = window.setTimeout(() => {
+        persistStablePortfolioReturnScroll()
+        delete resumeWindow.__resumePortfolioStableScrollTimeoutId
+      }, PORTFOLIO_RETURN_STABLE_SCROLL_DEBOUNCE_MS)
+    }
+
+    persistStablePortfolioReturnScroll()
+    window.addEventListener("scroll", scheduleStableScrollPersist, { passive: true })
+    resumeWindow.__resumePortfolioScrollTrackingBound = true
   }
 
   function setupAnalytics() {
@@ -246,15 +279,23 @@ const awardsWithContent = await Promise.all(
         const href = link.getAttribute("href")
         if (!href || !href.startsWith("/portfolio")) return
 
+        const stableScrollY = Number.parseInt(
+          sessionStorage.getItem(PORTFOLIO_RETURN_STABLE_SCROLL_KEY) ?? "",
+          10
+        )
+        const scrollYToStore = Number.isFinite(stableScrollY) && stableScrollY > 0
+          ? stableScrollY
+          : Math.round(window.scrollY)
         const historyIndex = window.history.state?.index
         if (typeof historyIndex === "number") {
           sessionStorage.setItem(PORTFOLIO_RETURN_INDEX_KEY, historyIndex.toString())
           sessionStorage.setItem(
             buildPortfolioReturnScrollKey(historyIndex),
-            Math.round(window.scrollY).toString()
+            scrollYToStore.toString()
           )
         } else {
-          sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+          sessionStorage.setItem(PORTFOLIO_RETURN_INDEX_KEY, "direct")
+          sessionStorage.setItem(PORTFOLIO_RETURN_DIRECT_SCROLL_KEY, scrollYToStore.toString())
         }
       },
       { capture: true }
@@ -264,14 +305,24 @@ const awardsWithContent = await Promise.all(
   }
 
   function restorePortfolioReturnScroll() {
-    const historyIndex = window.history.state?.index
-    if (typeof historyIndex !== "number") return
+    if (sessionStorage.getItem(PORTFOLIO_RETURN_PENDING_KEY) !== "true") return
 
     const expectedIndex = sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY)
-    if (expectedIndex !== historyIndex.toString()) return
+    if (expectedIndex === null) return
 
-    const scrollKey = buildPortfolioReturnScrollKey(historyIndex)
+    const isDirectRestore = expectedIndex === "direct"
+    const resumeIndex = Number.parseInt(expectedIndex, 10)
+    if (!isDirectRestore && !Number.isInteger(resumeIndex)) {
+      sessionStorage.removeItem(PORTFOLIO_RETURN_PENDING_KEY)
+      sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
+      return
+    }
+
+    const scrollKey = isDirectRestore
+      ? PORTFOLIO_RETURN_DIRECT_SCROLL_KEY
+      : buildPortfolioReturnScrollKey(resumeIndex)
     const storedScroll = sessionStorage.getItem(scrollKey)
+    sessionStorage.removeItem(PORTFOLIO_RETURN_PENDING_KEY)
     sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
     sessionStorage.removeItem(scrollKey)
 
@@ -280,11 +331,19 @@ const awardsWithContent = await Promise.all(
     const targetScrollY = Number.parseInt(storedScroll, 10)
     if (!Number.isFinite(targetScrollY)) return
 
+    const nextScrollY = Math.max(0, targetScrollY)
+
+    const applyScrollRestore = () => {
+      window.scrollTo(0, nextScrollY)
+    }
+
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        window.scrollTo(0, Math.max(0, targetScrollY))
-      })
+      requestAnimationFrame(applyScrollRestore)
     })
+
+    window.addEventListener("load", applyScrollRestore, { once: true })
+    setTimeout(applyScrollRestore, 120)
+    setTimeout(applyScrollRestore, 320)
   }
 
   function parseDownloadFileName(contentDisposition: string | null, fallbackFileName: string): string {
@@ -385,6 +444,7 @@ const awardsWithContent = await Promise.all(
   }
 
   setupAnalytics()
+  setupPortfolioReturnScrollTracking()
   setupPortfolioReturnHint()
   restorePortfolioReturnScroll()
   setupPdfDownloadLoading()

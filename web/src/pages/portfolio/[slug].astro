@@ -67,7 +67,7 @@ const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
       define:vars={{ allowedSectionIds: portfolioCase.sections, defaultSectionId, caseId: portfolioCase.caseId }}
     >
       const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
-      const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
+      const PORTFOLIO_RETURN_PENDING_KEY = "__resume_portfolio_return_pending"
       const sectionIdSet = new Set(allowedSectionIds)
       const expectedPathname = `/portfolio/${caseId}`
 
@@ -132,34 +132,26 @@ const resumeHref = resumeItemId ? `/#${resumeItemId}` : "/"
       function setupPortfolioPage() {
         cleanupPortfolioPage()
         const cleanups = []
-        const portfolioEntryHistoryLength = window.history.length
 
         const link = document.getElementById("back-to-resume-link")
         if (link instanceof HTMLAnchorElement) {
           const rawResumeIndex = sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY)
+          const resumeRootUrl = new URL(link.href)
+          resumeRootUrl.hash = ""
           const onBackClick = (event) => {
             event.preventDefault()
 
-            const fallbackStepsBack = window.history.length - portfolioEntryHistoryLength + 1
-            if (fallbackStepsBack > 0 && window.history.length > fallbackStepsBack) {
-              window.history.go(-fallbackStepsBack)
-              return
+            if (rawResumeIndex !== null) {
+              sessionStorage.setItem(PORTFOLIO_RETURN_PENDING_KEY, "true")
+            } else {
+              sessionStorage.removeItem(PORTFOLIO_RETURN_PENDING_KEY)
             }
 
-            sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
-            const fallbackResumeIndex = Number.parseInt(rawResumeIndex, 10)
-            if (Number.isInteger(fallbackResumeIndex)) {
-              sessionStorage.removeItem(
-                `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${fallbackResumeIndex}`
-              )
-            }
-            window.location.assign(link.href)
+            window.location.assign(resumeRootUrl.toString())
           }
 
-          if (rawResumeIndex !== null) {
-            link.addEventListener("click", onBackClick)
-            cleanups.push(() => link.removeEventListener("click", onBackClick))
-          }
+          link.addEventListener("click", onBackClick)
+          cleanups.push(() => link.removeEventListener("click", onBackClick))
         }
 
         const onHashChange = () => {

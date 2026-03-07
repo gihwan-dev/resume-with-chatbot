@@ -20,13 +20,34 @@ const expectedAccomplishmentCounts = new Map(
   RESUME_PORTFOLIO_CONTENT_V2.map((item) => [item.projectId, item.accomplishments.length])
 )
 
+function createProjectBody(summary: string): string {
+  return `
+## TL;DR
+${summary}
+
+## 문제 정의
+핵심 병목을 먼저 정의했습니다.
+
+## 핵심 의사결정
+1. 구조 전환
+2. 검증 자동화
+
+## 구현 전략
+- 단계별로 기능을 전환했습니다.
+
+## 검증 및 결과
+- 지표를 반복 측정했습니다.
+
+## What I Learned
+구조와 검증을 함께 설계해야 유지보수가 쉬워집니다.
+`.trim()
+}
+
 describe("serializeResumeData", () => {
   function setupCollections(options?: {
-    includeOptionalFields?: boolean
     includeUnmappedCompanyProject?: boolean
     includeDuplicateTitleUnmappedProject?: boolean
   }) {
-    const includeOptionalFields = options?.includeOptionalFields ?? false
     const includeUnmappedCompanyProject = options?.includeUnmappedCompanyProject ?? false
     const includeDuplicateTitleUnmappedProject =
       options?.includeDuplicateTitleUnmappedProject ?? false
@@ -83,116 +104,44 @@ describe("serializeResumeData", () => {
               data: {
                 companyId: "exem",
                 title: "인스턴스 통합 모니터링 대시보드 개발",
-                company: "Exem",
-                description: "project summary",
                 techStack: ["React", "TypeScript", "TanStack Query"],
-                link: undefined,
-                github: undefined,
                 dateStart: new Date("2025-01-01"),
-                dateEnd: undefined,
                 priority: 1,
-                ...(includeOptionalFields
-                  ? {
-                      storyThread: {
-                        tldrSummary: "핵심 병목을 구조 전환으로 해결했습니다.",
-                        keyMetrics: [
-                          {
-                            value: "10초 -> 3초",
-                            label: "장애 인지 시간 단축",
-                            description: "초기 대응 속도를 높였습니다.",
-                          },
-                          {
-                            value: "73~82%",
-                            label: "인터랙션 지연 개선",
-                            description: "조작 중 지연을 완화했습니다.",
-                          },
-                          {
-                            value: "20%+",
-                            label: "DOM 감소",
-                            description: "렌더링 비용을 줄였습니다.",
-                          },
-                        ],
-                        coreApproach: "정책 통합과 구조 전환, 회귀 자동화를 결합 설계했습니다.",
-                        problemDefinition: "분산 정책과 화면 밀도 한계가 병목이었습니다.",
-                        problemPoints: ["정책 편차가 있었습니다.", "렌더 경합이 있었습니다."],
-                        decisions: [
-                          {
-                            title: "중앙 정책 통합",
-                            whyThisChoice: "운영 일관성이 필요했습니다.",
-                            alternative: "A안: 분산 유지 / B안: 통합",
-                            tradeOff: "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
-                          },
-                          {
-                            title: "그리드 전환",
-                            whyThisChoice: "대량 비교 속도가 중요했습니다.",
-                            alternative: "A안: 카드 유지 / B안: 그리드",
-                            tradeOff: "적응 비용은 늘지만 판단 속도가 빨라집니다.",
-                          },
-                        ],
-                        implementationHighlights: [
-                          "정책 통합을 설계했습니다.",
-                          "그리드 화면을 재설계했습니다.",
-                          "회귀 게이트를 표준화했습니다.",
-                        ],
-                        validationImpact: {
-                          measurementMethod: "React Profiler 동일 시나리오 30회 평균값 기준",
-                          metrics: ["인지 시간: 10초 -> 3초", "지연: 73~82% 감소"],
-                          operationalImpact: "운영 대응 속도가 빨라졌습니다.",
-                        },
-                        lessonsLearned: "구조 개선과 검증 자동화는 함께 설계해야 합니다.",
-                      },
-                    }
-                  : {}),
               },
-              body: "project body",
+              body: createProjectBody("운영 지표를 한 화면에서 빠르게 판단하도록 개선했습니다."),
             },
             {
               id: "exem-data-grid",
               data: {
                 companyId: "exem",
                 title: "20+ 기능의 고성능 데이터 그리드 개발",
-                company: "Exem",
-                description: "project summary",
                 techStack: ["React", "TanStack Table", "TanStack Virtual"],
-                link: undefined,
-                github: undefined,
                 dateStart: new Date("2025-02-01"),
-                dateEnd: undefined,
                 priority: 2,
               },
-              body: "project body",
+              body: createProjectBody("공용 그리드의 성능과 기능 조합 확장성을 함께 확보했습니다."),
             },
             {
               id: "exem-new-generation",
               data: {
                 companyId: "exem",
                 title: "차세대 데이터베이스 성능 모니터링 제품 개발",
-                company: "Exem",
-                description: "project summary",
                 techStack: ["React", "TypeScript", "Zustand"],
-                link: undefined,
-                github: undefined,
                 dateStart: new Date("2025-03-01"),
-                dateEnd: undefined,
                 priority: 3,
               },
-              body: "project body",
+              body: createProjectBody("신규 차트 추가와 상태 생성 방식을 일관되게 정리했습니다."),
             },
             {
               id: "exem-dx-improvement",
               data: {
                 companyId: "exem",
                 title: "레거시 프론트엔드 안정화 및 진단 구조 개선",
-                company: "Exem",
-                description: "project summary",
                 techStack: ["ExtJS", "TypeScript", "Oracle"],
-                link: undefined,
-                github: undefined,
                 dateStart: new Date("2025-02-01"),
-                dateEnd: undefined,
                 priority: 4,
               },
-              body: "project body",
+              body: createProjectBody("레거시 유지보수의 진단 가능성과 추적 효율을 개선했습니다."),
             },
             ...(includeUnmappedCompanyProject
               ? [
@@ -201,16 +150,11 @@ describe("serializeResumeData", () => {
                     data: {
                       companyId: "exem",
                       title: "매핑 누락 프로젝트",
-                      company: "Exem",
-                      description: "project summary",
                       techStack: ["React"],
-                      link: undefined,
-                      github: undefined,
                       dateStart: new Date("2025-05-01"),
-                      dateEnd: undefined,
                       priority: 5,
                     },
-                    body: "project body",
+                    body: createProjectBody("매핑되지 않은 유지보수 작업을 진행했습니다."),
                   },
                 ]
               : []),
@@ -221,16 +165,11 @@ describe("serializeResumeData", () => {
                     data: {
                       companyId: "exem",
                       title: "인스턴스 통합 모니터링 대시보드 개발",
-                      company: "Exem",
-                      description: "project summary",
                       techStack: ["React"],
-                      link: undefined,
-                      github: undefined,
                       dateStart: new Date("2025-06-01"),
-                      dateEnd: undefined,
                       priority: 6,
                     },
-                    body: "project body",
+                    body: createProjectBody("동명 프로젝트를 별도 트랙으로 운영했습니다."),
                   },
                 ]
               : []),
@@ -255,7 +194,7 @@ describe("serializeResumeData", () => {
     })
   }
 
-  it("신규 필드가 없을 때도 기존 구조를 유지하며 직렬화한다", async () => {
+  it("기본 구조를 직렬화한다", async () => {
     setupCollections()
 
     const blogPosts = [
@@ -288,9 +227,6 @@ describe("serializeResumeData", () => {
       expect(projectCase.accomplishments.length).toBe(
         expectedAccomplishmentCounts.get(projectCase.projectId)
       )
-      expect(projectCase.architectureSummary).toBeUndefined()
-      expect(projectCase.measurementMethod).toBeUndefined()
-      expect(projectCase.tradeOffs).toBeUndefined()
     }
     expect(result.work[1].projectCases).toBeUndefined()
     expect(result.work[1].projectTitles).toEqual([])
@@ -298,61 +234,6 @@ describe("serializeResumeData", () => {
       "총 12건의 프로젝트에서 요구사항 정의부터 배포까지 전 과정을 단독 수행",
       "5점 만점 리뷰 9건 확보",
     ])
-    for (const project of result.projects) {
-      expect(project.architectureSummary).toBeUndefined()
-      expect(project.measurementMethod).toBeUndefined()
-      expect(project.tradeOffs).toBeUndefined()
-    }
-  })
-
-  it("신규 optional 필드가 존재하면 PDF 직렬화에 반영한다", async () => {
-    setupCollections({ includeOptionalFields: true })
-
-    const blogPosts = [
-      {
-        title: "리액트 아키텍처 글",
-        url: "https://publish.obsidian.md/gihwan-dev/50-Blog/sample-post",
-        publishedAt: "2026-01-11T08:17:53.000Z",
-        summary: "요약",
-      },
-    ]
-    mockGetObsidianBlogPosts.mockResolvedValue(blogPosts)
-
-    const result = await serializeResumeData()
-
-    expect(result.work[0].projectCases).toHaveLength(4)
-    const dashboardCase = result.work[0].projectCases?.[0]
-    expect(dashboardCase?.projectId).toBe("exem-customer-dashboard")
-    expect(dashboardCase?.title).toBe("인스턴스 통합 모니터링 대시보드 개발")
-    expect(dashboardCase?.summary).toContain("그룹 단위 일·월·연 추세 분석 제품")
-    expect(dashboardCase?.accomplishments).toHaveLength(7)
-    expect(dashboardCase?.measurementMethod).toBe("React Profiler 동일 시나리오 30회 평균값 기준")
-    expect(dashboardCase?.tradeOffs).toEqual([
-      "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
-      "적응 비용은 늘지만 판단 속도가 빨라집니다.",
-    ])
-    expect(result.work[1].projectCases).toBeUndefined()
-
-    const dashboardProject = result.projects.find(
-      (project) => project.resumeItemId === "project-exem-customer-dashboard"
-    )
-    expect(dashboardProject?.architectureSummary).toBe(
-      "정책 통합과 구조 전환, 회귀 자동화를 결합 설계했습니다."
-    )
-    expect(dashboardProject?.measurementMethod).toBe(
-      "React Profiler 동일 시나리오 30회 평균값 기준"
-    )
-    expect(dashboardProject?.tradeOffs).toEqual([
-      "복잡도는 증가했지만 운영 일관성이 높아졌습니다.",
-      "적응 비용은 늘지만 판단 속도가 빨라집니다.",
-    ])
-
-    const dataGridProject = result.projects.find(
-      (project) => project.resumeItemId === "project-exem-data-grid"
-    )
-    expect(dataGridProject?.architectureSummary).toBeUndefined()
-    expect(dataGridProject?.measurementMethod).toBeUndefined()
-    expect(dataGridProject?.tradeOffs).toBeUndefined()
   })
 
   it("일부 프로젝트만 projectCases로 매핑돼도 unmapped projectTitles는 유지한다", async () => {
