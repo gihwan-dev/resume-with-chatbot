@@ -1,4 +1,4 @@
-import { getCollection } from "astro:content"
+import { getCollection, type CollectionEntry } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
 
 /**
@@ -28,7 +28,15 @@ function formatDateRange(dateStart: Date, dateEnd?: Date, isCurrent?: boolean): 
  * Content Collections 데이터를 읽어 프롬프트 문자열로 변환
  */
 export async function buildResumePrompt(): Promise<string> {
-  const [basics, work, projects, education, certificates, awards, blogPosts] = await Promise.all([
+  const [basics, work, projects, education, certificates, awards, blogPosts]: [
+    CollectionEntry<"basics">[],
+    CollectionEntry<"work">[],
+    CollectionEntry<"projects">[],
+    CollectionEntry<"education">[],
+    CollectionEntry<"certificates">[],
+    CollectionEntry<"awards">[],
+    Awaited<ReturnType<typeof getObsidianBlogPosts>>,
+  ] = await Promise.all([
     getCollection("basics"),
     getCollection("work"),
     getCollection("projects"),

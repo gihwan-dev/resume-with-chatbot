@@ -1,4 +1,4 @@
-import { getCollection } from "astro:content"
+import { getCollection, type CollectionEntry } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
 import { resolveProjectCompanyId, resolveWorkCompanyId } from "@/lib/experience/company-id"
 import {
@@ -24,19 +24,30 @@ function extractTradeOffs(decisions: { tradeOff: string }[] | undefined): string
 }
 
 export async function serializeResumeData(): Promise<SerializedResumeData> {
-  const [basics, work, projects, education, certificates, awards, skills, blogPosts] =
-    await Promise.all([
-      getCollection("basics"),
-      getCollection("work"),
-      getCollection("projects"),
-      getCollection("education"),
-      getCollection("certificates"),
-      getCollection("awards"),
-      getCollection("skills"),
-      getObsidianBlogPosts({ limit: 5 }),
-    ])
+  const [basics, work, projects, education, certificates, awards, skills, blogPosts]: [
+    CollectionEntry<"basics">[],
+    CollectionEntry<"work">[],
+    CollectionEntry<"projects">[],
+    CollectionEntry<"education">[],
+    CollectionEntry<"certificates">[],
+    CollectionEntry<"awards">[],
+    CollectionEntry<"skills">[],
+    Awaited<ReturnType<typeof getObsidianBlogPosts>>,
+  ] = await Promise.all([
+    getCollection("basics"),
+    getCollection("work"),
+    getCollection("projects"),
+    getCollection("education"),
+    getCollection("certificates"),
+    getCollection("awards"),
+    getCollection("skills"),
+    getObsidianBlogPosts({ limit: 5 }),
+  ])
 
   const profile = basics[0]?.data
+  if (!profile) {
+    throw new Error("Profile data is required in basics collection.")
+  }
 
   const sortedWork = [...work].sort(
     (a, b) => b.data.dateStart.getTime() - a.data.dateStart.getTime()
@@ -64,7 +75,9 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
   })
 
   const { summaryBlocks, mappings } = buildResumePortfolioContracts(projects)
-  const projectById = new Map(projects.map((project) => [project.id, project]))
+  const projectById = new Map<string, CollectionEntry<"projects">>(
+    projects.map((project) => [project.id, project])
+  )
   const projectIdByResumeItemId = new Map(
     mappings.map((mapping) => [mapping.resumeItemId, mapping.portfolioCaseId])
   )

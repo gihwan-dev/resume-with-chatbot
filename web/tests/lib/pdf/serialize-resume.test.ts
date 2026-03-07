@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
+import { RESUME_PORTFOLIO_CONTENT_V2 } from "../../../src/lib/resume-portfolio/content"
 
 const { mockGetCollection, mockGetObsidianBlogPosts } = vi.hoisted(() => ({
   mockGetCollection: vi.fn(),
@@ -14,6 +15,10 @@ vi.mock("astro:content", () => ({
 }))
 
 import { serializeResumeData } from "../../../src/lib/pdf/serialize-resume"
+
+const expectedAccomplishmentCounts = new Map(
+  RESUME_PORTFOLIO_CONTENT_V2.map((item) => [item.projectId, item.accomplishments.length])
+)
 
 describe("serializeResumeData", () => {
   function setupCollections(options?: {
@@ -279,16 +284,9 @@ describe("serializeResumeData", () => {
       "exem-new-generation",
       "exem-dx-improvement",
     ])
-    const expectedAccomplishmentCounts = {
-      "exem-customer-dashboard": 7,
-      "exem-data-grid": 7,
-      "exem-new-generation": 3,
-      "exem-dx-improvement": 3,
-    } as const
-
     for (const projectCase of result.work[0].projectCases ?? []) {
       expect(projectCase.accomplishments.length).toBe(
-        expectedAccomplishmentCounts[projectCase.projectId]
+        expectedAccomplishmentCounts.get(projectCase.projectId)
       )
       expect(projectCase.architectureSummary).toBeUndefined()
       expect(projectCase.measurementMethod).toBeUndefined()
