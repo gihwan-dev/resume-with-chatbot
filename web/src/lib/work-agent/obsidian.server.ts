@@ -7,8 +7,6 @@
  */
 
 import MiniSearch from "minisearch"
-import searchIndexData from "@/generated/search-index.json"
-import vaultData from "@/generated/vault-data.json"
 import type { ObsidianDocument } from "./types"
 
 interface VaultDocument {
@@ -25,13 +23,43 @@ interface VaultData {
   documents: VaultDocument[]
 }
 
-const data = vaultData as VaultData
+const GENERATED_VAULT_DATA_KEY = "../../generated/vault-data.json"
+const GENERATED_SEARCH_INDEX_KEY = "../../generated/search-index.json"
+const GENERATED_JSON_MODULES = import.meta.glob("../../generated/*.json", {
+  eager: true,
+  import: "default",
+}) as Record<string, unknown>
+
+function isVaultData(value: unknown): value is VaultData {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      "documents" in value &&
+      Array.isArray((value as { documents?: unknown }).documents)
+  )
+}
+
+function readGeneratedModule<T>(moduleKey: string, label: string): T | null {
+  const moduleValue = GENERATED_JSON_MODULES[moduleKey]
+  if (moduleValue !== undefined) {
+    return moduleValue as T
+  }
+
+  if (import.meta.env.PROD) {
+    throw new Error(`[obsidian] Missing generated ${label}: ${moduleKey}`)
+  }
+
+  return null
+}
 
 // 메타데이터 카탈로그 (content 제외)
 let _catalog: ObsidianDocument[] | null = null
 
 // content 맵 (ID → 전체 내용)
 let _contentMap: Map<string, VaultDocument> | null = null
+
+// vault 데이터 캐시
+let _vaultData: VaultData | null = null
 
 // MiniSearch 인덱스 (레이지 초기화)
 let _searchIndex: MiniSearch | null = null
@@ -41,9 +69,48 @@ const MINISEARCH_OPTIONS = {
   storeFields: ["title", "category", "path", "summary", "tags"],
 }
 
+function getVaultData(): VaultData {
+  if (_vaultData) {
+    return _vaultData
+  }
+
+  const loadedVaultData = readGeneratedModule<unknown>(GENERATED_VAULT_DATA_KEY, "vault data")
+  if (!loadedVaultData) {
+    _vaultData = { documents: [] }
+    return _vaultData
+  }
+
+  if (!isVaultData(loadedVaultData)) {
+    if (import.meta.env.PROD) {
+      throw new Error("[obsidian] Invalid generated vault data shape")
+    }
+
+    _vaultData = { documents: [] }
+    return _vaultData
+  }
+
+  _vaultData = loadedVaultData
+  return _vaultData
+}
+
 function getSearchIndex(): MiniSearch {
   if (!_searchIndex) {
-    _searchIndex = MiniSearch.loadJSON(JSON.stringify(searchIndexData), MINISEARCH_OPTIONS)
+    const serializedIndex = readGeneratedModule<unknown>(GENERATED_SEARCH_INDEX_KEY, "search index")
+
+    if (!serializedIndex) {
+      _searchIndex = new MiniSearch(MINISEARCH_OPTIONS)
+      return _searchIndex
+    }
+
+    try {
+      _searchIndex = MiniSearch.loadJSON(JSON.stringify(serializedIndex), MINISEARCH_OPTIONS)
+    } catch {
+      if (import.meta.env.PROD) {
+        throw new Error("[obsidian] Invalid generated search index")
+      }
+
+      _searchIndex = new MiniSearch(MINISEARCH_OPTIONS)
+    }
   }
   return _searchIndex
 }
@@ -51,6 +118,7 @@ function getSearchIndex(): MiniSearch {
 function ensureLoaded(): void {
   if (_catalog && _contentMap) return
 
+  const data = getVaultData()
   _catalog = data.documents.map(({ content: _, ...meta }) => meta)
   _contentMap = new Map(data.documents.map((doc) => [doc.id, doc]))
 
@@ -71,6 +139,7 @@ export function getDocumentCatalog(): ObsidianDocument[] {
 export function resetCatalogCache(): void {
   _catalog = null
   _contentMap = null
+  _vaultData = null
 }
 
 /**
