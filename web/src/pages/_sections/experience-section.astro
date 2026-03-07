@@ -27,6 +27,14 @@ interface Props {
 }
 
 const { experiences } = Astro.props as Props
+
+function normalizeExperienceMarkdown(text: string): string {
+  // CommonMark parser does not close strong emphasis for patterns like `**text**를`.
+  return text.replace(
+    /(^|[^\p{L}\p{N}*])\*\*([^*]+)\*\*(?=[가-힣])/gu,
+    "$1<strong>$2</strong>"
+  )
+}
 ---
 
 <section
@@ -87,7 +95,7 @@ const { experiences } = Astro.props as Props
                   <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
                   {project.summary && (
                     <div class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
-                      <Markdown of={project.summary} />
+                      <Markdown of={normalizeExperienceMarkdown(project.summary)} />
                     </div>
                   )}
 
@@ -100,7 +108,7 @@ const { experiences } = Astro.props as Props
                             class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-resume-primary/70"
                           />
                           <div class="text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
-                            <Markdown of={accomplishment} />
+                            <Markdown of={normalizeExperienceMarkdown(accomplishment)} />
                           </div>
                         </li>
                       ))}
@@ -144,7 +152,9 @@ const { experiences } = Astro.props as Props
             entry.data.highlights.length > 0 && (
               <div class="space-y-2 text-sm leading-relaxed text-resume-text-main/90">
                 {entry.data.highlights.map((highlight) => (
-                  <p>{highlight}</p>
+                  <div class="[&_p]:m-0">
+                    <Markdown of={normalizeExperienceMarkdown(highlight)} />
+                  </div>
                 ))}
               </div>
             )
