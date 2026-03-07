@@ -57,11 +57,11 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     projectId: "exem-new-generation",
     resumeItemId: "project-exem-new-generation",
     resumeSummary:
-      "77개+ 엔터프라이즈 고객 대상 차세대 DB 모니터링 제품에서 **Zustand storeFactory**, **Widget Builder 확장성 아키텍처**, **Oracle SQL 분석형 UI**를 설계해 복잡한 데이터 화면의 확장 비용과 탐색 흐름을 구조적으로 정리했습니다.",
+      "DB 성능 모니터링 제품에서 신규 차트를 쉽게 추가할 수 있는 Widget Builder 구조와 상태 생성 방식을 설계했습니다. Oracle SQL 분석 영역에서는 실행계획 비교, SQL 원문 보기, 메타데이터 탐색 기능을 구현했습니다.",
     accomplishments: [
-      "화면 단위 상태가 전역처럼 남고 초기화 보일러플레이트가 반복되던 문제를 해결하기 위해 `storeFactory`를 설계해 Provider-local/global/persist를 단일 인터페이스로 통합하고, `initialState` 생성 시점 주입으로 20개 스토어의 생성 규약을 표준화했습니다.",
-      "하나의 Widget Builder에 line·area·bar·scatter·table 요구사항이 누적되던 병목을 줄이기 위해, `visualization` 기준 registry + Zod 판별 유니온 + preview adapter 구조를 설계해 차트별 폼·검증·미리보기 변경 범위를 메인 셸 밖으로 격리했습니다.",
-      "Oracle SQL 성능 분석 화면을 개발하며, 긴 상세 페이지 안에서 실행계획 비교, SQL 전문 탐색, 오브젝트 메타데이터 조회를 연결하고 drag-and-drop 비교 전환, 동기 스크롤, 바인드 변수 하이라이팅, 동적 컬럼 기반 탐색을 구현했습니다.",
+      "상세 진입과 새 탭 진입에서 상태 초기화 방식이 달라 수동 초기화 코드가 늘어나던 문제를 줄이기 위해 `storeFactory`를 도입했습니다. Provider-local/global/persist를 하나의 생성 패턴으로 묶고, 스토어 생성 시 초기값을 넣는 방식으로 20개 스토어의 상태 생성 방식을 통일했습니다.",
+      "새 차트를 추가할 때마다 공통 Builder 수정 범위가 커지던 문제를 줄이기 위해, `visualization` 기준 registry + Zod 판별 유니온 + preview adapter 구조로 차트별 설정·검증·미리보기 로직을 분리했습니다. 그 결과 line·area·bar·scatter·table 추가 시 공통 Builder 코드를 크게 건드리지 않도록 만들었습니다.",
+      "Oracle SQL 성능 분석 화면을 개발해 실행계획 비교, SQL 원문 보기, 메타데이터 탐색 기능을 구현했습니다. Best/Worst 자동 비교, drag-and-drop 전환, 동기 스크롤, 바인드 변수 하이라이팅, 동적 컬럼 기반 탐색을 지원했습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
