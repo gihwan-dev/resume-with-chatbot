@@ -36,11 +36,11 @@ test.describe("Portfolio TOC behavior", () => {
     }
   })
 
-  test("new-generation 케이스는 9개 목차 섹션을 노출한다", async ({ page }) => {
+  test("new-generation 케이스는 10개 목차 섹션을 노출한다", async ({ page }) => {
     await gotoPortfolioDetail(page, "/portfolio/exem-new-generation#tldr")
 
     const links = page.locator(".toc-link")
-    await expect(links).toHaveCount(9)
+    await expect(links).toHaveCount(10)
 
     const expectedSectionIds = [
       "tldr",
@@ -48,6 +48,7 @@ test.describe("Portfolio TOC behavior", () => {
       "complexity-axes",
       "chart-extensibility",
       "state-lifecycle",
+      "storage-migration",
       "sql-analysis-ux",
       "overall-change",
       "verification",
