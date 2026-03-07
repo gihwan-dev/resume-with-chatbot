@@ -15,10 +15,10 @@ const NEW_GENERATION_SECTIONS: readonly PortfolioSectionDefinition[] = [
   { id: "tldr", heading: "TL;DR" },
   { id: "shared-tension", heading: "왜 이 문제를 먼저 풀어야 했나" },
   { id: "complexity-axes", heading: "내가 해결한 복잡성은 네 가지였다" },
-  { id: "chart-extensibility", heading: "주제 1. 차트 추가 비용을 줄이기 위한 구조 정리" },
+  { id: "chart-extensibility", heading: "주제 1. 위젯 추가 비용을 줄이기 위한 구조 정리" },
   { id: "state-lifecycle", heading: "주제 2. 상태 생성과 초기화를 한 패턴으로 맞추기" },
-  { id: "storage-migration", heading: "주제 3. 대시보드 레이아웃 저장소를 webEnv로 전환하기" },
-  { id: "sql-analysis-ux", heading: "주제 4. SQL 분석 화면 핵심 상호작용 구현" },
+  { id: "storage-migration", heading: "주제 3. 대시보드 레이아웃 저장 방식을 영구 저장 구조로 바꾸기" },
+  { id: "sql-analysis-ux", heading: "주제 4. SQL 분석 화면 공통 컴포넌트와 핵심 상호작용 구현" },
   { id: "overall-change", heading: "그래서 전체적으로 무엇이 달라졌나" },
   { id: "verification", heading: "어떻게 확인했나" },
   { id: "learned", heading: "What I Learned" },
@@ -200,16 +200,16 @@ describe("parsePortfolioCaseBody", () => {
 ## 내가 해결한 복잡성은 네 가지였다
 네 축 요약
 
-## 주제 1. 차트 추가 비용을 줄이기 위한 구조 정리
+## 주제 1. 위젯 추가 비용을 줄이기 위한 구조 정리
 내용 1
 
 ## 주제 2. 상태 생성과 초기화를 한 패턴으로 맞추기
 내용 2
 
-## 주제 3. 대시보드 레이아웃 저장소를 webEnv로 전환하기
+## 주제 3. 대시보드 레이아웃 저장 방식을 영구 저장 구조로 바꾸기
 내용 3
 
-## 주제 4. SQL 분석 화면 핵심 상호작용 구현
+## 주제 4. SQL 분석 화면 공통 컴포넌트와 핵심 상호작용 구현
 내용 4
 
 ## 그래서 전체적으로 무엇이 달라졌나
