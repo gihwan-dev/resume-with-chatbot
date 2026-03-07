@@ -27,8 +27,8 @@ const MOCK_PROJECTS = [
   {
     id: "exem-dx-improvement",
     data: {
-      title: "개발 생산성 향상 및 자동화 인프라 구축",
-      techStack: ["Nest.js", "TypeScript", "Docker"],
+      title: "레거시 프론트엔드 안정화 및 진단 구조 개선",
+      techStack: ["ExtJS", "TypeScript", "Oracle"],
     },
   },
 ] as const

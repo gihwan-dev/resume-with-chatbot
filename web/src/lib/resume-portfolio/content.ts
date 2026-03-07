@@ -80,11 +80,13 @@ export const RESUME_PORTFOLIO_CONTENT_V2: ResumePortfolioContentItem[] = [
     projectId: "exem-dx-improvement",
     resumeItemId: "project-exem-dx-improvement",
     resumeSummary:
-      "폐쇄망 환경에서 TypeScript 기반 CI/CD 리포트 뷰어와 온보딩 CLI를 자동화해 검증·온보딩 병목을 줄였습니다.",
+      "ExtJS 기반 레거시 프론트엔드에서 전역 통신 규칙, SQL 실행 진단, 실행 환경 구성을 명시화·도구화해 원인 추적과 변경 착수 비용을 줄였습니다.",
     accomplishments: [
-      "다운로드 중심 리포트 접근으로 검증 착수 자체가 늦어지는 문제를 확인하고, **CLI → Nest.js API → MinIO → 정적 서빙** 파이프라인으로 내부 리포트 허브를 구축해 접근 시간을 3분에서 5초로 단축했습니다.",
-      "코드 리뷰 중 외부 AI 도구로 문맥 전환이 반복되는 문제를 **GitLab Webhook + N8N 워크플로**로 MR 내 자동 응답 흐름에 통합해 리뷰 중 외부 이동을 제거했습니다.",
-      "레거시 환경 설정 난도로 온보딩이 개인 숙련도에 의존하는 문제를 **환경 구성과 로컬 실행을 묶은 온보딩 CLI**로 도구화해 수 시간 걸리던 초기 세팅을 5분으로 줄였습니다.",
+      "전역 `WS`·`IMXWS` 통신 모듈에 JSDoc을 정리해 구두 지식에 의존하던 공통 규칙을 문서 기반으로 명시화했습니다.",
+      "ExtJS 이벤트 콜백이 `function` 문맥에서 컴포넌트 인스턴스의 `this`를 잃어 상태 판별 로직이 오동작하던 문제를 추적하고, arrow function으로 컨텍스트를 고정해 재진입·리프레시 시 오동작 범위를 줄였습니다.",
+      "Oracle 옵션에 따라 달라지는 SQL bind 치환 규칙을 `Exem.mixin.SQLBindHelper`로 공용화해 화면별 예외 처리로 퍼지던 수정 범위와 회귀 위험을 줄였습니다.",
+      "흩어진 레포·리소스·실행 절차를 스타터킷으로 중앙화해 수 시간 걸리던 셋업 부담을 줄이고, 버전별 환경 구성을 빠르게 시작할 수 있게 했습니다.",
+      "팀 공용 Sencha 진단 도구를 구축해 프론트 SQL 실행 응답을 `console.log` 삽입 없이 실시간으로 확인하고, 컴포넌트를 IDE로 바로 추적해 원인 파악과 수정 진입 시간을 단축했습니다.",
     ],
     hasPortfolio: true,
     ctaLabel: "상세 케이스 스터디 보기",
