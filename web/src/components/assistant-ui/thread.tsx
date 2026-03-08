@@ -96,16 +96,17 @@ export function extractFinalAnswerPayload(content: ReadonlyArray<AssistantConten
   }
 }
 
-export const FinalAnswerFromToolCall: FC<{ content: ReadonlyArray<AssistantContentPart> }> = ({
-  content,
-}) => {
+export const FinalAnswerFromToolCall: FC<{
+  content: ReadonlyArray<AssistantContentPart>
+  isComplete: boolean
+}> = ({ content, isComplete }) => {
   const { hasAnswerToolCall, hasTextPart, answer, sources } = extractFinalAnswerPayload(content)
   const hasUsablePayload = Boolean(
     (typeof answer === "string" && answer.trim().length > 0) || (sources && sources.length > 0)
   )
 
   if (!hasUsablePayload && hasTextPart) return null
-  if (!hasUsablePayload && hasAnswerToolCall) {
+  if (!hasUsablePayload && hasAnswerToolCall && isComplete) {
     return (
       <div className="mt-2 rounded-md border border-border/40 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
         응답을 표시하는 중 문제가 발생했습니다. 다시 생성해 주세요.
@@ -369,6 +370,7 @@ const AssistantMessage: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
   onUserMessageSubmitted,
 }) => {
   const message = useAuiState(({ message }) => message)
+  const isComplete = message.status?.type === "complete"
 
   return (
     <MessagePrimitive.Root
@@ -392,7 +394,7 @@ const AssistantMessage: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
               },
             }}
           />
-          <FinalAnswerFromToolCall content={message.content} />
+          <FinalAnswerFromToolCall content={message.content} isComplete={isComplete} />
         </ThinkingProcessProvider>
         <MessageError />
       </div>

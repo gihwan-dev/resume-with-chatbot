@@ -14,6 +14,7 @@ describe("FinalAnswerFromToolCall", () => {
   it("answer tool only content에서도 답변 본문을 렌더링한다", () => {
     render(
       <FinalAnswerFromToolCall
+        isComplete
         content={[
           {
             type: "tool-call",
@@ -30,6 +31,7 @@ describe("FinalAnswerFromToolCall", () => {
   it("text 파트가 있으면 answer text 중복 렌더링 없이 sources만 유지한다", () => {
     render(
       <FinalAnswerFromToolCall
+        isComplete
         content={[
           { type: "text", text: "assistant text response" },
           {
@@ -49,6 +51,7 @@ describe("FinalAnswerFromToolCall", () => {
   it("answer tool only content에서도 source 카드까지 함께 렌더링한다", () => {
     render(
       <FinalAnswerFromToolCall
+        isComplete
         content={[
           {
             type: "tool-call",
@@ -63,9 +66,10 @@ describe("FinalAnswerFromToolCall", () => {
     expect(screen.getByText("참고한 경험 (1)")).toBeTruthy()
   })
 
-  it("answer tool call이 있지만 args가 malformed면 fallback 문구를 렌더링한다", () => {
+  it("malformed answer payload는 complete 상태에서만 fallback 문구를 렌더링한다", () => {
     render(
       <FinalAnswerFromToolCall
+        isComplete
         content={[
           {
             type: "tool-call",
@@ -81,9 +85,27 @@ describe("FinalAnswerFromToolCall", () => {
     ).toBeTruthy()
   })
 
+  it("malformed answer payload는 streaming 상태면 null을 유지한다", () => {
+    const { container } = render(
+      <FinalAnswerFromToolCall
+        isComplete={false}
+        content={[
+          {
+            type: "tool-call",
+            toolName: "answer",
+            args: "invalid-payload",
+          },
+        ]}
+      />
+    )
+
+    expect(container.firstChild).toBeNull()
+  })
+
   it("answer tool call이 아예 없으면 null을 유지한다", () => {
     const { container } = render(
       <FinalAnswerFromToolCall
+        isComplete
         content={[
           {
             type: "tool-call",
