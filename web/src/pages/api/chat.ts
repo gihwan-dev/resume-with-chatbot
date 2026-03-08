@@ -30,7 +30,7 @@ type ToolName = keyof typeof workAgentTools
 const SEARCH_TOOLS: ToolName[] = ["searchDocuments", "readDocument"]
 const ALL_TOOLS: ToolName[] = [...SEARCH_TOOLS, "answer"]
 
-const SYSTEM_PROMPT_HEADER = `당신은 최기환의 포트폴리오 웹사이트에서 방문자의 질문에 답변하는 AI 어시스턴트입니다.
+const SYSTEM_PROMPT_HEADER = `당신은 최기환의 이력서 웹사이트에서 방문자의 질문에 답변하는 AI 어시스턴트입니다.
 
 ## 역할
 - 아래 이력서 정보와 Obsidian 볼트 문서를 기반으로 최기환에 대한 질문에 답변

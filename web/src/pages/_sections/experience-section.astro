@@ -5,10 +5,8 @@ import { normalizeKoreanMarkdown } from "@/lib/markdown/normalize-korean-markdow
 interface ExperienceCaseItem {
   projectId: string
   title: string
-  href?: string
-  summary?: string
-  accomplishments?: string[]
-  ctaLabel?: string
+  summary: string
+  accomplishments: string[]
 }
 
 interface ExperienceEntry {
@@ -114,36 +112,6 @@ const summaryMarkdownClass =
                         </li>
                       ))}
                     </ul>
-                  )}
-
-                  {project.href && (
-                    <div class="mt-6 border-t border-resume-border/70 pt-4">
-                      <a
-                        href={project.href}
-                        class="group/btn inline-flex cursor-pointer items-center gap-1.5 rounded-sm text-sm font-semibold text-resume-primary underline-offset-4 transition-colors duration-200 hover:text-resume-secondary hover:underline focus-visible:text-resume-secondary focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-card-bg"
-                        data-ga-event="project_portfolio_click"
-                        data-ga-project={project.title}
-                      >
-                        {project.ctaLabel ?? "상세 케이스 스터디 보기"}
-                        <svg
-                          aria-hidden="true"
-                          focusable="false"
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="h-4 w-4 opacity-90 transition-all duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:opacity-100 group-focus-visible/btn:translate-x-0.5 group-focus-visible/btn:opacity-100"
-                        >
-                          <path d="M5 12h14" />
-                          <path d="m12 5 7 7-7 7" />
-                        </svg>
-                      </a>
-                    </div>
                   )}
                 </article>
               ))}

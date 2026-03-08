@@ -4,7 +4,7 @@ import { normalizeMarkdownForPdf } from "../../../src/lib/pdf/markdown-to-pdf"
 describe("normalizeMarkdownForPdf", () => {
   it("HTML/MDX 태그를 PDF 친화 마크다운으로 정규화한다", () => {
     const input = [
-      'import CompareToggle from "@/components/portfolio/compare-toggle.astro"',
+      'import DemoCard from "@/components/ui/card"',
       "",
       '<CompareToggle beforeLabel="before" afterLabel="after">',
       '  <div slot="before">',

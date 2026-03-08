@@ -154,8 +154,6 @@ export const INTENT_KEYWORDS: Record<UserIntent, string[]> = {
     "linkedin",
     "블로그",
     "blog",
-    "포트폴리오",
-    "portfolio",
     "사이트",
     "site",
     "주소",

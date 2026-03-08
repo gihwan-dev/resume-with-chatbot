@@ -7,7 +7,6 @@ import {
   buildCompanyProjectsByCompanyId,
   type CompanyProjectSource,
 } from "@/lib/experience/company-projects"
-import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import Layout from "../layouts/Layout.astro"
 import AwardSection from "./_sections/award-section.astro"
 import BlogSection from "./_sections/blog-section.astro"
@@ -30,33 +29,12 @@ const education = await getCollection("education")
 const certificates = await getCollection("certificates")
 const awards = await getCollection("awards")
 
-// Sort by date (descending)
 const sortedWork = [...work].sort((a, b) => b.data.dateStart.valueOf() - a.data.dateStart.valueOf())
 const workWithCompanyId = sortedWork.map((entry) => ({
   entry,
   companyId: resolveWorkCompanyId(entry),
 }))
 const knownCompanyIds = workWithCompanyId.map((item) => item.companyId)
-
-const sortedAwards = awards.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-const contracts = buildResumePortfolioContracts(projects)
-const { summaryBlocks, mappings } = contracts
-
-const summaryBlockByResumeItemId = new Map(
-  summaryBlocks.map((summaryBlock) => [summaryBlock.resumeItemId, summaryBlock])
-)
-const summaryBlockByProjectId = new Map<string, (typeof summaryBlocks)[number]>()
-const hrefByProjectId = new Map<string, string>()
-
-for (const mapping of mappings) {
-  const summaryBlock = summaryBlockByResumeItemId.get(mapping.resumeItemId)
-  if (!summaryBlock) continue
-
-  summaryBlockByProjectId.set(mapping.portfolioCaseId, summaryBlock)
-  if (!summaryBlock.ctaHref) continue
-
-  hrefByProjectId.set(mapping.portfolioCaseId, summaryBlock.ctaHref)
-}
 
 const normalizedProjects: CompanyProjectSource[] = projects.flatMap((project) => {
   const companyId = resolveProjectCompanyId(project, knownCompanyIds)
@@ -70,30 +48,20 @@ const normalizedProjects: CompanyProjectSource[] = projects.flatMap((project) =>
         title: project.data.title,
         priority: project.data.priority,
         dateStart: project.data.dateStart,
+        summary: project.data.summary,
+        accomplishments: [...project.data.accomplishments],
       },
     },
   ]
 })
 
-const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(normalizedProjects, {
-  hrefByProjectId,
-})
+const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(normalizedProjects)
 const experienceEntries = workWithCompanyId.map(({ entry, companyId }) => ({
   data: entry.data,
-  projects: (companyProjectsByCompanyId.get(companyId) ?? []).map((project) => {
-    const summaryBlock = summaryBlockByProjectId.get(project.projectId)
-
-    return {
-      projectId: project.projectId,
-      title: project.title,
-      href: project.href,
-      summary: summaryBlock?.summary,
-      accomplishments: summaryBlock?.accomplishments,
-      ctaLabel: summaryBlock?.ctaLabel,
-    }
-  }),
+  projects: companyProjectsByCompanyId.get(companyId) ?? [],
 }))
 
+const sortedAwards = [...awards].sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
 const awardsWithContent = await Promise.all(
   sortedAwards.map(async (entry) => {
     const { Content } = await render(entry)
@@ -163,52 +131,11 @@ const awardsWithContent = await Promise.all(
 </Layout>
 
 <script>
-  const PORTFOLIO_RETURN_INDEX_KEY = "__resume_portfolio_return_index"
-  const PORTFOLIO_RETURN_SCROLL_KEY_PREFIX = "__resume_portfolio_return_scroll_"
-  const PORTFOLIO_RETURN_PENDING_KEY = "__resume_portfolio_return_pending"
-  const PORTFOLIO_RETURN_DIRECT_SCROLL_KEY = "__resume_portfolio_return_scroll_direct"
-  const PORTFOLIO_RETURN_STABLE_SCROLL_KEY = "__resume_portfolio_return_stable_scroll"
-  const PORTFOLIO_RETURN_STABLE_SCROLL_DEBOUNCE_MS = 24
-
   type ResumePageWindow = Window & {
     __resumeAnalyticsClickBound?: boolean
     __resumeSectionObserver?: IntersectionObserver
-    __resumePortfolioClickBound?: boolean
-    __resumePortfolioScrollTrackingBound?: boolean
-    __resumePortfolioStableScrollTimeoutId?: number
     __resumePdfDownloadBound?: boolean
     gtag?: (command: string, eventName: string, params?: Record<string, string>) => void
-  }
-
-  function buildPortfolioReturnScrollKey(historyIndex: number): string {
-    return `${PORTFOLIO_RETURN_SCROLL_KEY_PREFIX}${historyIndex}`
-  }
-
-  function persistStablePortfolioReturnScroll(scrollY: number = Math.round(window.scrollY)) {
-    sessionStorage.setItem(PORTFOLIO_RETURN_STABLE_SCROLL_KEY, Math.max(0, scrollY).toString())
-  }
-
-  function setupPortfolioReturnScrollTracking() {
-    const resumeWindow = window as ResumePageWindow
-    if (resumeWindow.__resumePortfolioScrollTrackingBound) {
-      persistStablePortfolioReturnScroll()
-      return
-    }
-
-    const scheduleStableScrollPersist = () => {
-      if (typeof resumeWindow.__resumePortfolioStableScrollTimeoutId === "number") {
-        window.clearTimeout(resumeWindow.__resumePortfolioStableScrollTimeoutId)
-      }
-
-      resumeWindow.__resumePortfolioStableScrollTimeoutId = window.setTimeout(() => {
-        persistStablePortfolioReturnScroll()
-        delete resumeWindow.__resumePortfolioStableScrollTimeoutId
-      }, PORTFOLIO_RETURN_STABLE_SCROLL_DEBOUNCE_MS)
-    }
-
-    persistStablePortfolioReturnScroll()
-    window.addEventListener("scroll", scheduleStableScrollPersist, { passive: true })
-    resumeWindow.__resumePortfolioScrollTrackingBound = true
   }
 
   function setupAnalytics() {
@@ -216,7 +143,6 @@ const awardsWithContent = await Promise.all(
     if (typeof resumeWindow.gtag !== "function") return
 
     if (!resumeWindow.__resumeAnalyticsClickBound) {
-      // 클릭 이벤트 위임: data-ga-event 속성이 있는 요소
       document.addEventListener("click", (e) => {
         const target = (e.target as HTMLElement).closest("[data-ga-event]") as HTMLElement | null
         if (!target) return
@@ -239,7 +165,6 @@ const awardsWithContent = await Promise.all(
 
     resumeWindow.__resumeSectionObserver?.disconnect()
 
-    // 섹션 뷰 추적: Intersection Observer
     const sections = document.querySelectorAll<HTMLElement>(
       "#profile, #experience, #blog, #awards, #certificates"
     )
@@ -264,86 +189,6 @@ const awardsWithContent = await Promise.all(
     }
 
     resumeWindow.__resumeSectionObserver = observer
-  }
-
-  function setupPortfolioReturnHint() {
-    const resumeWindow = window as ResumePageWindow
-    if (resumeWindow.__resumePortfolioClickBound) return
-
-    document.addEventListener(
-      "click",
-      (e) => {
-        const link = (e.target as HTMLElement | null)?.closest("a")
-        if (!link) return
-
-        const href = link.getAttribute("href")
-        if (!href || !href.startsWith("/portfolio")) return
-
-        const stableScrollY = Number.parseInt(
-          sessionStorage.getItem(PORTFOLIO_RETURN_STABLE_SCROLL_KEY) ?? "",
-          10
-        )
-        const scrollYToStore = Number.isFinite(stableScrollY) && stableScrollY > 0
-          ? stableScrollY
-          : Math.round(window.scrollY)
-        const historyIndex = window.history.state?.index
-        if (typeof historyIndex === "number") {
-          sessionStorage.setItem(PORTFOLIO_RETURN_INDEX_KEY, historyIndex.toString())
-          sessionStorage.setItem(
-            buildPortfolioReturnScrollKey(historyIndex),
-            scrollYToStore.toString()
-          )
-        } else {
-          sessionStorage.setItem(PORTFOLIO_RETURN_INDEX_KEY, "direct")
-          sessionStorage.setItem(PORTFOLIO_RETURN_DIRECT_SCROLL_KEY, scrollYToStore.toString())
-        }
-      },
-      { capture: true }
-    )
-
-    resumeWindow.__resumePortfolioClickBound = true
-  }
-
-  function restorePortfolioReturnScroll() {
-    if (sessionStorage.getItem(PORTFOLIO_RETURN_PENDING_KEY) !== "true") return
-
-    const expectedIndex = sessionStorage.getItem(PORTFOLIO_RETURN_INDEX_KEY)
-    if (expectedIndex === null) return
-
-    const isDirectRestore = expectedIndex === "direct"
-    const resumeIndex = Number.parseInt(expectedIndex, 10)
-    if (!isDirectRestore && !Number.isInteger(resumeIndex)) {
-      sessionStorage.removeItem(PORTFOLIO_RETURN_PENDING_KEY)
-      sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
-      return
-    }
-
-    const scrollKey = isDirectRestore
-      ? PORTFOLIO_RETURN_DIRECT_SCROLL_KEY
-      : buildPortfolioReturnScrollKey(resumeIndex)
-    const storedScroll = sessionStorage.getItem(scrollKey)
-    sessionStorage.removeItem(PORTFOLIO_RETURN_PENDING_KEY)
-    sessionStorage.removeItem(PORTFOLIO_RETURN_INDEX_KEY)
-    sessionStorage.removeItem(scrollKey)
-
-    if (storedScroll === null) return
-
-    const targetScrollY = Number.parseInt(storedScroll, 10)
-    if (!Number.isFinite(targetScrollY)) return
-
-    const nextScrollY = Math.max(0, targetScrollY)
-
-    const applyScrollRestore = () => {
-      window.scrollTo(0, nextScrollY)
-    }
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(applyScrollRestore)
-    })
-
-    window.addEventListener("load", applyScrollRestore, { once: true })
-    setTimeout(applyScrollRestore, 120)
-    setTimeout(applyScrollRestore, 320)
   }
 
   function parseDownloadFileName(contentDisposition: string | null, fallbackFileName: string): string {
@@ -444,8 +289,5 @@ const awardsWithContent = await Promise.all(
   }
 
   setupAnalytics()
-  setupPortfolioReturnScrollTracking()
-  setupPortfolioReturnHint()
-  restorePortfolioReturnScroll()
   setupPdfDownloadLoading()
 </script>

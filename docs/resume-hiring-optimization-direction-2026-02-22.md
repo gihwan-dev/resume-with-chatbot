@@ -4,6 +4,18 @@
 > 현재 구조 기준: `Hero -> Skills -> Experience -> Projects -> Blog -> Certificates -> Awards`
 > 적용 범위: 문서/콘텐츠/섹션 구조/AI 질문/PDF/검증 전략
 > 비범위: 기업 유형별 분기 버전(대기업/스타트업/외국계)
+> Historical snapshot 문서입니다. 현재 resume-only 운영의 실행 기준(runbook)으로 사용하지 않습니다.
+
+## 현재 활성 검증 기준 (resume-only)
+
+아래 명령만 현재 실행 기준으로 사용합니다.
+
+```bash
+pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck
+pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint
+pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:run
+CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:e2e
+```
 
 ## 1. 목표와 독자
 
@@ -203,11 +215,13 @@ Architecture Summary 예시:
 
 ## 8.2 구현 검증 게이트(후속 구현 단계)
 
+이 문서는 원 설계 방향 기록이며, 아래 커맨드는 2026-03-08 현재 저장소 기준으로 치환한 실행 기준이다.
+
 ```bash
 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck
 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint
-pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts
-CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts --project=chromium
+pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:run
+CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:e2e
 ```
 
 ## 9. 기본 가정

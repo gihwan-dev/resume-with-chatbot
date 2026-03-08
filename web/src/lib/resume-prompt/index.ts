@@ -1,23 +1,12 @@
 import { type CollectionEntry, getCollection } from "astro:content"
 import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
-import {
-  DEFAULT_PORTFOLIO_SECTIONS,
-  findPortfolioSectionsByCaseId,
-} from "@/lib/resume-portfolio/content"
-import { parsePortfolioCaseBody } from "@/lib/resume-portfolio/portfolio-case-body"
 
-/**
- * 날짜를 YYYY.MM 형식으로 변환
- */
 function formatDate(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, "0")
   return `${year}.${month}`
 }
 
-/**
- * 날짜 범위 문자열 생성
- */
 function formatDateRange(dateStart: Date, dateEnd?: Date, isCurrent?: boolean): string {
   const start = formatDate(dateStart)
   if (isCurrent) {
@@ -29,9 +18,6 @@ function formatDateRange(dateStart: Date, dateEnd?: Date, isCurrent?: boolean): 
   return `${start}~`
 }
 
-/**
- * Content Collections 데이터를 읽어 프롬프트 문자열로 변환
- */
 export async function buildResumePrompt(): Promise<string> {
   const [basics, work, projects, education, certificates, awards, blogPosts]: [
     CollectionEntry<"basics">[],
@@ -53,7 +39,6 @@ export async function buildResumePrompt(): Promise<string> {
 
   const sections: string[] = []
 
-  // 1. 기본 정보
   const profile = basics[0]?.data
   if (profile) {
     sections.push(`## 기본 정보
@@ -65,7 +50,6 @@ export async function buildResumePrompt(): Promise<string> {
 ${profile.summary}`)
   }
 
-  // 2. 경력 (최신순 정렬)
   if (work.length > 0) {
     const sortedWork = [...work].sort(
       (a, b) => b.data.dateStart.getTime() - a.data.dateStart.getTime()
@@ -86,37 +70,30 @@ ${profile.summary}`)
 ${workSection.join("\n\n")}`)
   }
 
-  // 3. 주요 프로젝트 (최신순 정렬)
   if (projects.length > 0) {
     const sortedProjects = [...projects].sort(
       (a, b) => b.data.dateStart.getTime() - a.data.dateStart.getTime()
     )
 
-    const projectSections = sortedProjects.map((p, index) => {
-      const dateRange = formatDateRange(p.data.dateStart)
-      const techStack = p.data.techStack.join(", ")
-      const body = p.body?.trim()
-      const sections = findPortfolioSectionsByCaseId(p.id) ?? DEFAULT_PORTFOLIO_SECTIONS
-      const parsedBody = parsePortfolioCaseBody(p.body ?? "", { caseId: p.id, sections })
+    const projectSections = sortedProjects.map((project, index) => {
+      const dateRange = formatDateRange(project.data.dateStart)
+      const techStack = project.data.techStack.join(", ")
+      const accomplishmentLines = project.data.accomplishments.map((item) => `- ${item}`).join("\n")
 
-      let section = `### ${index + 1}. ${p.data.title}
+      return `### ${index + 1}. ${project.data.title}
 - 기간: ${dateRange}
 - 기술: ${techStack}
-- 요약: ${parsedBody.summary}`
+- 요약: ${project.data.summary}
 
-      if (body) {
-        section += `\n\n${body}`
-      }
-
-      return section
+#### 주요 성과
+${accomplishmentLines}`
     })
 
     sections.push(`## 주요 프로젝트
 
-${projectSections.join("\n\n---\n\n")}`)
+${projectSections.join("\n\n")}`)
   }
 
-  // 4. 학력
   if (blogPosts.length > 0) {
     const blogSections = blogPosts.map((post, index) => {
       const date = formatDate(new Date(post.publishedAt))
@@ -127,7 +104,6 @@ ${projectSections.join("\n\n---\n\n")}`)
 ${blogSections.join("\n")}`)
   }
 
-  // 5. 학력
   if (education.length > 0) {
     const eduSection = education.map((e) => {
       const dateRange = formatDateRange(e.data.dateStart, e.data.dateEnd)
@@ -138,7 +114,6 @@ ${blogSections.join("\n")}`)
 ${eduSection.join("\n")}`)
   }
 
-  // 6. 자격증
   if (certificates.length > 0) {
     const certSections = certificates.map((c) => {
       const date = formatDate(c.data.date)
@@ -151,7 +126,6 @@ ${eduSection.join("\n")}`)
 ${certSections.join("\n")}`)
   }
 
-  // 7. 대외활동
   if (awards.length > 0) {
     const awardSections = awards.map((a) => {
       const date = a.data.date.getFullYear().toString()
@@ -172,7 +146,6 @@ ${certSections.join("\n")}`)
 ${awardSections.join("\n\n")}`)
   }
 
-  // 8. 링크
   if (profile?.profiles && profile.profiles.length > 0) {
     const linkSection = profile.profiles
       .map((p: { network: string; url: string }) => `- ${p.network}: ${p.url}`)

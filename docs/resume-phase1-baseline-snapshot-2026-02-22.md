@@ -1,5 +1,17 @@
 # Phase 1 기준선 스냅샷 (2026-02-22)
 
+> Historical snapshot 문서입니다. 현재 resume-only 운영의 실행 기준(runbook)으로 사용하지 않습니다.
+> 이 문서 내 `resume-portfolio`/portfolio 관련 내용은 2026-02-22 당시 상태 기록으로만 유지됩니다.
+
+## 현재 활성 검증 기준 (resume-only)
+
+아래 명령만 현재 실행 기준으로 사용합니다.
+
+1. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck`
+2. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint`
+3. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:run`
+4. `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:e2e`
+
 ## 1) 스냅샷 메타데이터
 
 | 항목 | 값 |
@@ -137,12 +149,12 @@
 
 ## 7) 검증 커맨드 기준선 (균형형 세트)
 
-실행 기준:
+이 문서는 2026-02-22 기준선 기록 문서다. 아래 커맨드는 2026-03-08 현재 저장소 기준으로 치환한 실행 기준이다.
 
 1. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck`
 2. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint`
-3. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/chat-utils.test.ts tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts`
-4. `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts --project=chromium`
+3. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:run`
+4. `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:e2e`
 
 스크립트 근거: `web/package.json:11`, `web/package.json:14`, `web/package.json:16`, `web/package.json:18`, `web/package.json:19`
 

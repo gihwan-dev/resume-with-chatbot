@@ -90,7 +90,7 @@ describe("buildResumePrompt", () => {
     expect(prompt).not.toContain("## 최근 블로그 글")
   })
 
-  it("프로젝트 요약은 TL;DR 첫 문단에서 파생한다", async () => {
+  it("프로젝트 frontmatter의 summary/accomplishments를 포함한다", async () => {
     mockGetCollection.mockImplementation(async (collectionName) => {
       switch (collectionName) {
         case "basics":
@@ -115,26 +115,9 @@ describe("buildResumePrompt", () => {
                 techStack: ["React", "TanStack Table"],
                 dateStart: new Date("2025-07-01"),
                 priority: 2,
+                summary: "table 기반 구조의 기능 조합 충돌을 해결했습니다.",
+                accomplishments: ["리렌더를 줄였습니다.", "레이아웃 제약을 정리했습니다."],
               },
-              body: `
-## TL;DR
-**table 기반 구조의 기능 조합 충돌**을 해결했습니다.
-
-## 문제 정의
-문제 정의 내용
-
-## 핵심 의사결정
-의사결정 내용
-
-## 구현 전략
-구현 전략 내용
-
-## 검증 및 결과
-검증 및 결과 내용
-
-## What I Learned
-회고 내용
-`.trim(),
             },
           ] as never
         default:
@@ -147,5 +130,7 @@ describe("buildResumePrompt", () => {
     const prompt = await buildResumePrompt()
 
     expect(prompt).toContain("- 요약: table 기반 구조의 기능 조합 충돌을 해결했습니다.")
+    expect(prompt).toContain("#### 주요 성과")
+    expect(prompt).toContain("- 리렌더를 줄였습니다.")
   })
 })

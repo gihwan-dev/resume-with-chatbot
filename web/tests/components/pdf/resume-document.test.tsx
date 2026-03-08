@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ResumeDocument } from "@/components/pdf/resume-document"
@@ -75,7 +75,7 @@ function createMockResumeData(): SerializedResumeData {
         role: "Frontend Engineer",
         dateStart: "2024-11-01T00:00:00.000Z",
         isCurrent: true,
-        projectCases: [
+        projects: [
           {
             projectId: "exem-customer-dashboard",
             title: "인스턴스 통합 모니터링 대시보드 개발",
@@ -83,7 +83,6 @@ function createMockResumeData(): SerializedResumeData {
             accomplishments: ["인지 시간 단축", "인터랙션 지연 개선"],
           },
         ],
-        projectTitles: ["매핑 누락 프로젝트"],
         highlights: [],
       },
       {
@@ -92,18 +91,7 @@ function createMockResumeData(): SerializedResumeData {
         dateStart: "2023-06-01T00:00:00.000Z",
         dateEnd: "2023-12-01T00:00:00.000Z",
         isCurrent: false,
-        projectTitles: [],
         highlights: ["프로젝트 전 과정을 단독 수행했습니다."],
-      },
-    ],
-    projects: [
-      {
-        resumeItemId: "project-hidden",
-        title: "숨김 프로젝트",
-        summary: "이 항목은 PDF에서 노출되지 않아야 합니다.",
-        hasPortfolio: false,
-        technologies: [],
-        accomplishments: [],
       },
     ],
     blogPosts: [
@@ -153,7 +141,6 @@ describe("ResumeDocument", () => {
     const { container } = render(<ResumeDocument data={createMockResumeData()} />)
     const text = container.textContent ?? ""
 
-    expect(text).toContain("매핑 누락 프로젝트")
     expect(text).toContain("프로젝트 전 과정을 단독 수행했습니다.")
 
     const expectedOrder = [
@@ -179,43 +166,24 @@ describe("ResumeDocument", () => {
 
     expect(text).not.toContain("Projects")
     expect(text).not.toContain("Education")
-    expect(text).not.toContain("숨김 프로젝트")
     expect(text).not.toContain("숨김 대학")
   })
 
-  it("부분 매핑에서도 unmatched projectTitles fallback을 함께 렌더링한다", () => {
+  it("projects가 없으면 highlights fallback을 렌더링한다", () => {
     const data = createMockResumeData()
     data.work[1] = {
       company: "Example Team",
       role: "Frontend Engineer",
       dateStart: "2024-01-01T00:00:00.000Z",
       isCurrent: true,
-      projectCases: [
-        {
-          projectId: "example-case",
-          title: "핵심 케이스",
-          summary: "핵심 케이스 요약",
-          accomplishments: ["핵심 성과 1"],
-        },
-      ],
-      projectTitles: ["케이스 미매핑 프로젝트"],
+      projects: undefined,
       highlights: ["하이라이트 fallback 노출"],
     }
 
     const { container } = render(<ResumeDocument data={data} />)
     const text = container.textContent ?? ""
 
-    expect(text).toContain("매핑 누락 프로젝트")
-    expect(text).toContain("케이스 미매핑 프로젝트")
-  })
-
-  it("동명 프로젝트여도 fallback title이 누락되지 않는다", () => {
-    const data = createMockResumeData()
-    data.work[0].projectTitles = ["인스턴스 통합 모니터링 대시보드 개발"]
-
-    render(<ResumeDocument data={data} />)
-
-    expect(screen.getAllByText("인스턴스 통합 모니터링 대시보드 개발")).toHaveLength(2)
+    expect(text).toContain("하이라이트 fallback 노출")
   })
 
   it("Experience 렌더에서 wrap=false를 사용하지 않아 페이지 분할을 허용한다", () => {

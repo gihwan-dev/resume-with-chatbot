@@ -5,17 +5,16 @@ export interface CompanyProjectSource {
     title: string
     priority: number
     dateStart: Date
+    summary: string
+    accomplishments: string[]
   }
 }
 
 export interface CompanyProjectItem {
   projectId: string
   title: string
-  href?: string
-}
-
-interface BuildCompanyProjectsOptions {
-  hrefByProjectId?: ReadonlyMap<string, string>
+  summary: string
+  accomplishments: string[]
 }
 
 function compareCompanyProjects(a: CompanyProjectSource, b: CompanyProjectSource): number {
@@ -32,10 +31,8 @@ function compareCompanyProjects(a: CompanyProjectSource, b: CompanyProjectSource
 }
 
 export function buildCompanyProjectsByCompanyId(
-  projects: readonly CompanyProjectSource[],
-  options: BuildCompanyProjectsOptions = {}
+  projects: readonly CompanyProjectSource[]
 ): Map<string, CompanyProjectItem[]> {
-  const { hrefByProjectId } = options
   const grouped = new Map<string, CompanyProjectSource[]>()
 
   for (const project of projects) {
@@ -54,14 +51,12 @@ export function buildCompanyProjectsByCompanyId(
 
   for (const [companyId, companyProjects] of grouped) {
     const sorted = [...companyProjects].sort(compareCompanyProjects)
-    const items = sorted.map((project) => {
-      const href = hrefByProjectId?.get(project.id)
-      return {
-        projectId: project.id,
-        title: project.data.title,
-        href,
-      }
-    })
+    const items = sorted.map((project) => ({
+      projectId: project.id,
+      title: project.data.title,
+      summary: project.data.summary,
+      accomplishments: [...project.data.accomplishments],
+    }))
 
     mapped.set(companyId, items)
   }
