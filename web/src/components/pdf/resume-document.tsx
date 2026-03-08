@@ -190,7 +190,11 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
                         textStyle: styles.experienceCaseSummary,
                       })}
                       {project.accomplishments.map((accomplishment, accomplishmentIndex) => (
-                        <View key={accomplishment} style={styles.experienceCaseBulletRow}>
+                        <View
+                          key={accomplishment}
+                          style={styles.experienceCaseBulletRow}
+                          minPresenceAhead={30}
+                        >
                           <View style={styles.experienceCaseBulletDot} />
                           {markdownInlineToPdf(accomplishment, {
                             key: `${w.company}-${project.projectId}-accomplishment-${accomplishmentIndex}`,

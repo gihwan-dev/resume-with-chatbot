@@ -124,8 +124,8 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 700,
     color: colors.primary,
-    marginTop: 14,
-    marginBottom: 6,
+    marginTop: 18,
+    marginBottom: 9,
     letterSpacing: 0.3,
   },
 
@@ -134,7 +134,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "baseline",
-    marginBottom: 2,
+    marginBottom: 3,
   },
   itemTitle: {
     fontSize: 12.2,
@@ -149,7 +149,7 @@ export const styles = StyleSheet.create({
     fontSize: 9.4,
     color: colors.mutedStrong,
     fontWeight: 600,
-    marginBottom: 5,
+    marginBottom: 7,
   },
   itemSummary: {
     fontSize: 9.2,
@@ -158,7 +158,7 @@ export const styles = StyleSheet.create({
     color: colors.mutedStrong,
   },
   experienceProjectList: {
-    marginTop: 3,
+    marginTop: 4,
   },
   experienceProjectRow: {
     flexDirection: "row",
@@ -177,26 +177,26 @@ export const styles = StyleSheet.create({
     lineHeight: 1.48,
   },
   experienceCaseList: {
-    marginTop: 4,
+    marginTop: 6,
   },
   experienceCaseCard: {
     paddingLeft: 0,
     paddingRight: 0,
-    paddingTop: 2,
-    paddingBottom: 2,
-    marginBottom: 5,
+    paddingTop: 3,
+    paddingBottom: 3,
+    marginBottom: 7,
     backgroundColor: colors.background,
   },
   experienceCaseTitle: {
     fontSize: 10.2,
     fontWeight: 600,
-    marginBottom: 3,
+    marginBottom: 4,
     color: colors.text,
   },
   experienceCaseSummary: {
     fontSize: 9.2,
     lineHeight: 1.5,
-    marginBottom: 3,
+    marginBottom: 4,
     color: colors.mutedStrong,
   },
   experienceCaseBulletRow: {
@@ -233,9 +233,9 @@ export const styles = StyleSheet.create({
     color: colors.text,
   },
   compactRow: {
-    paddingTop: 2,
-    paddingBottom: 2,
-    marginBottom: 5,
+    paddingTop: 3,
+    paddingBottom: 3,
+    marginBottom: 7,
   },
   compactTitle: {
     fontSize: 10.3,
@@ -250,13 +250,13 @@ export const styles = StyleSheet.create({
     fontSize: 9.2,
     lineHeight: 1.42,
     color: colors.mutedStrong,
-    marginTop: 1,
+    marginTop: 2,
   },
   compactBody: {
     fontSize: 9.2,
     lineHeight: 1.48,
     color: colors.mutedStrong,
-    marginTop: 2,
+    marginTop: 3,
   },
   compactLinkText: {
     fontSize: 9.2,
@@ -270,10 +270,10 @@ export const styles = StyleSheet.create({
     fontWeight: 600,
   },
   itemSeparator: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   projectContainer: {
-    marginBottom: 12,
+    marginBottom: 14,
     paddingLeft: 0,
   },
 
@@ -284,14 +284,14 @@ export const styles = StyleSheet.create({
     color: colors.mutedStrong,
     textTransform: "uppercase",
     letterSpacing: 0.7,
-    marginBottom: 2,
-    marginTop: 4,
+    marginBottom: 3,
+    marginTop: 5,
   },
   skillsBadgeRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 3,
-    marginBottom: 3,
+    marginBottom: 4,
   },
 
   // Tech stack badges
