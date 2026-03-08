@@ -61,22 +61,36 @@ const isAnswerToolSource = (value: unknown): value is AnswerToolSource => {
 }
 
 export function extractFinalAnswerPayload(content: ReadonlyArray<AssistantContentPart>): {
+  hasAnswerToolCall: boolean
+  hasTextPart: boolean
   answer?: string
   sources?: AnswerToolSource[]
 } {
+  const hasTextPart = content.some(
+    (part) => part.type === "text" && typeof part.text === "string" && part.text.trim().length > 0
+  )
   const answerPart = content.find((part) => part.type === "tool-call" && part.toolName === "answer")
-  if (!answerPart || !answerPart.args || typeof answerPart.args !== "object") {
-    return {}
+  if (!answerPart) {
+    return {
+      hasAnswerToolCall: false,
+      hasTextPart,
+    }
+  }
+
+  if (!answerPart.args || typeof answerPart.args !== "object") {
+    return {
+      hasAnswerToolCall: true,
+      hasTextPart,
+    }
   }
 
   const args = answerPart.args as { answer?: unknown; sources?: unknown }
   const answer = typeof args.answer === "string" ? args.answer : undefined
   const sources = Array.isArray(args.sources) ? args.sources.filter(isAnswerToolSource) : []
-  const hasTextPart = content.some(
-    (part) => part.type === "text" && typeof part.text === "string" && part.text.trim().length > 0
-  )
 
   return {
+    hasAnswerToolCall: true,
+    hasTextPart,
     answer: hasTextPart ? undefined : answer,
     sources: sources.length > 0 ? sources : undefined,
   }
@@ -85,7 +99,21 @@ export function extractFinalAnswerPayload(content: ReadonlyArray<AssistantConten
 export const FinalAnswerFromToolCall: FC<{ content: ReadonlyArray<AssistantContentPart> }> = ({
   content,
 }) => {
-  const { answer, sources } = extractFinalAnswerPayload(content)
+  const { hasAnswerToolCall, hasTextPart, answer, sources } = extractFinalAnswerPayload(content)
+  const hasUsablePayload = Boolean(
+    (typeof answer === "string" && answer.trim().length > 0) || (sources && sources.length > 0)
+  )
+
+  if (!hasUsablePayload && hasTextPart) return null
+  if (!hasUsablePayload && hasAnswerToolCall) {
+    return (
+      <div className="mt-2 rounded-md border border-border/40 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+        응답을 표시하는 중 문제가 발생했습니다. 다시 생성해 주세요.
+      </div>
+    )
+  }
+
+  if (!hasUsablePayload) return null
   return <AnswerToolContent answer={answer} sources={sources} />
 }
 

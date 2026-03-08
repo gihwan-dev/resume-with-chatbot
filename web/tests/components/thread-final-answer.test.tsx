@@ -62,4 +62,38 @@ describe("FinalAnswerFromToolCall", () => {
     expect(screen.getByText("answer from tool")).toBeTruthy()
     expect(screen.getByText("참고한 경험 (1)")).toBeTruthy()
   })
+
+  it("answer tool call이 있지만 args가 malformed면 fallback 문구를 렌더링한다", () => {
+    render(
+      <FinalAnswerFromToolCall
+        content={[
+          {
+            type: "tool-call",
+            toolName: "answer",
+            args: "invalid-payload",
+          },
+        ]}
+      />
+    )
+
+    expect(
+      screen.getByText("응답을 표시하는 중 문제가 발생했습니다. 다시 생성해 주세요.")
+    ).toBeTruthy()
+  })
+
+  it("answer tool call이 아예 없으면 null을 유지한다", () => {
+    const { container } = render(
+      <FinalAnswerFromToolCall
+        content={[
+          {
+            type: "tool-call",
+            toolName: "searchDocuments",
+            args: { query: "wcag" },
+          },
+        ]}
+      />
+    )
+
+    expect(container.firstChild).toBeNull()
+  })
 })
