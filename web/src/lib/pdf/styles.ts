@@ -196,7 +196,7 @@ export const styles = StyleSheet.create({
   experienceCaseSummary: {
     fontSize: 9.2,
     lineHeight: 1.5,
-    marginBottom: 5,
+    marginBottom: 7,
     color: colors.mutedStrong,
   },
   experienceCaseBulletRow: {
