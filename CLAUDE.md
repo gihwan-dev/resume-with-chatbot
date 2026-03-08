@@ -22,6 +22,11 @@ pnpm test:run         # Vitest single run
 pnpm test:run -- tests/lib/work-agent/tools.test.ts  # Run single test file
 ```
 
+## Push Checklist (Vault)
+
+- `web/vault/` is a tracked directory. Before push, verify there is no missed vault change with `git status -- web/vault` and include intended vault diffs in the same push.
+- If a task touches vault content or anything that depends on vault data (for example Live Resume Feed), run `pnpm build:vault` from `web/` (or `pnpm -C web run build:vault`) before push.
+
 ## Architecture
 
 ### Repo Layout

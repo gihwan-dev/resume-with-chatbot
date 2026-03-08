@@ -102,6 +102,11 @@ pnpm test:coverage
 pnpm test:e2e
 ```
 
+## 운영 체크리스트 (push 전)
+
+- `web/vault/`는 submodule이 아닌 tracked directory입니다. push 전에 vault 변경이 누락되지 않았는지 `git status -- web/vault`로 확인하고 함께 반영합니다.
+- 배포와 Live Resume Feed는 vault 빌드 산출물에 의존합니다. push 전에 `pnpm -C web run build:vault`(또는 `cd web && pnpm build:vault`)를 실행해 빌드 성공을 확인합니다.
+
 ## 주요 문서
 
 - `docs/resume-engineering-guide-2025.md`
