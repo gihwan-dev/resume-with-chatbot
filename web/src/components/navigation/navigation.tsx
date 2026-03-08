@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { NAVIGATION_READY_EVENT } from "@/lib/layer-events"
+import { isResumeRoutePath } from "@/lib/resume/variant"
 import { DesktopNav } from "./desktop-nav"
 import { MobileNav } from "./mobile-nav"
 import { RESUME_SECTION_NAV_ITEMS, type SectionNavItem } from "./section-nav"
@@ -30,7 +31,7 @@ export function Navigation({ initialPathname = "/" }: NavigationProps) {
   const mobileWrapperRef = useRef<HTMLDivElement>(null)
   const desktopWrapperRef = useRef<HTMLDivElement>(null)
   const [sections, setSections] = useState<readonly SectionNavItem[]>(() =>
-    initialPathname === "/" ? DEFAULT_RESUME_SECTION_ITEMS : []
+    isResumeRoutePath(initialPathname) ? DEFAULT_RESUME_SECTION_ITEMS : []
   )
 
   useEffect(() => {
@@ -50,7 +51,9 @@ export function Navigation({ initialPathname = "/" }: NavigationProps) {
 
   useEffect(() => {
     const syncSections = () => {
-      const nextSections = window.location.pathname === "/" ? getResumeSectionsFromDocument() : []
+      const nextSections = isResumeRoutePath(window.location.pathname)
+        ? getResumeSectionsFromDocument()
+        : []
       setSections((currentSections) => {
         if (isSameSectionSet(currentSections, nextSections)) {
           return currentSections

@@ -27,6 +27,11 @@ const CHAT_MODAL_CONTENT_ID = "assistant-chat-modal"
 const CHAT_MODAL_TITLE_ID = "assistant-chat-modal-title"
 const CHAT_MODAL_DESCRIPTION_ID = "assistant-chat-modal-description"
 
+function getActiveResumeVariant(): string {
+  if (typeof document === "undefined") return "frontend"
+  return document.body.dataset.resumeVariant ?? "frontend"
+}
+
 export const AssistantModal: FC = () => {
   const triggerRef = useRef<HTMLButtonElement>(null)
   const [open, setOpen] = useState(false)
@@ -285,7 +290,7 @@ const AssistantModalButton = forwardRef<HTMLButtonElement, AssistantModalButtonP
 
     const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
       if (state === "closed") {
-        trackEvent("chat_open")
+        trackEvent("chat_open", { resume_variant: getActiveResumeVariant() })
       }
       const originalOnClick = rest.onClick as React.MouseEventHandler<HTMLButtonElement> | undefined
       originalOnClick?.(e)

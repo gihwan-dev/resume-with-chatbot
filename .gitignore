@@ -37,6 +37,8 @@ coverage/
 !tsconfig.json
 !biome.json
 !components.json
+!web/src/content/basics/ai-agent.json
+!web/src/content/skills/ai-agent.json
 
 # Generated Data
 collected-histories/

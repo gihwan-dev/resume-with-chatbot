@@ -13,6 +13,13 @@ interface ProfileData {
   profiles?: ProfileLink[]
 }
 
+interface ResumeVariantLink {
+  id: string
+  label: string
+  href: string
+  isActive: boolean
+}
+
 interface SummarySegment {
   text: string
   highlight: boolean
@@ -35,7 +42,10 @@ const SUMMARY_HIGHLIGHT_TOKENS = [
   "Visx",
 ]
 
-const { profile } = Astro.props as { profile?: ProfileData }
+const { profile, variantLinks = [] } = Astro.props as {
+  profile?: ProfileData
+  variantLinks?: ResumeVariantLink[]
+}
 const sortedSummaryHighlightTokens = [...SUMMARY_HIGHLIGHT_TOKENS].sort(
   (a, b) => b.length - a.length
 )
@@ -96,6 +106,28 @@ const summarySegments = tokenizeSummary(profile?.summary)
   id="profile"
   class="mb-12 space-y-6"
 >
+  {variantLinks.length > 0 && (
+    <div class="flex items-center gap-2 text-xs">
+      <span class="text-resume-text-muted uppercase tracking-wider font-semibold">Resume</span>
+      <div class="flex items-center gap-1 rounded-md border border-resume-border p-1 bg-resume-card-bg">
+        {variantLinks.map((variant) => (
+          <a
+            href={variant.href}
+            aria-current={variant.isActive ? "page" : undefined}
+            class:list={[
+              "rounded px-2 py-1 font-medium transition-colors",
+              variant.isActive
+                ? "bg-resume-primary text-white"
+                : "text-resume-text-muted hover:text-resume-text-main hover:bg-resume-highlight",
+            ]}
+          >
+            {variant.label}
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
   <div class="space-y-2">
     <h1
       class="text-5xl font-heading font-bold tracking-tight text-resume-text-heading sm:text-6xl"

@@ -1,5 +1,4 @@
-import { type CollectionEntry, getCollection } from "astro:content"
-import { getObsidianBlogPosts } from "@/lib/blog/obsidian-publish"
+import { resolveResumeContent } from "@/lib/resume/content"
 
 function formatDate(date: Date): string {
   const year = date.getFullYear()
@@ -18,28 +17,11 @@ function formatDateRange(dateStart: Date, dateEnd?: Date, isCurrent?: boolean): 
   return `${start}~`
 }
 
-export async function buildResumePrompt(): Promise<string> {
-  const [basics, work, projects, education, certificates, awards, blogPosts]: [
-    CollectionEntry<"basics">[],
-    CollectionEntry<"work">[],
-    CollectionEntry<"projects">[],
-    CollectionEntry<"education">[],
-    CollectionEntry<"certificates">[],
-    CollectionEntry<"awards">[],
-    Awaited<ReturnType<typeof getObsidianBlogPosts>>,
-  ] = await Promise.all([
-    getCollection("basics"),
-    getCollection("work"),
-    getCollection("projects"),
-    getCollection("education"),
-    getCollection("certificates"),
-    getCollection("awards"),
-    getObsidianBlogPosts({ limit: 5 }),
-  ])
-
+export async function buildResumePrompt(variantInput?: string | null): Promise<string> {
+  const resumeContent = await resolveResumeContent(variantInput)
   const sections: string[] = []
 
-  const profile = basics[0]?.data
+  const profile = resumeContent.profile
   if (profile) {
     sections.push(`## 기본 정보
 - 이름: ${profile.name}
@@ -50,15 +32,11 @@ export async function buildResumePrompt(): Promise<string> {
 ${profile.summary}`)
   }
 
-  if (work.length > 0) {
-    const sortedWork = [...work].sort(
-      (a, b) => b.data.dateStart.getTime() - a.data.dateStart.getTime()
-    )
-
-    const workSection = sortedWork.map((w) => {
-      const dateRange = formatDateRange(w.data.dateStart, w.data.dateEnd, w.data.isCurrent)
-      const highlights = w.data.highlights ?? []
-      const lines = [`### ${w.data.company} (${dateRange})`, `- 직무: ${w.data.role}`]
+  if (resumeContent.experienceEntries.length > 0) {
+    const workSection = resumeContent.experienceEntries.map(({ data }) => {
+      const dateRange = formatDateRange(data.dateStart, data.dateEnd, data.isCurrent)
+      const highlights = data.highlights ?? []
+      const lines = [`### ${data.company} (${dateRange})`, `- 직무: ${data.role}`]
       for (const highlight of highlights) {
         lines.push(`- ${highlight}`)
       }
@@ -70,20 +48,13 @@ ${profile.summary}`)
 ${workSection.join("\n\n")}`)
   }
 
-  if (projects.length > 0) {
-    const sortedProjects = [...projects].sort(
-      (a, b) => b.data.dateStart.getTime() - a.data.dateStart.getTime()
-    )
-
+  const sortedProjects = resumeContent.experienceEntries.flatMap(({ projects }) => projects)
+  if (sortedProjects.length > 0) {
     const projectSections = sortedProjects.map((project, index) => {
-      const dateRange = formatDateRange(project.data.dateStart)
-      const techStack = project.data.techStack.join(", ")
-      const accomplishmentLines = project.data.accomplishments.map((item) => `- ${item}`).join("\n")
+      const accomplishmentLines = project.accomplishments.map((item) => `- ${item}`).join("\n")
 
-      return `### ${index + 1}. ${project.data.title}
-- 기간: ${dateRange}
-- 기술: ${techStack}
-- 요약: ${project.data.summary}
+      return `### ${index + 1}. ${project.title}
+- 요약: ${project.summary}
 
 #### 주요 성과
 ${accomplishmentLines}`
@@ -94,8 +65,8 @@ ${accomplishmentLines}`
 ${projectSections.join("\n\n")}`)
   }
 
-  if (blogPosts.length > 0) {
-    const blogSections = blogPosts.map((post, index) => {
+  if (resumeContent.blogPosts.length > 0) {
+    const blogSections = resumeContent.blogPosts.map((post, index) => {
       const date = formatDate(new Date(post.publishedAt))
       return `${index + 1}. ${post.title} (${date})\n   - 링크: ${post.url}`
     })
@@ -104,8 +75,8 @@ ${projectSections.join("\n\n")}`)
 ${blogSections.join("\n")}`)
   }
 
-  if (education.length > 0) {
-    const eduSection = education.map((e) => {
+  if (resumeContent.education.length > 0) {
+    const eduSection = resumeContent.education.map((e) => {
       const dateRange = formatDateRange(e.data.dateStart, e.data.dateEnd)
       return `- ${e.data.institution} ${e.data.area} (${dateRange})`
     })
@@ -114,8 +85,8 @@ ${blogSections.join("\n")}`)
 ${eduSection.join("\n")}`)
   }
 
-  if (certificates.length > 0) {
-    const certSections = certificates.map((c) => {
+  if (resumeContent.certificates.length > 0) {
+    const certSections = resumeContent.certificates.map((c) => {
       const date = formatDate(c.data.date)
       const body = c.body?.trim()
       const detail = body ? ` - ${body}` : ""
@@ -126,8 +97,8 @@ ${eduSection.join("\n")}`)
 ${certSections.join("\n")}`)
   }
 
-  if (awards.length > 0) {
-    const awardSections = awards.map((a) => {
+  if (resumeContent.awards.length > 0) {
+    const awardSections = resumeContent.awards.map((a) => {
       const date = a.data.date.getFullYear().toString()
       const body = a.body?.trim()
 

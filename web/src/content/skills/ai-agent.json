@@ -1,0 +1,25 @@
+{
+  "variant": "ai-agent",
+  "categories": [
+    {
+      "name": "Languages",
+      "items": ["TypeScript", "JavaScript", "Python", "HTML/CSS"]
+    },
+    {
+      "name": "AI Agent & Automation",
+      "items": ["MCP (Model Context Protocol)", "Claude API", "RAG", "n8n", "OpenAPI/Swagger", "GitLab API"]
+    },
+    {
+      "name": "Frameworks & Runtime",
+      "items": ["React", "Astro", "FastAPI", "Elasticsearch", "TanStack Table", "TanStack Virtual"]
+    },
+    {
+      "name": "Testing & Validation",
+      "items": ["Playwright", "Vitest", "pixelmatch", "Figma MCP"]
+    },
+    {
+      "name": "Tools",
+      "items": ["Vite", "Git", "Docker"]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "variant": "ai-agent",
+  "name": "최기환",
+  "label": "AI Native Frontend Developer",
+  "email": "rlghks3004@gmail.com",
+  "summary": "- 300대 인스턴스의 실시간 폴링 환경에서도 리사이징, 드래그 앤 드롭 같은 고사양 상호작용을 안정적으로 처리하도록 최적화했고, 와이드 모니터 한 화면에 300대를 동시에 렌더링하는 상황에서 60 FPS 수준으로 성능을 개선했습니다.\n- 20+ 기능의 커스텀 데이터 그리드를 직접 개발하며 대규모 데이터 화면, 공용 UI 구조, 렌더링 병목 문제를 꾸준히 해결해 왔습니다.\n- MCP(Model Context Protocol) 기반 서버를 직접 개발하고 npm으로 배포해, AI 에이전트가 내부 API 스펙을 자동 분석할 수 있는 실행 경로를 만들었습니다.\n- Claude API와 n8n을 조합해 GitLab 슬래시 커맨드 자동화 파이프라인(/mr, /review 등)을 설계·구현했고, 반복적인 문서화와 리뷰 보조 작업을 줄이는 흐름을 운영하고 있습니다.\n- Figma -> 코드 -> 검증 자동화와 RAG 기반 내부 문서 챗봇 구축을 통해, FE 개발 경험 위에 AI 에이전트·자동화 시스템을 실제 개발 프로세스에 연결해 왔습니다.",
+  "url": "https://resume-with-ai.gihwan-dev.com/ai-agent",
+  "profiles": [
+    {
+      "network": "GitHub",
+      "url": "https://github.com/gihwan-dev"
+    },
+    {
+      "network": "LinkedIn",
+      "url": "https://www.linkedin.com/in/기환-최-312530303"
+    },
+    {
+      "network": "Obsidian",
+      "url": "https://publish.obsidian.md/gihwan-dev/README"
+    }
+  ]
+}

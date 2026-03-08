@@ -1,8 +1,9 @@
 import { createElement } from "react"
+import { parseResumeVariant } from "@/lib/resume/variant"
 
 export const prerender = false
 
-export async function GET() {
+export async function GET({ request }: { request: Request }) {
   const [{ renderToBuffer }, { ResumeDocument }, { registerFonts }, { serializeResumeData }] =
     await Promise.all([
       import("@react-pdf/renderer"),
@@ -11,7 +12,8 @@ export async function GET() {
       import("@/lib/pdf/serialize-resume"),
     ])
 
-  const resumeData = await serializeResumeData()
+  const variant = parseResumeVariant(new URL(request.url).searchParams.get("variant"))
+  const resumeData = await serializeResumeData(variant)
   registerFonts()
 
   const document = createElement(ResumeDocument, { data: resumeData })

@@ -1,13 +1,16 @@
 import { defineCollection, z } from "astro:content"
 import { glob } from "astro/loaders"
 
+const resumeVariantSchema = z.enum(["frontend", "ai-agent"])
+
 const companyIdSchema = z
   .string()
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "companyId must be kebab-case")
 
 const basics = defineCollection({
-  loader: glob({ pattern: "profile.json", base: "./src/content/basics" }),
+  loader: glob({ pattern: "*.json", base: "./src/content/basics" }),
   schema: z.object({
+    variant: resumeVariantSchema,
     name: z.string(),
     label: z.string(),
     email: z.string(),
@@ -31,6 +34,7 @@ const work = defineCollection({
     dateStart: z.coerce.date(),
     dateEnd: z.coerce.date().optional(),
     isCurrent: z.boolean().default(false),
+    variants: z.array(resumeVariantSchema).optional(),
     highlights: z.array(z.string().min(1)).optional(),
   }),
 })
@@ -76,14 +80,16 @@ const projects = defineCollection({
       dateStart: z.coerce.date(),
       priority: z.number(),
       summary: z.string(),
+      variants: z.array(resumeVariantSchema).optional(),
       accomplishments: z.array(z.string()),
     })
     .strict(),
 })
 
 const skills = defineCollection({
-  loader: glob({ pattern: "skills.json", base: "./src/content/skills" }),
+  loader: glob({ pattern: "*.json", base: "./src/content/skills" }),
   schema: z.object({
+    variant: resumeVariantSchema,
     categories: z.array(
       z.object({
         name: z.string(),
