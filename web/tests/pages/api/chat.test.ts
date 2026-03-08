@@ -6,6 +6,7 @@ const {
   mockConvertToModelMessages,
   mockCreateUIMessageStreamResponse,
   mockCreateVertex,
+  mockVertexModel,
   mockStreamText,
   mockCaptureException,
   mockFlush,
@@ -19,6 +20,7 @@ const {
   mockConvertToModelMessages: vi.fn(),
   mockCreateUIMessageStreamResponse: vi.fn(),
   mockCreateVertex: vi.fn(),
+  mockVertexModel: vi.fn(),
   mockStreamText: vi.fn(),
   mockCaptureException: vi.fn(),
   mockFlush: vi.fn(),
@@ -88,6 +90,7 @@ describe("/api/chat", () => {
     mockConvertToModelMessages.mockReset()
     mockCreateUIMessageStreamResponse.mockReset()
     mockCreateVertex.mockReset()
+    mockVertexModel.mockReset()
     mockStreamText.mockReset()
     mockCaptureException.mockReset()
     mockFlush.mockReset()
@@ -107,7 +110,8 @@ describe("/api/chat", () => {
     mockBuildDynamicSystemPrompt.mockReturnValue("dynamic prompt")
     mockCreateSearchContext.mockReturnValue({})
     mockCreateAnswerTool.mockReturnValue({ description: "answer" })
-    mockCreateVertex.mockReturnValue(() => "mock-model")
+    mockVertexModel.mockReturnValue("mock-model")
+    mockCreateVertex.mockReturnValue(mockVertexModel)
     mockStreamText.mockReturnValue({
       toUIMessageStream: () => new ReadableStream(),
     })
@@ -143,5 +147,31 @@ describe("/api/chat", () => {
 
     expect(response.status).toBe(200)
     expect(mockBuildResumePrompt).toHaveBeenCalledWith("frontend")
+  })
+
+  it("Vertex global endpoint와 Gemini 3.1 Pro Preview를 사용한다", async () => {
+    const response = await POST({
+      request: new Request("http://localhost/api/chat?variant=frontend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", parts: [{ type: "text", text: "경험 알려줘" }] }],
+        }),
+      }),
+    })
+
+    expect(response.status).toBe(200)
+    expect(mockCreateVertex).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project: "test-project",
+        location: "global",
+      })
+    )
+    expect(mockVertexModel).toHaveBeenCalledWith("gemini-3.1-pro-preview")
+    expect(mockStreamText).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: "mock-model",
+      })
+    )
   })
 })

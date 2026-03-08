@@ -20,7 +20,7 @@ const getVertex = () => {
 
   return createVertex({
     project: projectId,
-    location: "us-central1",
+    location: "global",
     googleAuthOptions: {
       credentials: {
         client_email: clientEmail,

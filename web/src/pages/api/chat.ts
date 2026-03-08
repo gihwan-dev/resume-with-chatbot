@@ -206,7 +206,7 @@ const getVertex = () => {
 
   return createVertex({
     project: projectId,
-    location: "us-central1",
+    location: "global",
     googleAuthOptions: {
       credentials: {
         client_email: clientEmail,
@@ -264,7 +264,7 @@ export const POST = async ({ request }: { request: Request }) => {
     }
 
     const result = streamText({
-      model: vertex("gemini-2.5-pro"),
+      model: vertex("gemini-3.1-pro-preview"),
       providerOptions: {
         google: {
           thinkingConfig: {

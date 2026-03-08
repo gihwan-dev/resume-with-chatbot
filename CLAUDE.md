@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AI-powered interactive resume site. An Astro + React SPA where a chat widget answers visitor questions about the owner's career by searching a local Obsidian vault via tool-calling agents (Gemini 2.5 Pro). Deployed on Vercel.
+AI-powered interactive resume site. An Astro + React SPA where a chat widget answers visitor questions about the owner's career by searching a local Obsidian vault via tool-calling agents (Gemini 3.1 Pro Preview). Deployed on Vercel.
 
 ## Commands
 
@@ -32,7 +32,7 @@ Monorepo root with `web/` containing the Astro app. `web/vault/` is a git submod
 
 - **Astro 5 + React 19** with `client:load` hydration
 - **Vercel AI SDK** (`ai` package) — `streamText`, `convertToModelMessages`, tool calling
-- **Google Vertex AI** — Gemini 2.5 Pro (chat), Gemini 2.0 Flash (followup)
+- **Google Vertex AI** — Gemini 3.1 Pro Preview (chat), Gemini 2.0 Flash (followup)
 - **@assistant-ui/react** — Chat modal/thread primitives (wraps Radix Popover)
 - **TailwindCSS 4**, **Zustand**, **Zod**
 - **Biome** for linting/formatting (not ESLint), **Vitest** for tests
