@@ -10,10 +10,9 @@ import {
   buildDynamicSystemPrompt,
   classifyIntent,
   INTENT_KEYWORDS,
-  MIN_SEARCH_COUNT,
   PERSONA_PROMPTS,
   REFLEXION_PROTOCOL,
-  shouldAllowAnswer,
+  resolveThinkingLevel,
   type UserIntent,
 } from "../../../src/lib/work-agent/prompts"
 
@@ -172,28 +171,28 @@ describe("prompts", () => {
   describe("buildDynamicSystemPrompt", () => {
     it("career_inquiry 의도에 맞는 프롬프트 생성", () => {
       const result = buildDynamicSystemPrompt({ intent: "career_inquiry" })
-      expect(result).toContain("커리어 상담가")
-      expect(result).toContain("Exem 업무 기록을 우선 검색")
+      expect(result).toContain("모드: 커리어 답변")
+      expect(result).toContain("문제/해결/성과")
     })
 
     it("technical_inquiry 의도에 맞는 프롬프트 생성", () => {
       const result = buildDynamicSystemPrompt({ intent: "technical_inquiry" })
-      expect(result).toContain("기술 전문가")
-      expect(result).toContain("기술 카테고리")
+      expect(result).toContain("모드: 기술 답변")
+      expect(result).toContain("문서 제목만으로 단정하지 말고")
     })
 
     it("contact_inquiry 의도에 맞는 프롬프트 생성", () => {
       const result = buildDynamicSystemPrompt({ intent: "contact_inquiry" })
-      expect(result).toContain("연결 담당자")
-      expect(result).toContain("검색 최소화")
+      expect(result).toContain("모드: 연락처 안내")
+      expect(result).toContain("공개된 이력서/볼트 정보")
     })
 
     it("general_chat 의도에 맞는 프롬프트 생성", () => {
       const result = buildDynamicSystemPrompt({ intent: "general_chat" })
-      expect(result).toContain("친근한 어시스턴트")
+      expect(result).toContain("모드: 일반 대화")
     })
 
-    it("반복 호출 감지 시 Reflexion 프로토콜 추가", () => {
+    it("반복 호출 감지 시 soft guidance를 추가한다", () => {
       const analysis = {
         consecutiveSameToolCount: 3,
         lastToolName: "searchDocuments",
@@ -205,8 +204,8 @@ describe("prompts", () => {
         analysis,
         includeReflexion: true,
       })
-      expect(result).toContain("반복 호출 감지")
-      expect(result).toContain("자기 성찰")
+      expect(result).toContain("전략 전환 힌트")
+      expect(result).toContain("동일한 도구 호출이 반복")
       expect(result).toContain("이전 검색 쿼리")
       expect(result).toContain("query1")
       expect(result).toContain("query2")
@@ -225,7 +224,7 @@ describe("prompts", () => {
         analysis,
         includeReflexion: true,
       })
-      expect(result).not.toContain("반복 호출 감지")
+      expect(result).not.toContain("전략 전환 힌트")
     })
 
     it("includeReflexion false면 Reflexion 미포함", () => {
@@ -240,90 +239,22 @@ describe("prompts", () => {
         analysis,
         includeReflexion: false,
       })
-      expect(result).not.toContain("반복 호출 감지")
+      expect(result).not.toContain("전략 전환 힌트")
     })
   })
 
   // ============================================
-  // shouldAllowAnswer Tests
+  // resolveThinkingLevel Tests
   // ============================================
-  describe("shouldAllowAnswer", () => {
-    const createAnalysis = (totalSearchCount: number) => ({
-      consecutiveSameToolCount: 0,
-      lastToolName: null,
-      lastQueries: [],
-      totalSearchCount,
+  describe("resolveThinkingLevel", () => {
+    it("technical/career 의도는 high", () => {
+      expect(resolveThinkingLevel("technical_inquiry")).toBe("high")
+      expect(resolveThinkingLevel("career_inquiry")).toBe("high")
     })
 
-    describe("career_inquiry (최소 2회)", () => {
-      it("검색 0회: 미달", () => {
-        const result = shouldAllowAnswer("career_inquiry", createAnalysis(0))
-        expect(result.isReady).toBe(false)
-        expect(result.currentCount).toBe(0)
-        expect(result.minRequired).toBe(2)
-        expect(result.reason).toContain("최소 검색 미달")
-      })
-
-      it("검색 1회: 미달", () => {
-        const result = shouldAllowAnswer("career_inquiry", createAnalysis(1))
-        expect(result.isReady).toBe(false)
-        expect(result.currentCount).toBe(1)
-        expect(result.minRequired).toBe(2)
-      })
-
-      it("검색 2회: 충족", () => {
-        const result = shouldAllowAnswer("career_inquiry", createAnalysis(2))
-        expect(result.isReady).toBe(true)
-        expect(result.currentCount).toBe(2)
-        expect(result.reason).toContain("검색 충족")
-      })
-
-      it("검색 5회: 충족", () => {
-        const result = shouldAllowAnswer("career_inquiry", createAnalysis(5))
-        expect(result.isReady).toBe(true)
-        expect(result.currentCount).toBe(5)
-      })
-    })
-
-    describe("contact_inquiry (최소 1회)", () => {
-      it("검색 0회: 미달", () => {
-        const result = shouldAllowAnswer("contact_inquiry", createAnalysis(0))
-        expect(result.isReady).toBe(false)
-        expect(result.minRequired).toBe(1)
-      })
-
-      it("검색 1회: 충족", () => {
-        const result = shouldAllowAnswer("contact_inquiry", createAnalysis(1))
-        expect(result.isReady).toBe(true)
-        expect(result.currentCount).toBe(1)
-        expect(result.minRequired).toBe(1)
-      })
-    })
-
-    describe("general_chat (최소 1회)", () => {
-      it("검색 0회: 미달", () => {
-        const result = shouldAllowAnswer("general_chat", createAnalysis(0))
-        expect(result.isReady).toBe(false)
-        expect(result.minRequired).toBe(1)
-      })
-
-      it("검색 1회: 충족", () => {
-        const result = shouldAllowAnswer("general_chat", createAnalysis(1))
-        expect(result.isReady).toBe(true)
-      })
-    })
-
-    describe("technical_inquiry (최소 2회)", () => {
-      it("검색 1회: 미달", () => {
-        const result = shouldAllowAnswer("technical_inquiry", createAnalysis(1))
-        expect(result.isReady).toBe(false)
-        expect(result.minRequired).toBe(2)
-      })
-
-      it("검색 2회: 충족", () => {
-        const result = shouldAllowAnswer("technical_inquiry", createAnalysis(2))
-        expect(result.isReady).toBe(true)
-      })
+    it("contact/general 의도는 low", () => {
+      expect(resolveThinkingLevel("contact_inquiry")).toBe("low")
+      expect(resolveThinkingLevel("general_chat")).toBe("low")
     })
   })
 
@@ -359,27 +290,7 @@ describe("prompts", () => {
 
     it("REFLEXION_PROTOCOL이 정의됨", () => {
       expect(REFLEXION_PROTOCOL).toBeDefined()
-      expect(REFLEXION_PROTOCOL).toContain("반복 호출 감지")
-    })
-
-    it("MIN_SEARCH_COUNT에 모든 의도 정의됨", () => {
-      const intents: UserIntent[] = [
-        "career_inquiry",
-        "technical_inquiry",
-        "contact_inquiry",
-        "general_chat",
-      ]
-      for (const intent of intents) {
-        expect(MIN_SEARCH_COUNT[intent]).toBeDefined()
-        expect(MIN_SEARCH_COUNT[intent]).toBeGreaterThanOrEqual(1)
-      }
-    })
-
-    it("MIN_SEARCH_COUNT 값이 의도에 맞게 설정됨", () => {
-      expect(MIN_SEARCH_COUNT.contact_inquiry).toBe(1) // 연락처: 최소
-      expect(MIN_SEARCH_COUNT.general_chat).toBe(1) // 일반: 최소
-      expect(MIN_SEARCH_COUNT.career_inquiry).toBe(2) // 경력: searchDocuments + readDocument
-      expect(MIN_SEARCH_COUNT.technical_inquiry).toBe(2) // 기술: searchDocuments + readDocument
+      expect(REFLEXION_PROTOCOL).toContain("전략 전환 힌트")
     })
   })
 })

@@ -10,7 +10,7 @@ export {
   readDocumentContent,
   searchDocuments,
 } from "./obsidian.server"
-// Prompts (의도 분류, 반복 분석, 동적 프롬프트, 검색 충분성)
+// Prompts (의도 분류, 반복 분석, 동적 프롬프트, thinking level)
 export {
   analyzeToolCallPattern,
   buildDynamicSystemPrompt,
@@ -18,12 +18,11 @@ export {
   type DynamicPromptOptions,
   INTENT_KEYWORDS,
   type IntentClassification,
-  MIN_SEARCH_COUNT,
   PERSONA_PROMPTS,
   REFLEXION_PROTOCOL,
-  type SearchSufficiencyCheck,
+  resolveThinkingLevel,
   type StepAnalysis,
-  shouldAllowAnswer,
+  type ThinkingLevel,
   type ToolCallHistory,
   type UserIntent,
 } from "./prompts"

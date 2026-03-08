@@ -1,6 +1,6 @@
 /**
  * Work Agent 프롬프트 모듈
- * 의도 분류, 반복 호출 분석, 동적 프롬프트 생성
+ * 의도 분류, 반복 호출 분석, 동적 프롬프트/Thinking Level 생성
  * Obsidian 볼트 기반 아키텍처
  */
 
@@ -35,29 +35,11 @@ export interface DynamicPromptOptions {
   includeReflexion?: boolean
 }
 
-export interface SearchSufficiencyCheck {
-  isReady: boolean
-  currentCount: number
-  minRequired: number
-  reason: string
-}
+export type ThinkingLevel = "high" | "low"
 
 // ============================================
 // 상수 정의
 // ============================================
-
-/**
- * 의도별 최소 검색 횟수
- * - contact_inquiry: 연락처는 이력서에 있으므로 최소 1회
- * - career_inquiry/technical_inquiry: searchDocuments + readDocument
- * - general_chat: 최소한의 확인
- */
-export const MIN_SEARCH_COUNT: Record<UserIntent, number> = {
-  career_inquiry: 2, // searchDocuments + readDocument
-  technical_inquiry: 2, // searchDocuments + readDocument
-  contact_inquiry: 1, // 이력서 정보로 충분
-  general_chat: 1, // 최소한의 확인
-}
 
 /**
  * 의도별 키워드 매핑
@@ -194,62 +176,42 @@ export const INTENT_KEYWORDS: Record<UserIntent, string[]> = {
  * 의도별 페르소나 프롬프트
  */
 export const PERSONA_PROMPTS: Record<UserIntent, string> = {
-  career_inquiry: `## 현재 모드: 커리어 상담가
+  career_inquiry: `## 모드: 커리어 답변
+- 먼저 searchDocuments로 근거를 찾고, 필요한 문서는 readDocument로 확인하세요.
+- 답변은 문제/해결/성과 순서로 간결하게 작성하세요.
+- 확인되지 않은 수치나 사실은 추측하지 마세요.`,
 
-사용자가 경력/프로젝트 관련 질문을 했습니다. 다음 지침을 따르세요:
+  technical_inquiry: `## 모드: 기술 답변
+- 기술 질문은 반드시 검색 근거를 확보한 뒤 답변하세요.
+- 문서 제목만으로 단정하지 말고, 구현 세부는 readDocument로 검증하세요.
+- 설명은 기술 선택 이유와 구현 포인트 중심으로 작성하세요.`,
 
-1. **검색 전략**: Exem 업무 기록을 우선 검색하여 실제 업무 내용 파악
-2. **답변 스타일**: 구체적인 업무 경험과 성과 중심으로 답변
-3. **상세 조회 필수**: searchDocuments로 관련 문서 찾은 후 반드시 readDocument로 내용 확인`,
+  contact_inquiry: `## 모드: 연락처 안내
+- 공개된 이력서/볼트 정보만 사용하세요.
+- 정보가 없으면 없다고 명확히 말하세요.
+- 짧고 직접적으로 안내하세요.`,
 
-  technical_inquiry: `## 현재 모드: 기술 전문가
-
-사용자가 기술적 질문을 했습니다. 다음 지침을 따르세요:
-
-1. **검색 전략**: 기술 카테고리와 업무 기록을 함께 검색
-2. **답변 스타일**: 기술적으로 정확하고 구체적인 설명 제공
-3. **코드/구현 언급**: 가능하면 사용된 기술과 구현 방식 설명
-4. **상세 조회 필수**: searchDocuments 결과에서 유망한 문서는 반드시 readDocument로 확인`,
-
-  contact_inquiry: `## 현재 모드: 연결 담당자
-
-사용자가 연락처/연결 관련 질문을 했습니다. 다음 지침을 따르세요:
-
-1. **검색 전략**: 검색 최소화, 이력서 정보로 충분
-2. **답변 스타일**: 친절하게 연락처 정보 안내
-3. **정보 범위**: 이력서에 있는 공개 정보만 제공
-4. **추가 안내**: 필요시 GitHub, LinkedIn 등 프로필 링크 안내`,
-
-  general_chat: `## 현재 모드: 친근한 어시스턴트
-
-사용자가 일반적인 대화를 시작했습니다. 다음 지침을 따르세요:
-
-1. **검색 전략**: 질문 내용에 따라 유연하게 판단
-2. **답변 스타일**: 친근하고 도움이 되는 톤 유지
-3. **안내**: 더 구체적인 질문이 있으면 도움 가능함을 안내
-4. **자연스러움**: 로봇처럼 느껴지지 않게 자연스럽게 대화`,
+  general_chat: `## 모드: 일반 대화
+- 사실성 질문은 검색 후 답변하세요.
+- 잡담은 간결하고 자연스럽게 응답하세요.
+- 근거가 없으면 추측하지 마세요.`,
 }
 
 /**
- * Reflexion 프로토콜: 반복 호출 감지 시 사용
+ * 반복 호출 시 전략 전환 힌트(soft guidance)
  */
-export const REFLEXION_PROTOCOL = `## ⚠️ 반복 호출 감지
+export const REFLEXION_PROTOCOL = `## 전략 전환 힌트
+- 동일한 도구 호출이 반복되고 있습니다.
+- 이전 쿼리를 그대로 반복하지 말고 키워드를 바꾸거나 다른 문서를 읽으세요.
+- 충분한 근거가 모이면 answer 도구로 마무리하세요.
+- 근거가 부족하면 "확인되지 않음"으로 답변하세요.`
 
-동일한 도구가 3회 연속 호출되었습니다. 다음 지침을 따르세요:
-
-### 자기 성찰 (Reflexion)
-1. **이전 검색 결과 검토**: 지금까지 찾은 정보가 충분한지 평가
-2. **접근 방식 변경**: 다른 키워드나 다른 도구 사용 고려
-3. **종료 판단**: 충분한 정보가 있으면 answer 도구로 답변
-
-### 대안 전략
-- 다른 키워드로 검색 시도
-- searchDocuments와 readDocument를 번갈아 활용
-- 검색 결과가 없다면 이력서 기본 정보로 답변
-
-### 주의
-- 같은 검색을 반복하지 마세요
-- 정보를 찾지 못했다면 솔직히 답변하세요`
+export function resolveThinkingLevel(intent: UserIntent): ThinkingLevel {
+  if (intent === "career_inquiry" || intent === "technical_inquiry") {
+    return "high"
+  }
+  return "low"
+}
 
 // ============================================
 // 함수 정의
@@ -410,37 +372,10 @@ export function buildDynamicSystemPrompt(options: DynamicPromptOptions): string 
 ### 이전 검색 쿼리
 ${options.analysis.lastQueries.map((q, i) => `${i + 1}. "${q}"`).join("\n")}
 
-**위 쿼리와 다른 접근을 시도하세요.**`)
+위 쿼리와 다른 접근을 시도하세요.`)
       }
     }
   }
 
   return parts.join("\n\n")
-}
-
-/**
- * 검색 충분성을 확인하여 answer 도구 허용 여부를 결정합니다.
- */
-export function shouldAllowAnswer(
-  intent: UserIntent,
-  analysis: StepAnalysis
-): SearchSufficiencyCheck {
-  const minRequired = MIN_SEARCH_COUNT[intent]
-  const currentCount = analysis.totalSearchCount
-
-  if (currentCount < minRequired) {
-    return {
-      isReady: false,
-      currentCount,
-      minRequired,
-      reason: `최소 검색 미달: ${currentCount}/${minRequired}회 (의도: ${intent})`,
-    }
-  }
-
-  return {
-    isReady: true,
-    currentCount,
-    minRequired,
-    reason: `검색 충족: ${currentCount}/${minRequired}회 이상 완료`,
-  }
 }

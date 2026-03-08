@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AI-powered interactive resume site. An Astro + React SPA where a chat widget answers visitor questions about the owner's career by searching a local Obsidian vault via tool-calling agents (Gemini 2.5 Pro). Deployed on Vercel.
+AI-powered interactive resume site. An Astro + React SPA where a chat widget answers visitor questions about the owner's career by searching a local Obsidian vault via tool-calling agents (Gemini 3.1 Pro Preview). Deployed on Vercel.
 
 ## Commands
 
@@ -32,7 +32,7 @@ Monorepo root with `web/` containing the Astro app. `web/vault/` is a git submod
 
 - **Astro 5 + React 19** with `client:load` hydration
 - **Vercel AI SDK** (`ai` package) — `streamText`, `convertToModelMessages`, tool calling
-- **Google Vertex AI** — Gemini 2.5 Pro (chat), Gemini 2.0 Flash (followup)
+- **Google Vertex AI** — Gemini 3.1 Pro Preview on `global` endpoint (chat), Gemini 2.0 Flash (followup, `us-central1`)
 - **@assistant-ui/react** — Chat modal/thread primitives (wraps Radix Popover)
 - **TailwindCSS 4**, **Zustand**, **Zod**
 - **Biome** for linting/formatting (not ESLint), **Vitest** for tests
@@ -46,14 +46,15 @@ The core AI logic follows a multi-phase agent pattern:
 2. **Dynamic system prompt** — customizes persona and search strategy per intent
 3. **Agentic tool loop** (`pages/api/chat.ts`) — `streamText` with `prepareStep` callback controlling tool availability per step:
    - Step 0: search tools only (`toolChoice: "required"`)
-   - Step 1+: analyzes tool call patterns, enforces minimum search counts per intent, applies reflexion (excludes tool after 3+ consecutive same-tool calls)
+   - Step 1+: all tools enabled (`searchDocuments`, `readDocument`, `answer`) with `toolChoice: "auto"`
+   - Repetitive tool calls are handled with soft guidance in dynamic system prompt (no forced tool exclusion)
    - Loop ends on `hasToolCall("answer")` or `stepCountIs(15)`
 4. **Source validation** (`source-tracker.ts`) — `SearchContext` tracks all retrieved document IDs; `createAnswerTool` validates answer sources match actual search results to prevent hallucination
 
 Key modules:
 - `obsidian.server.ts` — searchDocuments, readDocument, buildCatalogSummary
 - `tools.ts` — AI SDK tool definitions (searchDocuments, readDocument, answer)
-- `prompts.ts` — classifyIntent, buildDynamicSystemPrompt, analyzeToolCallPattern, shouldAllowAnswer
+- `prompts.ts` — classifyIntent, buildDynamicSystemPrompt, analyzeToolCallPattern, resolveThinkingLevel
 - `source-tracker.ts` — createSearchContext, buildSearchContextFromSteps, validateSources
 
 ### API Routes
