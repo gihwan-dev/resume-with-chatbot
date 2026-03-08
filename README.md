@@ -76,7 +76,6 @@ flowchart LR
 ```bash
 git clone https://github.com/gihwan-dev/resume-with-ai.git
 cd resume-with-ai
-git submodule update --init --recursive
 cd web
 pnpm install
 cp .env.example .env

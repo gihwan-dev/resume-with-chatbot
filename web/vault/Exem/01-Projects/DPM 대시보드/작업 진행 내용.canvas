@@ -1,0 +1,11 @@
+{
+	"nodes":[
+		{"id":"7053965eb0478467","type":"text","text":"## 내용\n- **좌:** 현 대시보드 Alert Log\n- **우:** MFO의 Alert Log\n\n\n### 작업할 내용\n- MFO 처럼 Alert에 대한 자세한 View를 얻고싶어 함\n- 기존 대시보드 Alort Log의 최소 높이도 지정할 필요가 있어 보임","x":-300,"y":-240,"width":560,"height":540},
+		{"id":"e31c3b9ca14af169","type":"file","file":"Next.js/Pasted image 20260130163636.png","x":320,"y":-110,"width":400,"height":281},
+		{"id":"f90c4ab0f7625996","type":"file","file":"Next.js/Pasted image 20260130163620.png","x":-760,"y":-119,"width":400,"height":298}
+	],
+	"edges":[
+		{"id":"b04eab823ddd55ff","fromNode":"f90c4ab0f7625996","fromSide":"right","toNode":"7053965eb0478467","toSide":"left"},
+		{"id":"f8af05452109d61d","fromNode":"7053965eb0478467","fromSide":"right","toNode":"e31c3b9ca14af169","toSide":"left"}
+	]
+}

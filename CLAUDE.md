@@ -26,7 +26,7 @@ pnpm test:run -- tests/lib/work-agent/tools.test.ts  # Run single test file
 
 ### Repo Layout
 
-Monorepo root with `web/` containing the Astro app. `web/vault/` is a git submodule pointing to an Obsidian vault. `web/scripts/build-vault.mjs` pre-builds the vault into `src/generated/vault-data.json` (Vercel serverless can't scan filesystem at runtime).
+Monorepo root with `web/` containing the Astro app. `web/vault/` is a tracked Obsidian vault directory. `web/scripts/build-vault.mjs` pre-builds the vault into `src/generated/vault-data.json` (Vercel serverless can't scan filesystem at runtime).
 
 ### Tech Stack
 

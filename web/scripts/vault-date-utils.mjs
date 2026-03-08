@@ -35,14 +35,19 @@ function extractPathDate(relativePath) {
   return normalizeIsoDate(match?.[1] ?? null)
 }
 
-export function extractVaultDateMeta(content, relativePath) {
+function extractGitDate(gitLastCommitDate) {
+  return normalizeIsoDate(gitLastCommitDate ?? null)
+}
+
+export function extractVaultDateMeta(content, relativePath, options = {}) {
   const frontmatter = extractFrontmatter(content)
   const frontmatterDate = readFrontmatterField(frontmatter, "date")
   const frontmatterUpdated = readFrontmatterField(frontmatter, "updated")
   const pathDate = extractPathDate(relativePath)
+  const gitDate = extractGitDate(options.gitLastCommitDate)
 
-  const eventDate = frontmatterDate ?? frontmatterUpdated ?? pathDate ?? undefined
-  const updatedAt = frontmatterUpdated ?? frontmatterDate ?? pathDate ?? undefined
+  const eventDate = frontmatterDate ?? frontmatterUpdated ?? pathDate ?? gitDate ?? undefined
+  const updatedAt = frontmatterUpdated ?? frontmatterDate ?? pathDate ?? gitDate ?? undefined
 
   return {
     eventDate,

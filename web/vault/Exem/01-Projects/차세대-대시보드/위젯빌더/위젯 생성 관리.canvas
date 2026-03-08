@@ -1,0 +1,29 @@
+{
+	"nodes":[
+		{"id":"1ef5fd0499a00460","type":"text","text":"**Widget**\n\n### 도메인 순수 vs 도메인 포함\n\n**도메인 순수**\n- LineWidget\n- BarWidget\n\n**도메인 포함**\n- MaxGaugeInsight\n- SQLScatter\n- MetricChart\n\b\n### 위젯에 필요한 정보(위젯을 분리하는 기준)\n- 어떤 API에 의존하는지(무엇을 보여줄지)\n- 어떤 시각화 타입인지(어떻게 보여줄지)","x":1340,"y":-620,"width":460,"height":755},
+		{"id":"a471f574f3253f9f","type":"text","text":"**wiget.types.ts**\n\n- 정리하면 좋을거 같음\n- 타입이 너무 파편화 되어서 읽기 불편하다는 생각이 듬\n- 하나의 Widget 이라는 인터페이스가 있고 Widget[\"widgetState\"] 같은 형태로 \n- 예컨데 WidgetPayload, WidgetState, WidgetProps 이 3가지 타입은 어떤것을 정확히 의미하는지?","x":980,"y":-1220,"width":460,"height":480},
+		{"id":"78cfe04b9b2221f1","type":"text","text":"**Dashboard / Widget 분리**\n\n- Dashboard - features\n- Widget - entities\n\n로 수정하고 일단 widget, dashboard와 관련된 코드다 싶으면 무조건 이동\n\n**WidgetBuilder쪽 스키마는 WidgetBuilder에 유지** \n\nWidgetBuilder는 추상화된 인터페이스로 두고 Widget 과의 결합 관계를 최소화 한다.\n\nWidgetBuilder의 변경을 WidgetBuilder 내부로 국소화 하고 Widget으로 퍼져나가지 않게 한다.","x":1540,"y":-1220,"width":484,"height":440},
+		{"id":"0260f2c09bc79094","type":"text","text":"**WigetBuilder**\n\n- 단일 위젯 생성\n- formData를 반환\n\t- formData에는 어떤 API에 의존하는지에 대한 정보가 빠져있음\n- 위젯 생성 주체가 고객\n- 생성되는 위젯이 동적임\n- 변경이 잦을거고, 파생되는 수정이 최소화 되어야 한다고 생각해 의존성을 끊어낼 생각임\n\n\n**WidgetBuilder는 어떻게 변할까?**\n\n- 위젯 빌더로 만드는 위젯이 항상 MetricChartWidget 일까?\n- schema\n\t- visualization: line | bar | scatter | table\n\t- widgetType: WidgetType\n- 시각화 역시 더 확장될 수 있지 않을까?","x":250,"y":-1040,"width":480,"height":400,"color":"1"},
+		{"id":"0880f06693555722","type":"text","text":"**WidgetPack**\n\n- 복수 혹은 단일 위젯 생성\n- 하드 코딩한 템플릿을 기반으로 생성\n- 생성 주체가 개발자\n- 생성 되는 위젯이 정적임\n- 위젯과 강결합 될 수 밖에 없음. 오히려 강하게 결합 시켜 파생되는 수정을 빠르게 파악할 수 있게 할 필요가 있어 보임.\n\n**WidgetPack은 어떻게 변할까?**\n\n- 템플릿의 확장\n- 템플릿 커스터마이징 기능\n- 위젯팩의 확장이 곧 위젯의 확장과 동일하다고 판단해도 좋아 보임","x":250,"y":-620,"width":480,"height":340,"color":"1"},
+		{"id":"3812b60b5674937f","type":"link","url":"https://gemini.google.com/share/59b99e712c9b","x":-640,"y":-900,"width":780,"height":1100},
+		{"id":"627bcd6d6b438a29","type":"text","text":"**BuiltInWidget**\n- 복수 혹은 단일 위젯 생성\n- 하드 코딩한 템플릿을 기반으로 생성\n- 생성 주체가 개발자\n- 생성 되는 위젯이 정적임\n- 위젯과 강결합 될 수 밖에 없음. 오히려 강하게 결합 시켜 파생되는 수정을 빠르게 파악할 수 있게 할 필요가 있어 보임\n\n\n**BuiltInWidget은 어떻게 변할까?**\n\n- 템플릿의 확장","x":250,"y":-260,"width":480,"height":300,"color":"1"},
+		{"id":"c7a777cc1f1c0dee","type":"text","text":"**변환 로직 필요**\n\nWidgetBuilder의 반환 formData를 Widget에 맞게 변환\n\n관련해서 widget.types.ts에 WidgetBuilder 타입을 제거하면 어떨지.\n\n위젯과 WidgetBuilder의 의존 관계를 끊어내고 싶음","x":900,"y":-610,"width":250,"height":260},
+		{"id":"b61c4fae5c82db27","type":"file","file":"Next.js/Pasted image 20260122104843.png","x":1220,"y":765,"width":400,"height":204},
+		{"id":"8006ef28c7c68389","type":"file","file":"Next.js/Pasted image 20260122115326.png","x":1234,"y":1160,"width":372,"height":400},
+		{"id":"15201297850e062e","type":"text","text":"hooks 펼치기","x":1740,"y":765,"width":250,"height":204},
+		{"id":"46813afd960147d7","type":"text","text":"hooks 에 있는 훅 model로 이동","x":1740,"y":1250,"width":250,"height":220},
+		{"id":"febb4c103f5141ba","type":"file","file":"Next.js/Pasted image 20260122105012.png","x":2080,"y":802,"width":400,"height":131},
+		{"id":"fee217534db72163","type":"text","text":"utils -> lib로 이동","x":2600,"y":776,"width":250,"height":183}
+	],
+	"edges":[
+		{"id":"57e0035f536ef59b","fromNode":"a471f574f3253f9f","fromSide":"bottom","toNode":"1ef5fd0499a00460","toSide":"top"},
+		{"id":"ba9d042896abceaf","fromNode":"0880f06693555722","fromSide":"right","toNode":"1ef5fd0499a00460","toSide":"left"},
+		{"id":"8a4138d7b9c36fce","fromNode":"627bcd6d6b438a29","fromSide":"right","toNode":"1ef5fd0499a00460","toSide":"left"},
+		{"id":"5d297f30ab49df78","fromNode":"0260f2c09bc79094","fromSide":"right","toNode":"c7a777cc1f1c0dee","toSide":"left"},
+		{"id":"2dd0e43f1f53e3f0","fromNode":"c7a777cc1f1c0dee","fromSide":"right","toNode":"1ef5fd0499a00460","toSide":"left"},
+		{"id":"86658734c215b933","fromNode":"78cfe04b9b2221f1","fromSide":"bottom","toNode":"1ef5fd0499a00460","toSide":"right"},
+		{"id":"5d8ffdf35aab3541","fromNode":"8006ef28c7c68389","fromSide":"right","toNode":"46813afd960147d7","toSide":"left"},
+		{"id":"a4deb2d6750fe3f4","fromNode":"b61c4fae5c82db27","fromSide":"right","toNode":"15201297850e062e","toSide":"left"},
+		{"id":"4753b4217c58395d","fromNode":"febb4c103f5141ba","fromSide":"right","toNode":"fee217534db72163","toSide":"left"}
+	]
+}

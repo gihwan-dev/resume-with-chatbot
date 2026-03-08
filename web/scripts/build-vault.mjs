@@ -4,6 +4,7 @@
  * Vercel 서버리스 함수에서 런타임 파일시스템 스캔 없이 동작하도록 함
  */
 
+import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 import MiniSearch from "minisearch"
@@ -47,6 +48,18 @@ function extractSummary(content) {
   return ""
 }
 
+function getGitLastCommitDate(repoRelativePath) {
+  try {
+    return execFileSync("git", ["log", "-1", "--format=%cs", "--", repoRelativePath], {
+      cwd: process.cwd(),
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim()
+  } catch {
+    return undefined
+  }
+}
+
 function scanVault(dir) {
   const documents = []
 
@@ -88,7 +101,10 @@ function scanVault(dir) {
         // 읽기 실패 시 빈 값
       }
 
-      const { eventDate, updatedAt } = extractVaultDateMeta(rawContent, relativePath)
+      const gitLastCommitDate = getGitLastCommitDate(path.join("vault", relativePath))
+      const { eventDate, updatedAt } = extractVaultDateMeta(rawContent, relativePath, {
+        gitLastCommitDate,
+      })
 
       documents.push({
         id: createDocumentId(relativePath),
@@ -110,7 +126,7 @@ function scanVault(dir) {
 // 볼트 존재 확인
 if (!fs.existsSync(VAULT_PATH)) {
   console.error(`[build-vault] Vault not found at: ${VAULT_PATH}`)
-  console.error("[build-vault] Run: git submodule update --init --recursive")
+  console.error("[build-vault] Ensure web/vault directory exists in repository.")
   process.exit(1)
 }
 

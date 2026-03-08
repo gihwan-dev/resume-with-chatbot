@@ -2,7 +2,10 @@ import { beforeAll, describe, expect, it } from "vitest"
 
 let extractVaultDateMeta: (
   content: string,
-  relativePath: string
+  relativePath: string,
+  options?: {
+    gitLastCommitDate?: string
+  }
 ) => {
   eventDate?: string
   updatedAt?: string
@@ -77,6 +80,32 @@ updated: 2026-03-02T23:45:00+09:00
     expect(result).toEqual({
       eventDate: "2026-03-01",
       updatedAt: "2026-03-02",
+    })
+  })
+
+  it("frontmatter/path가 없으면 git last commit date를 fallback으로 사용", () => {
+    const markdown = "본문"
+    const result = extractVaultDateMeta(markdown, "Exem/Daily/note.md", {
+      gitLastCommitDate: "2026-03-05",
+    })
+    expect(result).toEqual({
+      eventDate: "2026-03-05",
+      updatedAt: "2026-03-05",
+    })
+  })
+
+  it("git fallback보다 frontmatter와 path를 우선 사용", () => {
+    const markdown = `---
+date: 2026-03-01
+---
+
+본문`
+    const result = extractVaultDateMeta(markdown, "Exem/Daily/2026-03-04-note.md", {
+      gitLastCommitDate: "2026-03-09",
+    })
+    expect(result).toEqual({
+      eventDate: "2026-03-01",
+      updatedAt: "2026-03-01",
     })
   })
 })

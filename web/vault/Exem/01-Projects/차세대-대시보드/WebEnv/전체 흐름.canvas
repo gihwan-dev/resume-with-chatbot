@@ -1,0 +1,15 @@
+{
+	"nodes":[
+		{"id":"8e61071f0a28b5b9","type":"file","file":"Exem/01-Projects/차세대-대시보드/WebEnv/차세대 WebEnv 저장 구조.md","x":1080,"y":1220,"width":920,"height":1060},
+		{"id":"e0e93ac6fb683dc7","type":"file","file":"Exem/01-Projects/차세대-대시보드/WebEnv/레거시WebEnv 저장 구조.md","x":1080,"y":80,"width":920,"height":1060},
+		{"id":"ef469948fa4a2d97","type":"file","file":"Exem/01-Projects/차세대-대시보드/WebEnv/WebEnv 문제점 - 현재 코드 기준.md","x":2360,"y":640,"width":960,"height":1060},
+		{"id":"b28072d96e0e5637","type":"file","file":"Exem/01-Projects/차세대-대시보드/WebEnv/webEnv-localStorage-교체-설명.excalidraw.md","x":3480,"y":530,"width":1160,"height":1280},
+		{"id":"834c5f79b44809a6","type":"file","file":"Exem/01-Projects/차세대-대시보드/WebEnv/차이점 비교.md","x":4880,"y":640,"width":960,"height":1060}
+	],
+	"edges":[
+		{"id":"07499e1cd0150e00","fromNode":"e0e93ac6fb683dc7","fromSide":"right","toNode":"ef469948fa4a2d97","toSide":"left"},
+		{"id":"b101d3faa1c34646","fromNode":"8e61071f0a28b5b9","fromSide":"right","toNode":"ef469948fa4a2d97","toSide":"left"},
+		{"id":"6066e895ab2901b5","fromNode":"ef469948fa4a2d97","fromSide":"right","toNode":"b28072d96e0e5637","toSide":"left"},
+		{"id":"b76403bb49e7fac3","fromNode":"b28072d96e0e5637","fromSide":"right","toNode":"834c5f79b44809a6","toSide":"left"}
+	]
+}

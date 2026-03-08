@@ -1,0 +1,22 @@
+{
+	"nodes":[
+		{"id":"dd049a7db4a0660a","type":"file","file":"Next.js/Pasted image 20260122175457.png","x":0,"y":-120,"width":400,"height":367},
+		{"id":"a6d3038742e3c6c8","type":"file","file":"Next.js/Pasted image 20260122175706.png","x":0,"y":320,"width":400,"height":367},
+		{"id":"33e369091fbf2f05","type":"text","text":"### Table 시각화의 Form - group by\nhttps://www.figma.com/design/nJ8YQifyJmzQKnHBtDNGPt/Dashboard?node-id=5518-177659&m=dev","x":-520,"y":880,"width":380,"height":210},
+		{"id":"084c87f54c2625cb","type":"file","file":"Next.js/Pasted image 20260122175814.png","x":0,"y":824,"width":400,"height":266},
+		{"id":"acc4bdf3a931e188","type":"text","text":"### Table 시각화의 Form - tree\nhttps://www.figma.com/design/nJ8YQifyJmzQKnHBtDNGPt/Dashboard?node-id=5518-177403&m=dev\n\n**기획 문서**\n","x":-520,"y":320,"width":380,"height":413},
+		{"id":"47c6fc2067b4c3f8","type":"text","text":"### Table 시각화의 Form - 기본 형태\nhttps://www.figma.com/design/nJ8YQifyJmzQKnHBtDNGPt/Dashboard?node-id=5518-177163&m=dev\n\n**연관된 기획 문서**\nhttps://www.figma.com/design/RG8XKEl8Vu9oVrZrKbtYBS/Dashboard?node-id=1597-4612&m=dev\n\n**내용 정리**\n- 드래그 핸들로 칼럼 순서 변경 가능해야함\n- 칼럼 Show/Hide 토글 가능\n- ","x":-520,"y":-120,"width":380,"height":367},
+		{"id":"b748d20938954602","type":"text","text":"### 타입별 ColumnItem\n\n#### 일반 혹은 Tree\n- UI: 드래그 핸들 - Metric(Read only) - Alias - Visibility - Setting\n- 초기 상태: Graph Data에서 선택된 데이터에 대한 모든 칼럼 리스트가 초기에 존재\n\n#### Group by\n전체 Frame: https://www.figma.com/design/nJ8YQifyJmzQKnHBtDNGPt/Dashboard?node-id=5518-177659&m=dev\n\n- UI: 두 섹션이 존재\n\t- Group by: Group by 할 Metric을 Select하는 섹션\n\t  https://www.figma.com/design/nJ8YQifyJmzQKnHBtDNGPt/Dashboard?node-id=5518-177670&m=dev\n\t- New Columns: 드래그 핸들 - Aggregation(Sum, Row Count 등) - Metric - Alias - Visibility - Setting 을 정정하는 섹션\n\t  https://www.figma.com/design/nJ8YQifyJmzQKnHBtDNGPt/Dashboard?node-id=5518-177676&m=dev\n- 초기 상태:\n\t Gropuing: 빈배열\n      New columns:\n        - Add Grouping 결과로 추가되는 칼럼이므로 당연히 빈 배열\n\n#### 특이 사항\n- UI에는 제거 버튼이 없음. Grouping 에서 제거 버튼이 있어야함.\n- \n---\n\n## Group by에 대한 설명\n\n### 기존 테이블 (Group by OFF)\n\n|Schema|Program|Elapsed Time|User Name|\n|---|---|---|---|\n|SYS|prog_a|100|kim|\n|SYS|prog_b|200|lee|\n|SYS|prog_a|150|park|\n|HR|prog_c|50|choi|\n|HR|prog_d|80|jung|\n\n→ 개별 행 데이터가 쭉 나열됨\n\n---\n\n### Group by ON (Schema 기준)\n\n|Schema|Elapsed Time Avg|Program Rows Count|\n|---|---|---|\n|SYS|150|3|\n|HR|65|2|\n\n→ Schema별로 **묶어서 집계**한 결과만 보여줌\n\n---\n\n## 핵심 포인트\n\n1. **Grouping Columns (2-1)**: 뭘 기준으로 묶을지 (예: Schema)\n2. **New Columns (3-1~3-3)**: 묶인 데이터를 어떻게 집계할지\n    - `Avg` + `Elapsed Time` → \"Elapsed Time Avg\"\n    - `Rows Count` + `Program` → \"Program Rows Count\"\n\nSQL로 치면 이거예요:\n\n```sql\nSELECT Schema,\n       AVG(Elapsed_Time) as \"Elapsed Time Avg\",\n       COUNT(Program) as \"Program Rows Count\"\nFROM dataset\nGROUP BY Schema\n```\n\n**결론**: 칼럼 헤더 그룹화가 아니라, **행 데이터를 특정 기준으로 묶어서 집계 요약 테이블**을 만드는 기능이에요!","x":560,"y":264,"width":580,"height":480},
+		{"id":"5cca0cefa7e210eb","type":"file","file":"Next.js/Pasted image 20260129102538.png","x":0,"y":1400,"width":400,"height":306},
+		{"id":"d2ad0a65455a6e07","type":"text","text":"## Table\n디자인(Row): https://www.figma.com/design/nJ8YQifyJmzQKnHBtDNGPt/Dashboard?node-id=5518-176591&m=dev\n- ColumnItem 그대로 사용하면 됨. 거의 대부분 동일한\n- 선택한 metric 기반으로 columns 구성\n- 설정 아이콘 클릭해 필터 설정, Visibility 아이콘 기능\n- 다만 다른점은 Quick Filter 라는 체크박스가 있음.\n- 테이블에는 있는 Columns 같은 헤더가 없음\n- Quick Filter 체크박스 체크하면 해당 체크된 행에 대한 필터가 프리뷰 상단의 퀵 필터에 추가됨","x":440,"y":1340,"width":500,"height":440},
+		{"id":"a0ffb29331da61dd","type":"file","file":"Next.js/Pasted image 20260129102932.png","x":0,"y":1820,"width":400,"height":43}
+	],
+	"edges":[
+		{"id":"9cf5d28f9f012b32","fromNode":"47c6fc2067b4c3f8","fromSide":"right","toNode":"dd049a7db4a0660a","toSide":"left"},
+		{"id":"ee8c15186a5494a7","fromNode":"acc4bdf3a931e188","fromSide":"right","toNode":"a6d3038742e3c6c8","toSide":"left"},
+		{"id":"4bea8e0641a79847","fromNode":"33e369091fbf2f05","fromSide":"right","toNode":"084c87f54c2625cb","toSide":"left"},
+		{"id":"c731f4ae67c903e6","fromNode":"a6d3038742e3c6c8","fromSide":"right","toNode":"b748d20938954602","toSide":"left"},
+		{"id":"a17d1a9deee48592","fromNode":"5cca0cefa7e210eb","fromSide":"bottom","toNode":"a0ffb29331da61dd","toSide":"top"},
+		{"id":"099489c716831c60","fromNode":"d2ad0a65455a6e07","fromSide":"bottom","toNode":"a0ffb29331da61dd","toSide":"right"}
+	]
+}
