@@ -60,6 +60,14 @@ function getGitLastCommitDate(repoRelativePath) {
   }
 }
 
+function shouldFailOnMissingFeedData() {
+  return (
+    process.env.CI === "true" ||
+    process.env.NODE_ENV === "production" ||
+    process.env.VERCEL === "1"
+  )
+}
+
 function scanVault(dir) {
   const documents = []
 
@@ -101,10 +109,14 @@ function scanVault(dir) {
         // 읽기 실패 시 빈 값
       }
 
-      const gitLastCommitDate = getGitLastCommitDate(path.join("vault", relativePath))
-      const { eventDate, updatedAt } = extractVaultDateMeta(rawContent, relativePath, {
-        gitLastCommitDate,
-      })
+      let { eventDate, updatedAt } = extractVaultDateMeta(rawContent, relativePath)
+
+      if (!eventDate && !updatedAt) {
+        const gitLastCommitDate = getGitLastCommitDate(path.join("vault", relativePath))
+        ;({ eventDate, updatedAt } = extractVaultDateMeta(rawContent, relativePath, {
+          gitLastCommitDate,
+        }))
+      }
 
       documents.push({
         id: createDocumentId(relativePath),
@@ -131,6 +143,24 @@ if (!fs.existsSync(VAULT_PATH)) {
 }
 
 const documents = scanVault(VAULT_PATH)
+const feedCandidates = documents.filter((document) => document.summary && document.eventDate)
+
+if (documents.length === 0) {
+  console.error("[build-vault] No markdown documents were discovered in web/vault.")
+  process.exit(1)
+}
+
+if (feedCandidates.length === 0) {
+  const message =
+    "[build-vault] No dated documents were produced for Live Resume Feed. Check vault metadata or git history."
+
+  if (shouldFailOnMissingFeedData()) {
+    console.error(message)
+    process.exit(1)
+  }
+
+  console.warn(message)
+}
 
 // 출력 디렉토리 생성
 fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true })
@@ -140,6 +170,7 @@ fs.writeFileSync(OUTPUT_PATH, JSON.stringify({ documents }, null, 0))
 
 const sizeKB = (fs.statSync(OUTPUT_PATH).size / 1024).toFixed(1)
 console.log(`[build-vault] Built vault data: ${documents.length} documents (${sizeKB} KB)`)
+console.log(`[build-vault] Live Resume Feed candidates: ${feedCandidates.length}`)
 
 // MiniSearch 인덱스 빌드
 const miniSearch = new MiniSearch({
