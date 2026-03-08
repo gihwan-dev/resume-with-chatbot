@@ -40,25 +40,33 @@ function ProfileSection({ profile }: { profile: SerializedResumeData["profile"] 
 
   return (
     <View>
-      <Text style={styles.headerName}>{profile.name}</Text>
-      <Text style={styles.headerLabel}>{profile.label}</Text>
+      <View style={styles.headerMastheadRow}>
+        <View style={styles.headerMastheadPrimary}>
+          <Text style={styles.headerName}>{profile.name}</Text>
+          <Text style={styles.headerLabel}>{profile.label}</Text>
+        </View>
 
-      <View style={styles.headerContactRow}>
-        <Link src={`mailto:${profile.email}`} style={styles.link}>
-          <Text style={{ fontSize: 9 }}>{profile.email}</Text>
-        </Link>
-        {links.map((l) => (
-          <View key={l.url} style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <Text style={styles.headerContactDot}>|</Text>
-            <Link src={l.url} style={styles.link}>
-              <Text style={{ fontSize: 9 }}>{l.label}</Text>
-            </Link>
-          </View>
-        ))}
+        <View style={styles.headerContactColumn}>
+          <Link src={`mailto:${profile.email}`} style={styles.link}>
+            <Text style={styles.headerContactText}>{profile.email}</Text>
+          </Link>
+          {links.length > 0 && (
+            <View style={styles.headerContactRow}>
+              {links.map((l, index) => (
+                <View key={l.url} style={styles.headerContactItem}>
+                  {index > 0 && <Text style={styles.headerContactDot}>·</Text>}
+                  <Link src={l.url} style={styles.link}>
+                    <Text style={styles.headerContactText}>{l.label}</Text>
+                  </Link>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
       </View>
 
       {bullets ? (
-        <View style={{ marginTop: 10, marginBottom: 6 }}>
+        <View style={styles.headerSummaryList}>
           {bullets.map((bullet) => (
             <View key={bullet} style={styles.headerSummaryBulletRow}>
               <Text style={styles.headerSummaryBulletMarker}>•</Text>
@@ -69,8 +77,57 @@ function ProfileSection({ profile }: { profile: SerializedResumeData["profile"] 
       ) : (
         <Text style={styles.headerSummary}>{profile.summary}</Text>
       )}
+    </View>
+  )
+}
 
-      <View style={styles.headerDivider} />
+interface CompactRowProps {
+  title: string
+  date: string
+  meta?: string
+  body?: string
+  linkLabel?: string
+  linkUrl?: string
+}
+
+interface CompactSectionRow extends CompactRowProps {
+  rowKey: string
+}
+
+function CompactRow({ title, date, meta, body, linkLabel, linkUrl }: CompactRowProps) {
+  return (
+    <View style={styles.compactRow} wrap={false}>
+      <View style={styles.itemHeader}>
+        <Text style={styles.compactTitle}>{title}</Text>
+        <Text style={styles.compactDate}>{date}</Text>
+      </View>
+      {meta && <Text style={styles.compactMeta}>{meta}</Text>}
+      {body && <Text style={styles.compactBody}>{body}</Text>}
+      {linkUrl && linkLabel && (
+        <Link src={linkUrl} style={styles.link}>
+          <Text style={styles.compactLinkText}>{linkLabel}</Text>
+        </Link>
+      )}
+    </View>
+  )
+}
+
+function CompactRowsSection({ title, rows }: { title: string; rows: CompactSectionRow[] }) {
+  if (rows.length === 0) return null
+
+  const [firstRow, ...remainingRows] = rows
+  const firstRowProps: CompactRowProps = firstRow
+
+  return (
+    <View>
+      <View wrap={false} minPresenceAhead={50}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <CompactRow {...firstRowProps} />
+      </View>
+      {remainingRows.map((row) => {
+        const rowProps: CompactRowProps = row
+        return <CompactRow key={row.rowKey} {...rowProps} />
+      })}
     </View>
   )
 }
@@ -110,51 +167,58 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
             style={styles.itemSeparator}
             minPresenceAhead={80}
           >
-            <View style={styles.itemHeader}>
-              <Text style={styles.itemTitle}>{w.role}</Text>
-              <Text style={styles.itemDate}>
-                {formatDateRange(w.dateStart, w.dateEnd, w.isCurrent)}
-              </Text>
+            <View style={styles.projectContainer}>
+              <View style={styles.itemHeader}>
+                <Text style={styles.itemTitle}>{w.role}</Text>
+                <Text style={styles.itemDate}>
+                  {formatDateRange(w.dateStart, w.dateEnd, w.isCurrent)}
+                </Text>
+              </View>
+              <Text style={styles.itemSubtitle}>{w.company}</Text>
+
+              {w.projects && w.projects.length > 0 && (
+                <View style={styles.experienceCaseList}>
+                  {w.projects.map((project) => (
+                    <View
+                      key={`${w.company}-${project.projectId}`}
+                      style={styles.experienceCaseCard}
+                      minPresenceAhead={60}
+                    >
+                      <Text style={styles.experienceCaseTitle}>{project.title}</Text>
+                      {markdownInlineToPdf(project.summary, {
+                        key: `${w.company}-${project.projectId}-summary`,
+                        textStyle: styles.experienceCaseSummary,
+                      })}
+                      {project.accomplishments.map((accomplishment, accomplishmentIndex) => (
+                        <View
+                          key={accomplishment}
+                          style={styles.experienceCaseBulletRow}
+                          wrap={false}
+                          minPresenceAhead={42}
+                        >
+                          <View style={styles.experienceCaseBulletDot} />
+                          {markdownInlineToPdf(accomplishment, {
+                            key: `${w.company}-${project.projectId}-accomplishment-${accomplishmentIndex}`,
+                            textStyle: styles.experienceCaseBulletText,
+                          })}
+                        </View>
+                      ))}
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {fallbackHighlights.length > 0 && (
+                <View style={styles.experienceProjectList}>
+                  {fallbackHighlights.map((highlight) => (
+                    <View key={`${w.company}-${highlight}`} style={styles.experienceProjectRow}>
+                      <Text style={styles.experienceProjectBullet}>•</Text>
+                      <Text style={styles.experienceProjectText}>{highlight}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
-            <Text style={styles.itemSubtitle}>{w.company}</Text>
-
-            {w.projects && w.projects.length > 0 && (
-              <View style={styles.experienceCaseList}>
-                {w.projects.map((project) => (
-                  <View
-                    key={`${w.company}-${project.projectId}`}
-                    style={styles.experienceCaseCard}
-                    minPresenceAhead={60}
-                  >
-                    <Text style={styles.experienceCaseTitle}>{project.title}</Text>
-                    {markdownInlineToPdf(project.summary, {
-                      key: `${w.company}-${project.projectId}-summary`,
-                      textStyle: styles.experienceCaseSummary,
-                    })}
-                    {project.accomplishments.map((accomplishment, accomplishmentIndex) => (
-                      <View key={accomplishment} style={styles.experienceCaseBulletRow}>
-                        <View style={styles.experienceCaseBulletDot} />
-                        {markdownInlineToPdf(accomplishment, {
-                          key: `${w.company}-${project.projectId}-accomplishment-${accomplishmentIndex}`,
-                          textStyle: styles.experienceCaseBulletText,
-                        })}
-                      </View>
-                    ))}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {fallbackHighlights.length > 0 && (
-              <View style={styles.experienceProjectList}>
-                {fallbackHighlights.map((highlight) => (
-                  <View key={`${w.company}-${highlight}`} style={styles.experienceProjectRow}>
-                    <Text style={styles.experienceProjectBullet}>•</Text>
-                    <Text style={styles.experienceProjectText}>{highlight}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
           </View>
         )
       })}
@@ -164,22 +228,16 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
 
 function BlogSection({ blogPosts }: { blogPosts: SerializedResumeData["blogPosts"] }) {
   if (blogPosts.length === 0) return null
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Technical Writing</Text>
-      {blogPosts.map((post) => (
-        <View key={post.url} style={styles.itemSeparator} wrap={false}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle}>{post.title}</Text>
-            <Text style={styles.itemDate}>{formatDate(post.publishedAt)}</Text>
-          </View>
-          <Link src={post.url} style={styles.link}>
-            <Text style={styles.blogLinkText}>Read post</Text>
-          </Link>
-        </View>
-      ))}
-    </View>
-  )
+
+  const rows: CompactSectionRow[] = blogPosts.map((post) => ({
+    rowKey: post.url,
+    title: post.title,
+    date: formatDate(post.publishedAt),
+    linkLabel: "Read post",
+    linkUrl: post.url,
+  }))
+
+  return <CompactRowsSection title="Technical Writing" rows={rows} />
 }
 
 function CertificateSection({
@@ -188,40 +246,30 @@ function CertificateSection({
   certificates: SerializedResumeData["certificates"]
 }) {
   if (certificates.length === 0) return null
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Certificates</Text>
-      {certificates.map((c) => (
-        <View key={`${c.name}-${c.date}`} style={styles.itemSeparator} wrap={false}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle}>{c.name}</Text>
-            <Text style={styles.itemDate}>{formatDate(c.date)}</Text>
-          </View>
-          <Text style={styles.itemSubtitle}>{c.issuer}</Text>
-          {c.body && <Text style={styles.itemSummary}>{c.body}</Text>}
-        </View>
-      ))}
-    </View>
-  )
+
+  const rows: CompactSectionRow[] = certificates.map((c) => ({
+    rowKey: `${c.name}-${c.date}`,
+    title: c.name,
+    date: formatDate(c.date),
+    meta: c.issuer,
+    body: c.body,
+  }))
+
+  return <CompactRowsSection title="Certificates" rows={rows} />
 }
 
 function AwardSection({ awards }: { awards: SerializedResumeData["awards"] }) {
   if (awards.length === 0) return null
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Awards</Text>
-      {awards.map((a) => (
-        <View key={`${a.title}-${a.date}`} style={styles.itemSeparator} wrap={false}>
-          <View style={styles.itemHeader}>
-            <Text style={styles.itemTitle}>{a.title}</Text>
-            <Text style={styles.itemDate}>{formatDate(a.date)}</Text>
-          </View>
-          <Text style={styles.itemSubtitle}>{a.issuer}</Text>
-          {a.summary && <Text style={styles.itemSummary}>{a.summary}</Text>}
-        </View>
-      ))}
-    </View>
-  )
+
+  const rows: CompactSectionRow[] = awards.map((a) => ({
+    rowKey: `${a.title}-${a.date}`,
+    title: a.title,
+    date: formatDate(a.date),
+    meta: a.issuer,
+    body: a.summary,
+  }))
+
+  return <CompactRowsSection title="Awards" rows={rows} />
 }
 
 export function ResumeDocument({ data }: { data: SerializedResumeData }) {

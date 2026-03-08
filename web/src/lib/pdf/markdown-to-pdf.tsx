@@ -198,7 +198,7 @@ function renderInline(segments: InlineSegment[], key: string, textStyle?: PdfTex
         }
         if (seg.bold && seg.code) {
           return (
-            <Text key={segKey} style={mergeTextStyle(textStyle, [styles.mdBold, styles.mdCode])}>
+            <Text key={segKey} style={mergeTextStyle(textStyle, styles.mdCode)}>
               {seg.text}
             </Text>
           )

@@ -186,7 +186,35 @@ describe("ResumeDocument", () => {
     expect(text).toContain("하이라이트 fallback 노출")
   })
 
-  it("Experience 렌더에서 wrap=false를 사용하지 않아 페이지 분할을 허용한다", () => {
+  it("summary가 bullet 형식이면 proof-point 리스트 텍스트를 렌더링한다", () => {
+    const data = createMockResumeData()
+    data.profile.summary = "- 첫 번째 근거\n- 두 번째 근거"
+    data.work[1].highlights = []
+
+    const { container } = render(<ResumeDocument data={data} />)
+    const text = container.textContent ?? ""
+
+    expect(text).toContain("첫 번째 근거")
+    expect(text).toContain("두 번째 근거")
+    expect(text).not.toContain("- 첫 번째 근거")
+    expect(text).not.toContain("- 두 번째 근거")
+    expect((text.match(/•/g) ?? []).length).toBeGreaterThanOrEqual(2)
+  })
+
+  it("summary가 혼합 입력이면 fallback 경로로 raw summary를 유지한다", () => {
+    const data = createMockResumeData()
+    data.profile.summary = "- 혼합 입력\n일반 문장"
+    data.work[1].highlights = []
+
+    const { container } = render(<ResumeDocument data={data} />)
+    const text = container.textContent ?? ""
+
+    expect(text).toContain("- 혼합 입력")
+    expect(text).toContain("일반 문장")
+    expect((text.match(/•/g) ?? []).length).toBe(0)
+  })
+
+  it("Experience bullet row는 wrap=false로 유지해 dangling bullet을 방지한다", () => {
     const data = createMockResumeData()
     data.blogPosts = []
     data.certificates = []
@@ -195,6 +223,6 @@ describe("ResumeDocument", () => {
 
     render(<ResumeDocument data={data} />)
 
-    expect(viewWrapValues).not.toContain(false)
+    expect(viewWrapValues).toContain(false)
   })
 })
