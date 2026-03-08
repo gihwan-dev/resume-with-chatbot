@@ -25,11 +25,23 @@ describe("serializeResumeData", () => {
           return [
             {
               data: {
+                variant: "frontend",
                 name: "최기환",
                 label: "Frontend Developer",
-                email: "test@example.com",
+                email: "frontend@example.com",
                 url: "https://resume-with-ai.gihwan-dev.com",
-                summary: "summary",
+                summary: "frontend summary",
+                profiles: [],
+              },
+            },
+            {
+              data: {
+                variant: "ai-agent",
+                name: "최기환",
+                label: "AI Native Frontend Developer",
+                email: "ai@example.com",
+                url: "https://resume-with-ai.gihwan-dev.com/ai-agent",
+                summary: "ai summary",
                 profiles: [],
               },
             },
@@ -37,6 +49,7 @@ describe("serializeResumeData", () => {
         case "work":
           return [
             {
+              id: "exem",
               data: {
                 companyId: "exem",
                 company: "Exem",
@@ -44,35 +57,25 @@ describe("serializeResumeData", () => {
                 dateStart: new Date("2024-11-01"),
                 dateEnd: undefined,
                 isCurrent: true,
-                highlights: [],
+                highlights: ["shared work"],
               },
             },
             {
+              id: "ai-automation",
               data: {
-                companyId: "kmong",
-                company: "Kmong",
-                role: "Freelancer",
-                dateStart: new Date("2023-06-01"),
-                dateEnd: new Date("2023-12-01"),
-                isCurrent: false,
-                highlights: ["프로젝트 전 과정을 단독 수행"],
+                companyId: "ai-automation",
+                company: "개인 R&D",
+                role: "AI Automation / Agent Systems",
+                dateStart: new Date("2024-11-01"),
+                dateEnd: undefined,
+                isCurrent: true,
+                variants: ["ai-agent"],
+                highlights: [],
               },
             },
           ] as never
         case "projects":
           return [
-            {
-              id: "exem-customer-dashboard",
-              data: {
-                companyId: "exem",
-                title: "인스턴스 통합 모니터링 대시보드 개발",
-                techStack: ["React", "TypeScript"],
-                dateStart: new Date("2025-01-01"),
-                priority: 1,
-                summary: "운영 대시보드 구조를 개선했습니다.",
-                accomplishments: ["성과 1", "성과 2"],
-              },
-            },
             {
               id: "exem-data-grid",
               data: {
@@ -81,8 +84,23 @@ describe("serializeResumeData", () => {
                 techStack: ["React"],
                 dateStart: new Date("2025-02-01"),
                 priority: 2,
-                summary: "그리드 렌더링 경로를 최적화했습니다.",
-                accomplishments: ["성과 A"],
+                summary: "shared project",
+                accomplishments: ["shared accomplishment"],
+              },
+            },
+            {
+              id: "ai-automation-swagger-parser-mcp",
+              data: {
+                companyId: "ai-automation",
+                title: "Swagger Parser MCP 서버 개발 및 npm 배포",
+                techStack: ["Node.js", "MCP"],
+                dateStart: new Date("2024-11-01"),
+                priority: 4,
+                variants: ["ai-agent"],
+                summary: "ai project",
+                accomplishments: [
+                  "npm 배포 링크: https://www.npmjs.com/package/swagger-parser-mcp-server",
+                ],
               },
             },
           ] as never
@@ -96,7 +114,14 @@ describe("serializeResumeData", () => {
           return [
             {
               data: {
+                variant: "frontend",
                 categories: [{ name: "Frontend", items: ["React"] }],
+              },
+            },
+            {
+              data: {
+                variant: "ai-agent",
+                categories: [{ name: "AI", items: ["MCP", "n8n"] }],
               },
             },
           ] as never
@@ -106,39 +131,37 @@ describe("serializeResumeData", () => {
     })
   }
 
-  it("work.projects 기반으로 데이터를 직렬화한다", async () => {
+  it("ai-agent variant에서 shared 경력 + AI 전용 경력/프로젝트와 AI 프로필/스킬을 함께 직렬화한다", async () => {
     setupCollections()
-    const blogPosts = [
-      {
-        title: "리액트 아키텍처 글",
-        url: "https://publish.obsidian.md/gihwan-dev/50-Blog/sample-post",
-        publishedAt: "2026-01-11T08:17:53.000Z",
-        summary: "요약",
-      },
-    ]
-    mockGetObsidianBlogPosts.mockResolvedValue(blogPosts)
+    mockGetObsidianBlogPosts.mockResolvedValue([])
 
-    const result = await serializeResumeData()
+    const result = await serializeResumeData("ai-agent")
 
-    expect(mockGetObsidianBlogPosts).toHaveBeenCalledWith({ limit: 5 })
-    expect(result.blogPosts).toEqual(blogPosts)
-    expect(result.work).toHaveLength(2)
-    expect(result.work[0].projects).toEqual([
-      {
-        projectId: "exem-customer-dashboard",
-        title: "인스턴스 통합 모니터링 대시보드 개발",
-        summary: "운영 대시보드 구조를 개선했습니다.",
-        accomplishments: ["성과 1", "성과 2"],
-      },
-      {
-        projectId: "exem-data-grid",
-        title: "대규모 데이터 화면용 공용 데이터 그리드 개발",
-        summary: "그리드 렌더링 경로를 최적화했습니다.",
-        accomplishments: ["성과 A"],
-      },
-    ])
-    expect(result.work[1].projects).toBeUndefined()
-    expect(result.work[1].highlights).toEqual(["프로젝트 전 과정을 단독 수행"])
+    expect(result.profile.label).toBe("AI Native Frontend Developer")
+    expect(result.skills?.[0]?.items).toContain("MCP")
+
+    const companies = result.work.map((entry) => entry.company)
+    expect(companies).toContain("Exem")
+    expect(companies).toContain("개인 R&D")
+
+    const aiWork = result.work.find((entry) => entry.company === "개인 R&D")
+    expect(aiWork?.projects?.[0]?.title).toBe("Swagger Parser MCP 서버 개발 및 npm 배포")
+    expect(aiWork?.projects?.[0]?.accomplishments.join("\n")).toContain(
+      "https://www.npmjs.com/package/swagger-parser-mcp-server"
+    )
+
+    const sharedWork = result.work.find((entry) => entry.company === "Exem")
+    expect(sharedWork?.projects?.[0]?.title).toBe("대규모 데이터 화면용 공용 데이터 그리드 개발")
+  })
+
+  it("invalid variant는 frontend로 fallback 한다", async () => {
+    setupCollections()
+    mockGetObsidianBlogPosts.mockResolvedValue([])
+
+    const result = await serializeResumeData("unknown-variant")
+
+    expect(result.profile.label).toBe("Frontend Developer")
+    expect(result.skills?.[0]?.items).toContain("React")
   })
 
   it("기본 프로필 데이터가 없으면 오류를 던진다", async () => {

@@ -30,17 +30,19 @@ describe("/api/resume-pdf", () => {
     mockSerializeResumeData.mockReset()
   })
 
-  it("PDF 응답 헤더를 유지한다(Content-Type / Content-Disposition / Cache-Control)", async () => {
+  it("variant=ai-agent를 전달하면 serializeResumeData('ai-agent')를 호출한다", async () => {
     mockSerializeResumeData.mockResolvedValue({
       profile: {
         name: "최기환",
-        label: "성능·아키텍처 Frontend Engineer",
+        label: "AI Native Frontend Developer",
       },
     })
     mockRenderToBuffer.mockResolvedValue(new Uint8Array([1, 2, 3]))
 
-    const response = await GET()
-    const encodedFileName = encodeURIComponent("최기환_성능·아키텍처 Frontend Engineer_이력서.pdf")
+    const response = await GET({
+      request: new Request("http://localhost/api/resume-pdf?variant=ai-agent"),
+    })
+    const encodedFileName = encodeURIComponent("최기환_AI Native Frontend Developer_이력서.pdf")
 
     expect(response.status).toBe(200)
     expect(response.headers.get("Content-Type")).toBe("application/pdf")
@@ -48,8 +50,24 @@ describe("/api/resume-pdf", () => {
       `attachment; filename*=UTF-8''${encodedFileName}`
     )
     expect(response.headers.get("Cache-Control")).toBe("no-store")
-    expect(mockSerializeResumeData).toHaveBeenCalledTimes(1)
+    expect(mockSerializeResumeData).toHaveBeenCalledWith("ai-agent")
     expect(mockRegisterFonts).toHaveBeenCalledTimes(1)
     expect(mockRenderToBuffer).toHaveBeenCalledTimes(1)
+  })
+
+  it("invalid variant는 frontend로 fallback 한다", async () => {
+    mockSerializeResumeData.mockResolvedValue({
+      profile: {
+        name: "최기환",
+        label: "Frontend Developer",
+      },
+    })
+    mockRenderToBuffer.mockResolvedValue(new Uint8Array([1, 2, 3]))
+
+    await GET({
+      request: new Request("http://localhost/api/resume-pdf?variant=invalid"),
+    })
+
+    expect(mockSerializeResumeData).toHaveBeenCalledWith("frontend")
   })
 })

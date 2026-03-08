@@ -11,6 +11,7 @@ import {
   streamText,
 } from "ai"
 import { buildResumePrompt } from "@/lib/resume-prompt"
+import { parseResumeVariant, type ResumeVariantId } from "@/lib/resume/variant"
 import { createToolInputDeltaFilter } from "@/lib/stream/filter-tool-input-delta"
 import {
   analyzeToolCallPattern,
@@ -162,8 +163,11 @@ const SYSTEM_PROMPT_FOOTER = `## 도구 사용 전략
  * Content Collections 데이터를 기반으로 시스템 프롬프트를 동적 생성
  * @param dynamicPrompt - 의도 분류 및 반복 호출 분석에 기반한 동적 프롬프트
  */
-async function getSystemPrompt(dynamicPrompt?: string): Promise<string> {
-  const resumeSection = await buildResumePrompt()
+async function getSystemPrompt(
+  resumeVariant: ResumeVariantId,
+  dynamicPrompt?: string
+): Promise<string> {
+  const resumeSection = await buildResumePrompt(resumeVariant)
   const catalogSummary = buildCatalogSummary()
   const dynamicSection = dynamicPrompt ? `\n\n---\n\n${dynamicPrompt}` : ""
   return `${SYSTEM_PROMPT_HEADER}
@@ -214,6 +218,7 @@ const getVertex = () => {
 
 export const POST = async ({ request }: { request: Request }) => {
   try {
+    const resumeVariant = parseResumeVariant(new URL(request.url).searchParams.get("variant"))
     const { messages } = (await request.json()) as { messages: UIMessage[] }
     const modelMessages = await convertToModelMessages(messages)
 
@@ -243,7 +248,7 @@ export const POST = async ({ request }: { request: Request }) => {
     const initialDynamicPrompt = buildDynamicSystemPrompt({
       intent: intentClassification.intent,
     })
-    const systemPrompt = await getSystemPrompt(initialDynamicPrompt)
+    const systemPrompt = await getSystemPrompt(resumeVariant, initialDynamicPrompt)
 
     // SearchContext 추적: 검색된 모든 ID를 누적
     let currentSearchContext: SearchContext = createSearchContext()

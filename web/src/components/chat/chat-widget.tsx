@@ -1,10 +1,17 @@
 import { useEffect } from "react"
 import { AssistantModal } from "@/components/assistant-ui/assistant-modal"
 import { CHAT_WIDGET_READY_EVENT } from "@/lib/layer-events"
+import { parseResumeVariant, type ResumeVariantId } from "@/lib/resume/variant"
 import { AnswerToolUI } from "./answer-tool-ui"
 import { ChatRuntimeProvider } from "./chat-runtime-provider"
 
-export function ChatWidget() {
+interface ChatWidgetProps {
+  resumeVariant?: ResumeVariantId
+}
+
+export function ChatWidget({ resumeVariant = "frontend" }: ChatWidgetProps) {
+  const normalizedResumeVariant = parseResumeVariant(resumeVariant)
+
   useEffect(() => {
     const chatWindow = window as Window & {
       __resumeUiReady?: {
@@ -21,7 +28,7 @@ export function ChatWidget() {
   }, [])
 
   return (
-    <ChatRuntimeProvider>
+    <ChatRuntimeProvider resumeVariant={normalizedResumeVariant}>
       <AnswerToolUI />
       <AssistantModal />
     </ChatRuntimeProvider>

@@ -4,18 +4,22 @@ import { ClientRouter } from "astro:transitions"
 import { SEO } from "astro-seo"
 import { ChatWidget } from "@/components/chat/chat-widget"
 import { Navigation } from "@/components/navigation"
+import { parseResumeVariant, type ResumeVariantId } from "@/lib/resume/variant"
 
 interface Props {
   title?: string
   description?: string
+  resumeVariant?: ResumeVariantId
 }
 
 const {
   title = "Gihwan-dev | AI와 함께하는 이력서",
   description = "최기환의 AI 기반 개발자 이력서입니다. RAG 기술이 적용된 AI 어시스턴트와 직접 대화하며 경력과 기술을 확인해보세요.",
+  resumeVariant = "frontend",
 } = Astro.props
 
 const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
+const normalizedResumeVariant = parseResumeVariant(resumeVariant)
 ---
 
 <!doctype html>
@@ -78,6 +82,7 @@ const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
     </script>
   </head>
   <body
+    data-resume-variant={normalizedResumeVariant}
     class="bg-resume-bg text-resume-text-main min-h-screen font-sans antialiased selection:bg-resume-primary selection:text-white transition-colors duration-100"
   >
     <a href="#main-content" class="skip-link">
@@ -90,7 +95,7 @@ const gaId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID
         &copy; {new Date().getFullYear()} 최기환 &middot; AI 기반 인터랙티브 이력서
       </p>
     </footer>
-    <ChatWidget client:load />
+    <ChatWidget client:load resumeVariant={normalizedResumeVariant} />
   </body>
 </html>
 
