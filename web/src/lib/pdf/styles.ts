@@ -88,11 +88,11 @@ export const styles = StyleSheet.create({
     fontSize: 9.2,
     lineHeight: 1.52,
     marginTop: 8,
-    marginBottom: 6,
+    marginBottom: 10,
   },
   headerSummaryList: {
     marginTop: 8,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   headerSummaryBulletRow: {
     flexDirection: "row",
@@ -113,12 +113,6 @@ export const styles = StyleSheet.create({
     fontWeight: 600,
     color: colors.accent,
   },
-  headerDivider: {
-    borderBottomWidth: 0.75,
-    borderBottomColor: colors.borderStrong,
-    marginTop: 10,
-    marginBottom: 6,
-  },
   link: {
     color: colors.linkText,
     textDecoration: "none",
@@ -130,12 +124,9 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 700,
     color: colors.primary,
-    marginTop: 16,
-    marginBottom: 8,
-    paddingBottom: 4,
-    borderBottomWidth: 0.75,
-    borderBottomColor: colors.borderStrong,
-    letterSpacing: 0.5,
+    marginTop: 14,
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
 
   // Experience / Project item
@@ -189,13 +180,11 @@ export const styles = StyleSheet.create({
     marginTop: 4,
   },
   experienceCaseCard: {
-    borderLeftWidth: 1.5,
-    borderColor: colors.border,
-    paddingLeft: 8,
+    paddingLeft: 0,
     paddingRight: 0,
-    paddingTop: 4,
-    paddingBottom: 3,
-    marginBottom: 6,
+    paddingTop: 2,
+    paddingBottom: 2,
+    marginBottom: 5,
     backgroundColor: colors.background,
   },
   experienceCaseTitle: {
@@ -244,11 +233,9 @@ export const styles = StyleSheet.create({
     color: colors.text,
   },
   compactRow: {
-    borderBottomWidth: 0.5,
-    borderBottomColor: colors.border,
-    paddingTop: 4,
-    paddingBottom: 4,
-    marginBottom: 1,
+    paddingTop: 2,
+    paddingBottom: 2,
+    marginBottom: 5,
   },
   compactTitle: {
     fontSize: 10.3,
@@ -283,13 +270,11 @@ export const styles = StyleSheet.create({
     fontWeight: 600,
   },
   itemSeparator: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
   projectContainer: {
-    marginBottom: 16,
-    borderLeftWidth: 1.5,
-    borderLeftColor: colors.borderStrong,
-    paddingLeft: 8,
+    marginBottom: 12,
+    paddingLeft: 0,
   },
 
   // Skills section
@@ -299,14 +284,14 @@ export const styles = StyleSheet.create({
     color: colors.mutedStrong,
     textTransform: "uppercase",
     letterSpacing: 0.7,
-    marginBottom: 3,
-    marginTop: 5,
+    marginBottom: 2,
+    marginTop: 4,
   },
   skillsBadgeRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 4,
-    marginBottom: 4,
+    gap: 3,
+    marginBottom: 3,
   },
 
   // Tech stack badges
@@ -319,12 +304,10 @@ export const styles = StyleSheet.create({
   techBadge: {
     fontSize: 9,
     color: colors.mutedStrong,
-    backgroundColor: colors.background,
-    paddingHorizontal: 5,
-    paddingVertical: 1.6,
-    borderRadius: 2,
-    borderWidth: 0.5,
-    borderColor: colors.borderStrong,
+    backgroundColor: colors.cardBg,
+    paddingHorizontal: 4,
+    paddingVertical: 1.4,
+    borderRadius: 1.6,
   },
 
   // Markdown body
@@ -390,10 +373,9 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.highlight,
   },
   mdCode: {
-    backgroundColor: "#f1f5f9",
     fontSize: 9,
-    paddingHorizontal: 3,
-    borderRadius: 2,
+    fontWeight: 600,
+    color: colors.mutedStrong,
   },
 
   // PAR labels

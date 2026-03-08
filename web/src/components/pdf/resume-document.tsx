@@ -77,8 +77,6 @@ function ProfileSection({ profile }: { profile: SerializedResumeData["profile"] 
       ) : (
         <Text style={styles.headerSummary}>{profile.summary}</Text>
       )}
-
-      <View style={styles.headerDivider} />
     </View>
   )
 }
@@ -90,6 +88,10 @@ interface CompactRowProps {
   body?: string
   linkLabel?: string
   linkUrl?: string
+}
+
+interface CompactSectionRow extends CompactRowProps {
+  rowKey: string
 }
 
 function CompactRow({ title, date, meta, body, linkLabel, linkUrl }: CompactRowProps) {
@@ -106,6 +108,26 @@ function CompactRow({ title, date, meta, body, linkLabel, linkUrl }: CompactRowP
           <Text style={styles.compactLinkText}>{linkLabel}</Text>
         </Link>
       )}
+    </View>
+  )
+}
+
+function CompactRowsSection({ title, rows }: { title: string; rows: CompactSectionRow[] }) {
+  if (rows.length === 0) return null
+
+  const [firstRow, ...remainingRows] = rows
+  const firstRowProps: CompactRowProps = firstRow
+
+  return (
+    <View>
+      <View wrap={false} minPresenceAhead={50}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <CompactRow {...firstRowProps} />
+      </View>
+      {remainingRows.map((row) => {
+        const rowProps: CompactRowProps = row
+        return <CompactRow key={row.rowKey} {...rowProps} />
+      })}
     </View>
   )
 }
@@ -201,20 +223,16 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
 
 function BlogSection({ blogPosts }: { blogPosts: SerializedResumeData["blogPosts"] }) {
   if (blogPosts.length === 0) return null
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Technical Writing</Text>
-      {blogPosts.map((post) => (
-        <CompactRow
-          key={post.url}
-          title={post.title}
-          date={formatDate(post.publishedAt)}
-          linkLabel="Read post"
-          linkUrl={post.url}
-        />
-      ))}
-    </View>
-  )
+
+  const rows: CompactSectionRow[] = blogPosts.map((post) => ({
+    rowKey: post.url,
+    title: post.title,
+    date: formatDate(post.publishedAt),
+    linkLabel: "Read post",
+    linkUrl: post.url,
+  }))
+
+  return <CompactRowsSection title="Technical Writing" rows={rows} />
 }
 
 function CertificateSection({
@@ -223,38 +241,30 @@ function CertificateSection({
   certificates: SerializedResumeData["certificates"]
 }) {
   if (certificates.length === 0) return null
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Certificates</Text>
-      {certificates.map((c) => (
-        <CompactRow
-          key={`${c.name}-${c.date}`}
-          title={c.name}
-          date={formatDate(c.date)}
-          meta={c.issuer}
-          body={c.body}
-        />
-      ))}
-    </View>
-  )
+
+  const rows: CompactSectionRow[] = certificates.map((c) => ({
+    rowKey: `${c.name}-${c.date}`,
+    title: c.name,
+    date: formatDate(c.date),
+    meta: c.issuer,
+    body: c.body,
+  }))
+
+  return <CompactRowsSection title="Certificates" rows={rows} />
 }
 
 function AwardSection({ awards }: { awards: SerializedResumeData["awards"] }) {
   if (awards.length === 0) return null
-  return (
-    <View>
-      <Text style={styles.sectionTitle}>Awards</Text>
-      {awards.map((a) => (
-        <CompactRow
-          key={`${a.title}-${a.date}`}
-          title={a.title}
-          date={formatDate(a.date)}
-          meta={a.issuer}
-          body={a.summary}
-        />
-      ))}
-    </View>
-  )
+
+  const rows: CompactSectionRow[] = awards.map((a) => ({
+    rowKey: `${a.title}-${a.date}`,
+    title: a.title,
+    date: formatDate(a.date),
+    meta: a.issuer,
+    body: a.summary,
+  }))
+
+  return <CompactRowsSection title="Awards" rows={rows} />
 }
 
 export function ResumeDocument({ data }: { data: SerializedResumeData }) {
