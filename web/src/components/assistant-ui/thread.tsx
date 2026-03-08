@@ -23,6 +23,11 @@ import { Reasoning, ReasoningGroupWrapper } from "@/components/assistant-ui/reas
 import { ThinkingProcessProvider } from "@/components/assistant-ui/thinking-process"
 import { ToolCallStatus, ToolGroupWrapper } from "@/components/assistant-ui/tool-call-status"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
+import {
+  AnswerMessageContent,
+  extractLatestAnswerToolArgs,
+  extractLatestCompletedAnswerToolArgs,
+} from "@/components/chat/answer-tool-ui"
 import { Button } from "@/components/ui/button"
 import { useFollowUp } from "@/hooks/use-follow-up"
 import { trackEvent } from "@/lib/analytics"
@@ -317,6 +322,7 @@ const AssistantMessage: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
             }}
           />
         </ThinkingProcessProvider>
+        <AnswerMessageBlock />
         <MessageError />
       </div>
 
@@ -326,6 +332,21 @@ const AssistantMessage: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
 
       <FollowUpSuggestions onUserMessageSubmitted={onUserMessageSubmitted} />
     </MessagePrimitive.Root>
+  )
+}
+
+const AnswerMessageBlock: FC = () => {
+  const message = useAuiState(({ message }) => message)
+  const answerArgs = extractLatestCompletedAnswerToolArgs(message.content, message.status?.type)
+  if (!answerArgs) return null
+
+  return (
+    <AnswerMessageContent
+      answer={answerArgs.answer}
+      sources={answerArgs.sources}
+      confidence={answerArgs.confidence}
+      className="px-2"
+    />
   )
 }
 
@@ -370,21 +391,8 @@ const FollowUpSuggestions: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
   useEffect(() => {
     if (!isLast || !isComplete || generatedRef.current) return
 
-    // 1차: answer tool call의 args.answer에서 추출
-    const answerPart = message.content.find(
-      (part) => part.type === "tool-call" && part.toolName === "answer"
-    )
-
-    let answerText = ""
-    if (
-      answerPart &&
-      answerPart.type === "tool-call" &&
-      answerPart.args &&
-      typeof answerPart.args === "object" &&
-      "answer" in answerPart.args
-    ) {
-      answerText = String((answerPart.args as Record<string, unknown>).answer)
-    }
+    const answerArgs = extractLatestAnswerToolArgs(message.content)
+    const answerText = answerArgs?.answer ?? ""
 
     // 2차 fallback: text 파트 (tool call 없는 경우 대비)
     const textContent =
