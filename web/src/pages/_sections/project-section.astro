@@ -1,6 +1,7 @@
 ---
 import { Markdown } from "@astropub/md"
 import { Badge } from "@/components/ui/badge"
+import { normalizeKoreanMarkdown } from "@/lib/markdown/normalize-korean-markdown"
 import type { ResumeSummaryBlock } from "@/lib/resume-portfolio/contracts"
 
 interface Props {
@@ -8,6 +9,8 @@ interface Props {
 }
 
 const { projects } = Astro.props
+const summaryMarkdownClass =
+  "[&_p]:m-0 [&_code]:rounded-sm [&_code]:border [&_code]:border-resume-border/70 [&_code]:bg-resume-highlight/60 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_pre]:mt-2 [&_pre]:overflow-x-auto [&_pre]:rounded-sm [&_pre]:border [&_pre]:border-resume-border/70 [&_pre]:bg-resume-highlight/40 [&_pre]:p-3 [&_pre]:text-xs [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0"
 ---
 
 <section
@@ -42,16 +45,22 @@ const { projects } = Astro.props
               </div>
             ) : null}
 
-            <p class="text-resume-text-main/80 mb-6 text-[0.95rem] leading-relaxed">
-              {project.summary}
-            </p>
+            <div
+              data-project-summary
+              class:list={[
+                "text-resume-text-main/80 mb-6 text-[0.95rem] leading-relaxed",
+                summaryMarkdownClass,
+              ]}
+            >
+              <Markdown of={normalizeKoreanMarkdown(project.summary)} />
+            </div>
 
             {project.accomplishments && project.accomplishments.length > 0 ? (
               <ul class="resume-bullet-list space-y-2">
                 {project.accomplishments.map((item) => (
                   <li class="pl-4 relative text-[0.95rem] text-resume-text-main/90 leading-relaxed">
                     <span class="absolute left-0 top-2.5 w-1.5 h-1.5 rounded-full bg-resume-primary/70" />
-                    <Markdown of={item} />
+                    <Markdown of={normalizeKoreanMarkdown(item)} />
                   </li>
                 ))}
               </ul>

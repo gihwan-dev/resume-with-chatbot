@@ -1,5 +1,6 @@
 ---
 import { Markdown } from "@astropub/md"
+import { normalizeKoreanMarkdown } from "@/lib/markdown/normalize-korean-markdown"
 
 interface ExperienceCaseItem {
   projectId: string
@@ -27,11 +28,8 @@ interface Props {
 }
 
 const { experiences } = Astro.props as Props
-
-function normalizeExperienceMarkdown(text: string): string {
-  // CommonMark parser does not close strong emphasis for patterns like `**text**를`.
-  return text.replace(/(^|[^\p{L}\p{N}*])\*\*([^*]+)\*\*(?=[가-힣])/gu, "$1<strong>$2</strong>")
-}
+const summaryMarkdownClass =
+  "[&_p]:m-0 [&_code]:rounded-sm [&_code]:border [&_code]:border-resume-border/70 [&_code]:bg-resume-highlight/60 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_pre]:mt-2 [&_pre]:overflow-x-auto [&_pre]:rounded-sm [&_pre]:border [&_pre]:border-resume-border/70 [&_pre]:bg-resume-highlight/40 [&_pre]:p-3 [&_pre]:text-xs [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0"
 ---
 
 <section
@@ -91,9 +89,15 @@ function normalizeExperienceMarkdown(text: string): string {
                 >
                   <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
                   {project.summary && (
-                    <p class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90">
-                      {project.summary}
-                    </p>
+                    <div
+                      data-experience-project-summary
+                      class:list={[
+                        "mt-1.5 text-sm leading-relaxed text-resume-text-main/90",
+                        summaryMarkdownClass,
+                      ]}
+                    >
+                      <Markdown of={normalizeKoreanMarkdown(project.summary)} />
+                    </div>
                   )}
 
                   {project.accomplishments && project.accomplishments.length > 0 && (
@@ -105,7 +109,7 @@ function normalizeExperienceMarkdown(text: string): string {
                             class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-resume-primary/70"
                           />
                           <div class="text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
-                            <Markdown of={normalizeExperienceMarkdown(accomplishment)} />
+                            <Markdown of={normalizeKoreanMarkdown(accomplishment)} />
                           </div>
                         </li>
                       ))}
@@ -150,7 +154,7 @@ function normalizeExperienceMarkdown(text: string): string {
               <div class="space-y-2 text-sm leading-relaxed text-resume-text-main/90">
                 {entry.data.highlights.map((highlight) => (
                   <div class="[&_p]:m-0">
-                    <Markdown of={normalizeExperienceMarkdown(highlight)} />
+                    <Markdown of={normalizeKoreanMarkdown(highlight)} />
                   </div>
                 ))}
               </div>
