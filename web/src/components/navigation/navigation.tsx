@@ -4,65 +4,13 @@ import { useEffect, useRef, useState } from "react"
 import { NAVIGATION_READY_EVENT } from "@/lib/layer-events"
 import { DesktopNav } from "./desktop-nav"
 import { MobileNav } from "./mobile-nav"
-import {
-  RESUME_SECTION_NAV_ITEMS,
-  type SectionNavItem,
-  type SectionNavVariant,
-} from "./section-nav"
+import { RESUME_SECTION_NAV_ITEMS, type SectionNavItem } from "./section-nav"
 import { ThemeProvider } from "./theme-provider"
 
 const DEFAULT_RESUME_SECTION_ITEMS: readonly SectionNavItem[] = RESUME_SECTION_NAV_ITEMS
 
-type NavigationMode = "resume" | "portfolio-detail"
-
-interface NavigationState {
-  mode: NavigationMode
-  sections: readonly SectionNavItem[]
-}
-
 interface NavigationProps {
   initialPathname?: string
-}
-
-function isPortfolioDetailPathname(pathname: string) {
-  return /^\/portfolio\/[^/]+\/?$/.test(pathname)
-}
-
-function getInitialNavigationState(pathname: string): NavigationState {
-  if (isPortfolioDetailPathname(pathname)) {
-    return {
-      mode: "portfolio-detail",
-      sections: [],
-    }
-  }
-
-  return {
-    mode: "resume",
-    sections: DEFAULT_RESUME_SECTION_ITEMS,
-  }
-}
-
-function getPortfolioSectionsFromDocument() {
-  const sectionElements = Array.from(
-    document.querySelectorAll<HTMLElement>("[data-portfolio-section]")
-  )
-
-  const sections = sectionElements
-    .map((element) => {
-      const id = element.id || element.getAttribute("data-portfolio-section") || ""
-      const heading =
-        element.getAttribute("data-portfolio-section-heading") ||
-        element.querySelector("h2, h1")?.textContent ||
-        id
-
-      return {
-        id: id.trim(),
-        label: heading.trim(),
-      }
-    })
-    .filter((section) => section.id.length > 0 && section.label.length > 0)
-
-  return sections
 }
 
 function getResumeSectionsFromDocument() {
@@ -75,15 +23,14 @@ function getResumeSectionsFromDocument() {
 
 function isSameSectionSet(left: readonly SectionNavItem[], right: readonly SectionNavItem[]) {
   if (left.length !== right.length) return false
-
   return left.every((section, index) => section.id === right[index]?.id)
 }
 
 export function Navigation({ initialPathname = "/" }: NavigationProps) {
   const mobileWrapperRef = useRef<HTMLDivElement>(null)
   const desktopWrapperRef = useRef<HTMLDivElement>(null)
-  const [navigationState, setNavigationState] = useState<NavigationState>(() =>
-    getInitialNavigationState(initialPathname)
+  const [sections, setSections] = useState<readonly SectionNavItem[]>(() =>
+    initialPathname === "/" ? DEFAULT_RESUME_SECTION_ITEMS : []
   )
 
   useEffect(() => {
@@ -102,37 +49,23 @@ export function Navigation({ initialPathname = "/" }: NavigationProps) {
   }, [])
 
   useEffect(() => {
-    const syncNavigationState = () => {
-      const pathname = window.location.pathname
-      const nextState: NavigationState = isPortfolioDetailPathname(pathname)
-        ? {
-            mode: "portfolio-detail",
-            sections: getPortfolioSectionsFromDocument(),
-          }
-        : {
-            mode: "resume",
-            sections: getResumeSectionsFromDocument(),
-          }
-
-      setNavigationState((currentState) => {
-        if (
-          currentState.mode === nextState.mode &&
-          isSameSectionSet(currentState.sections, nextState.sections)
-        ) {
-          return currentState
+    const syncSections = () => {
+      const nextSections = window.location.pathname === "/" ? getResumeSectionsFromDocument() : []
+      setSections((currentSections) => {
+        if (isSameSectionSet(currentSections, nextSections)) {
+          return currentSections
         }
-
-        return nextState
+        return nextSections
       })
     }
 
-    document.addEventListener("astro:page-load", syncNavigationState)
-    window.addEventListener("popstate", syncNavigationState)
-    syncNavigationState()
+    document.addEventListener("astro:page-load", syncSections)
+    window.addEventListener("popstate", syncSections)
+    syncSections()
 
     return () => {
-      document.removeEventListener("astro:page-load", syncNavigationState)
-      window.removeEventListener("popstate", syncNavigationState)
+      document.removeEventListener("astro:page-load", syncSections)
+      window.removeEventListener("popstate", syncSections)
     }
   }, [])
 
@@ -206,32 +139,17 @@ export function Navigation({ initialPathname = "/" }: NavigationProps) {
     }
   }, [])
 
-  const isPortfolioDetailMode = navigationState.mode === "portfolio-detail"
-  const sectionVariant: SectionNavVariant = isPortfolioDetailMode ? "toc" : "default"
-  const desktopAriaLabel = isPortfolioDetailMode
-    ? "데스크톱 포트폴리오 목차 이동"
-    : "데스크톱 이력서 섹션 이동"
-  const mobileAriaLabel = isPortfolioDetailMode
-    ? "모바일 포트폴리오 목차 이동"
-    : "모바일 이력서 섹션 이동"
-
   return (
     <ThemeProvider>
       <div ref={mobileWrapperRef} className="lg:hidden">
         <MobileNav
-          sections={navigationState.sections}
-          ariaLabel={mobileAriaLabel}
-          sectionTitle={isPortfolioDetailMode ? "목차" : "Sections"}
-          sectionVariant={sectionVariant}
+          sections={sections}
+          ariaLabel="모바일 이력서 섹션 이동"
+          sectionTitle="Sections"
         />
       </div>
       <div ref={desktopWrapperRef} className="hidden lg:block">
-        <DesktopNav
-          sections={navigationState.sections}
-          ariaLabel={desktopAriaLabel}
-          sectionTitle={isPortfolioDetailMode ? "목차" : undefined}
-          sectionVariant={sectionVariant}
-        />
+        <DesktopNav sections={sections} ariaLabel="데스크톱 이력서 섹션 이동" />
       </div>
     </ThemeProvider>
   )

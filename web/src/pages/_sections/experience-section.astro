@@ -1,13 +1,12 @@
 ---
 import { Markdown } from "@astropub/md"
+import { normalizeKoreanMarkdown } from "@/lib/markdown/normalize-korean-markdown"
 
 interface ExperienceCaseItem {
   projectId: string
   title: string
-  href?: string
-  summary?: string
-  accomplishments?: string[]
-  ctaLabel?: string
+  summary: string
+  accomplishments: string[]
 }
 
 interface ExperienceEntry {
@@ -27,11 +26,8 @@ interface Props {
 }
 
 const { experiences } = Astro.props as Props
-
-function normalizeExperienceMarkdown(text: string): string {
-  // CommonMark parser does not close strong emphasis for patterns like `**text**를`.
-  return text.replace(/(^|[^\p{L}\p{N}*])\*\*([^*]+)\*\*(?=[가-힣])/gu, "$1<strong>$2</strong>")
-}
+const summaryMarkdownClass =
+  "[&_p]:m-0 [&_code]:rounded-sm [&_code]:border [&_code]:border-resume-border/70 [&_code]:bg-resume-highlight/60 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[0.85em] [&_pre]:mt-2 [&_pre]:overflow-x-auto [&_pre]:rounded-sm [&_pre]:border [&_pre]:border-resume-border/70 [&_pre]:bg-resume-highlight/40 [&_pre]:p-3 [&_pre]:text-xs [&_pre_code]:border-0 [&_pre_code]:bg-transparent [&_pre_code]:p-0"
 ---
 
 <section
@@ -91,8 +87,14 @@ function normalizeExperienceMarkdown(text: string): string {
                 >
                   <h4 class="text-lg font-semibold text-resume-text-heading">{project.title}</h4>
                   {project.summary && (
-                    <div class="mt-1.5 text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
-                      <Markdown of={normalizeExperienceMarkdown(project.summary)} />
+                    <div
+                      data-experience-project-summary
+                      class:list={[
+                        "mt-1.5 text-sm leading-relaxed text-resume-text-main/90",
+                        summaryMarkdownClass,
+                      ]}
+                    >
+                      <Markdown of={normalizeKoreanMarkdown(project.summary)} />
                     </div>
                   )}
 
@@ -105,41 +107,11 @@ function normalizeExperienceMarkdown(text: string): string {
                             class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-resume-primary/70"
                           />
                           <div class="text-sm leading-relaxed text-resume-text-main/90 [&_p]:m-0">
-                            <Markdown of={normalizeExperienceMarkdown(accomplishment)} />
+                            <Markdown of={normalizeKoreanMarkdown(accomplishment)} />
                           </div>
                         </li>
                       ))}
                     </ul>
-                  )}
-
-                  {project.href && (
-                    <div class="mt-6 border-t border-resume-border/70 pt-4">
-                      <a
-                        href={project.href}
-                        class="group/btn inline-flex cursor-pointer items-center gap-1.5 rounded-sm text-sm font-semibold text-resume-primary underline-offset-4 transition-colors duration-200 hover:text-resume-secondary hover:underline focus-visible:text-resume-secondary focus-visible:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-resume-card-bg"
-                        data-ga-event="project_portfolio_click"
-                        data-ga-project={project.title}
-                      >
-                        {project.ctaLabel ?? "상세 케이스 스터디 보기"}
-                        <svg
-                          aria-hidden="true"
-                          focusable="false"
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          class="h-4 w-4 opacity-90 transition-all duration-200 group-hover/btn:translate-x-0.5 group-hover/btn:opacity-100 group-focus-visible/btn:translate-x-0.5 group-focus-visible/btn:opacity-100"
-                        >
-                          <path d="M5 12h14" />
-                          <path d="m12 5 7 7-7 7" />
-                        </svg>
-                      </a>
-                    </div>
                   )}
                 </article>
               ))}
@@ -150,7 +122,7 @@ function normalizeExperienceMarkdown(text: string): string {
               <div class="space-y-2 text-sm leading-relaxed text-resume-text-main/90">
                 {entry.data.highlights.map((highlight) => (
                   <div class="[&_p]:m-0">
-                    <Markdown of={normalizeExperienceMarkdown(highlight)} />
+                    <Markdown of={normalizeKoreanMarkdown(highlight)} />
                   </div>
                 ))}
               </div>

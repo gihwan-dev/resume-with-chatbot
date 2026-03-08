@@ -5,7 +5,6 @@ import {
   buildCompanyProjectsByCompanyId,
   type CompanyProjectSource,
 } from "@/lib/experience/company-projects"
-import { buildResumePortfolioContracts } from "@/lib/resume-portfolio/derive"
 import type { SerializedResumeData } from "./types"
 
 export async function serializeResumeData(): Promise<SerializedResumeData> {
@@ -42,6 +41,7 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
     companyId: resolveWorkCompanyId(entry),
   }))
   const knownCompanyIds = workWithCompanyId.map((item) => item.companyId)
+
   const normalizedProjects: CompanyProjectSource[] = projects.flatMap((project) => {
     const companyId = resolveProjectCompanyId(project, knownCompanyIds)
     if (!companyId) return []
@@ -54,23 +54,14 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
           title: project.data.title,
           priority: project.data.priority,
           dateStart: project.data.dateStart,
+          summary: project.data.summary,
+          accomplishments: [...project.data.accomplishments],
         },
       },
     ]
   })
 
-  const { summaryBlocks, mappings } = buildResumePortfolioContracts(projects)
-  const projectIdByResumeItemId = new Map(
-    mappings.map((mapping) => [mapping.resumeItemId, mapping.portfolioCaseId])
-  )
-  const summaryBlockByProjectId = new Map<string, (typeof summaryBlocks)[number]>()
-  for (const summaryBlock of summaryBlocks) {
-    const projectId = projectIdByResumeItemId.get(summaryBlock.resumeItemId)
-    if (!projectId) continue
-    summaryBlockByProjectId.set(projectId, summaryBlock)
-  }
   const companyProjectsByCompanyId = buildCompanyProjectsByCompanyId(normalizedProjects)
-
   const sortedAwards = [...awards].sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
 
   return {
@@ -84,23 +75,6 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
     },
     work: workWithCompanyId.map(({ entry: w, companyId }) => {
       const companyProjects = companyProjectsByCompanyId.get(companyId) ?? []
-      const projectCases = companyProjects.flatMap((project) => {
-        const summaryBlock = summaryBlockByProjectId.get(project.projectId)
-        if (!summaryBlock) return []
-
-        return [
-          {
-            projectId: project.projectId,
-            title: summaryBlock.title,
-            summary: summaryBlock.summary,
-            accomplishments: summaryBlock.accomplishments,
-          },
-        ]
-      })
-      const mappedProjectCaseIds = new Set(projectCases.map((projectCase) => projectCase.projectId))
-      const unmappedProjectTitles = companyProjects
-        .filter((project) => !mappedProjectCaseIds.has(project.projectId))
-        .map((project) => project.title)
 
       return {
         company: w.data.company,
@@ -108,21 +82,8 @@ export async function serializeResumeData(): Promise<SerializedResumeData> {
         dateStart: w.data.dateStart.toISOString(),
         dateEnd: w.data.dateEnd?.toISOString(),
         isCurrent: w.data.isCurrent,
-        projectCases: projectCases.length > 0 ? projectCases : undefined,
-        projectTitles: unmappedProjectTitles,
+        projects: companyProjects.length > 0 ? companyProjects : undefined,
         highlights: w.data.highlights ?? [],
-      }
-    }),
-    projects: summaryBlocks.map((summaryBlock) => {
-      return {
-        resumeItemId: summaryBlock.resumeItemId,
-        title: summaryBlock.title,
-        summary: summaryBlock.summary,
-        hasPortfolio: summaryBlock.hasPortfolio,
-        technologies: summaryBlock.technologies,
-        accomplishments: summaryBlock.accomplishments,
-        ctaLabel: summaryBlock.ctaLabel,
-        ctaHref: summaryBlock.ctaHref,
       }
     }),
     blogPosts,

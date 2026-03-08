@@ -102,12 +102,7 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
     <View>
       <Text style={styles.sectionTitle}>Experience</Text>
       {work.map((w) => {
-        const fallbackProjectItems =
-          w.projectTitles.length > 0
-            ? w.projectTitles
-            : w.projectCases && w.projectCases.length > 0
-              ? []
-              : w.highlights
+        const fallbackHighlights = w.projects && w.projects.length > 0 ? [] : w.highlights
 
         return (
           <View
@@ -123,24 +118,24 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
             </View>
             <Text style={styles.itemSubtitle}>{w.company}</Text>
 
-            {w.projectCases && w.projectCases.length > 0 && (
+            {w.projects && w.projects.length > 0 && (
               <View style={styles.experienceCaseList}>
-                {w.projectCases.map((projectCase) => (
+                {w.projects.map((project) => (
                   <View
-                    key={`${w.company}-${projectCase.projectId}`}
+                    key={`${w.company}-${project.projectId}`}
                     style={styles.experienceCaseCard}
                     minPresenceAhead={60}
                   >
-                    <Text style={styles.experienceCaseTitle}>{projectCase.title}</Text>
-                    {markdownInlineToPdf(projectCase.summary, {
-                      key: `${w.company}-${projectCase.projectId}-summary`,
+                    <Text style={styles.experienceCaseTitle}>{project.title}</Text>
+                    {markdownInlineToPdf(project.summary, {
+                      key: `${w.company}-${project.projectId}-summary`,
                       textStyle: styles.experienceCaseSummary,
                     })}
-                    {projectCase.accomplishments.map((accomplishment, accomplishmentIndex) => (
+                    {project.accomplishments.map((accomplishment, accomplishmentIndex) => (
                       <View key={accomplishment} style={styles.experienceCaseBulletRow}>
                         <View style={styles.experienceCaseBulletDot} />
                         {markdownInlineToPdf(accomplishment, {
-                          key: `${w.company}-${projectCase.projectId}-accomplishment-${accomplishmentIndex}`,
+                          key: `${w.company}-${project.projectId}-accomplishment-${accomplishmentIndex}`,
                           textStyle: styles.experienceCaseBulletText,
                         })}
                       </View>
@@ -150,12 +145,12 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
               </View>
             )}
 
-            {fallbackProjectItems.length > 0 && (
+            {fallbackHighlights.length > 0 && (
               <View style={styles.experienceProjectList}>
-                {fallbackProjectItems.map((projectTitle) => (
-                  <View key={`${w.company}-${projectTitle}`} style={styles.experienceProjectRow}>
+                {fallbackHighlights.map((highlight) => (
+                  <View key={`${w.company}-${highlight}`} style={styles.experienceProjectRow}>
                     <Text style={styles.experienceProjectBullet}>•</Text>
-                    <Text style={styles.experienceProjectText}>{projectTitle}</Text>
+                    <Text style={styles.experienceProjectText}>{highlight}</Text>
                   </View>
                 ))}
               </View>

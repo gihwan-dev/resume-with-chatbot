@@ -12,6 +12,8 @@ const MOCK_PROJECTS: CompanyProjectSource[] = [
       title: "Z Project",
       priority: 2,
       dateStart: new Date("2025-01-01"),
+      summary: "z-summary",
+      accomplishments: ["z-1"],
     },
   },
   {
@@ -21,6 +23,8 @@ const MOCK_PROJECTS: CompanyProjectSource[] = [
       title: "B Project",
       priority: 1,
       dateStart: new Date("2025-05-01"),
+      summary: "b-summary",
+      accomplishments: ["b-1"],
     },
   },
   {
@@ -30,6 +34,8 @@ const MOCK_PROJECTS: CompanyProjectSource[] = [
       title: "A Project",
       priority: 1,
       dateStart: new Date("2025-05-01"),
+      summary: "a-summary",
+      accomplishments: ["a-1", "a-2"],
     },
   },
   {
@@ -39,6 +45,8 @@ const MOCK_PROJECTS: CompanyProjectSource[] = [
       title: "C Project",
       priority: 1,
       dateStart: new Date("2024-12-01"),
+      summary: "c-summary",
+      accomplishments: ["c-1"],
     },
   },
   {
@@ -48,6 +56,8 @@ const MOCK_PROJECTS: CompanyProjectSource[] = [
       title: "Freelance Project",
       priority: 1,
       dateStart: new Date("2023-07-01"),
+      summary: "kmong-summary",
+      accomplishments: ["kmong-1"],
     },
   },
 ]
@@ -60,45 +70,36 @@ describe("buildCompanyProjectsByCompanyId", () => {
       {
         projectId: "project-priority-1-latest-a",
         title: "A Project",
-        href: undefined,
+        summary: "a-summary",
+        accomplishments: ["a-1", "a-2"],
       },
       {
         projectId: "project-priority-1-latest-b",
         title: "B Project",
-        href: undefined,
+        summary: "b-summary",
+        accomplishments: ["b-1"],
       },
       {
         projectId: "project-priority-1-older",
         title: "C Project",
-        href: undefined,
+        summary: "c-summary",
+        accomplishments: ["c-1"],
       },
       {
         projectId: "project-priority-2",
         title: "Z Project",
-        href: undefined,
+        summary: "z-summary",
+        accomplishments: ["z-1"],
       },
     ])
     expect(grouped.get("kmong")).toEqual([
       {
         projectId: "project-kmong",
         title: "Freelance Project",
-        href: undefined,
+        summary: "kmong-summary",
+        accomplishments: ["kmong-1"],
       },
     ])
-  })
-
-  it("href 매핑이 전달되면 해당 프로젝트에만 링크를 포함한다", () => {
-    const grouped = buildCompanyProjectsByCompanyId(MOCK_PROJECTS, {
-      hrefByProjectId: new Map([["project-priority-1-latest-a", "/portfolio/a#overview"]]),
-    })
-
-    const exemProjects = grouped.get("exem") ?? []
-    expect(exemProjects[0]).toEqual({
-      projectId: "project-priority-1-latest-a",
-      title: "A Project",
-      href: "/portfolio/a#overview",
-    })
-    expect(exemProjects[1]?.href).toBeUndefined()
   })
 
   it("companyId가 없는 프로젝트는 그룹에서 제외한다", () => {
@@ -110,6 +111,8 @@ describe("buildCompanyProjectsByCompanyId", () => {
           title: "Orphan Project",
           priority: 1,
           dateStart: new Date("2025-01-01"),
+          summary: "orphan-summary",
+          accomplishments: ["orphan-1"],
         },
       },
     ])

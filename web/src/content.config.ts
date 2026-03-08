@@ -75,6 +75,8 @@ const projects = defineCollection({
       techStack: z.array(z.string()),
       dateStart: z.coerce.date(),
       priority: z.number(),
+      summary: z.string(),
+      accomplishments: z.array(z.string()),
     })
     .strict(),
 })

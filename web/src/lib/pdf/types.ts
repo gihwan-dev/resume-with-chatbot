@@ -1,4 +1,4 @@
-export interface SerializedWorkProjectCase {
+export interface SerializedWorkProject {
   projectId: string
   title: string
   summary: string
@@ -20,20 +20,8 @@ export interface SerializedWork {
   dateStart: string
   dateEnd?: string
   isCurrent: boolean
-  projectCases?: SerializedWorkProjectCase[]
-  projectTitles: string[]
+  projects?: SerializedWorkProject[]
   highlights: string[]
-}
-
-export interface SerializedProject {
-  resumeItemId: string
-  title: string
-  summary: string
-  hasPortfolio: boolean
-  technologies: string[]
-  accomplishments: string[]
-  ctaLabel?: string
-  ctaHref?: string
 }
 
 export interface SerializedEducation {
@@ -75,7 +63,6 @@ export interface SerializedBlogPost {
 export interface SerializedResumeData {
   profile: SerializedProfile
   work: SerializedWork[]
-  projects: SerializedProject[]
   blogPosts: SerializedBlogPost[]
   education: SerializedEducation[]
   certificates: SerializedCertificate[]

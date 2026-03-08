@@ -1,5 +1,17 @@
 # Phase 1 수용 기준(AC) 고정: 30초 스캔 적합성 (2026-02-22)
 
+> Historical snapshot 문서입니다. 현재 resume-only 운영의 실행 기준(runbook)으로 사용하지 않습니다.
+> 이 문서 내 portfolio 전용 AC/검증 시나리오는 과거 기록이며, 현재 릴리즈 게이트로 해석하지 않습니다.
+
+## 현재 활성 검증 기준 (resume-only)
+
+아래 명령만 현재 실행 기준으로 사용합니다.
+
+1. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck`
+2. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint`
+3. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:run`
+4. `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:e2e`
+
 ## 1) 목적과 독자
 
 - 목적: 채용 담당자/리쿠르터가 30초 내에 `성능·아키텍처 FE` 포지셔닝을 판단하고, 시니어 리뷰어가 2차 검토에서 의사결정 깊이를 확인할 수 있는 판정 기준을 고정한다.
@@ -139,8 +151,8 @@
 
 1. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run typecheck`
 2. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run lint`
-3. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec vitest run tests/lib/chat-utils.test.ts tests/lib/resume-portfolio/story-thread-schema.test.ts tests/lib/resume-portfolio/validation.test.ts tests/lib/pdf/serialize-resume.test.ts`
-4. `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web exec playwright test e2e/portfolio-deep-link.spec.ts e2e/portfolio-toc-and-print.spec.ts e2e/resume-portfolio-print-flow.spec.ts e2e/accessibility.spec.ts --project=chromium`
+3. `pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:run`
+4. `CI=1 pnpm -C /Users/choegihwan/Documents/Projects/resume-with-ai/web run test:e2e`
 
 ## 6) 릴리즈 판정 규칙
 
