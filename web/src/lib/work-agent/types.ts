@@ -33,6 +33,7 @@ export interface ObsidianDocument {
   tags: string[]
   eventDate?: string
   updatedAt?: string
+  activityAt?: string
 }
 
 export interface ObsidianDocumentContent {
@@ -43,7 +44,7 @@ export interface ObsidianDocumentContent {
 export interface LiveResumeFeedItem {
   id: string
   title: string
-  date: string
+  activityAt: string
   summary: string
   tags: string[]
   promptText: string

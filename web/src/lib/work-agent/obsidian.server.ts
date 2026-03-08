@@ -19,6 +19,7 @@ interface VaultDocument {
   content: string
   eventDate?: string
   updatedAt?: string
+  activityAt?: string
 }
 
 interface VaultData {
@@ -68,10 +69,17 @@ let _searchIndex: MiniSearch | null = null
 
 const MINISEARCH_OPTIONS = {
   fields: ["title", "category", "tagsText", "summary", "content"],
-  storeFields: ["title", "category", "path", "summary", "tags", "eventDate", "updatedAt"],
+  storeFields: [
+    "title",
+    "category",
+    "path",
+    "summary",
+    "tags",
+    "eventDate",
+    "updatedAt",
+    "activityAt",
+  ],
 }
-const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
-const ISO_DATE_PREFIX_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:[T\s].*)?$/
 
 function getVaultData(): VaultData {
   if (_vaultData) {
@@ -182,8 +190,10 @@ export function searchDocuments(query: string, limit = 20): ObsidianDocument[] {
 
     const eventDate = result.eventDate as string | undefined
     const updatedAt = result.updatedAt as string | undefined
+    const activityAt = result.activityAt as string | undefined
     if (eventDate) mappedResult.eventDate = eventDate
     if (updatedAt) mappedResult.updatedAt = updatedAt
+    if (activityAt) mappedResult.activityAt = activityAt
 
     return mappedResult
   })
@@ -201,16 +211,11 @@ export function readDocumentContent(
   return { ...doc }
 }
 
-function normalizeDateToIso(dateValue: string | undefined): string | null {
-  if (!dateValue) return null
-  if (ISO_DATE_PATTERN.test(dateValue)) return dateValue
-
-  const prefixMatch = dateValue.match(ISO_DATE_PREFIX_PATTERN)
-  if (prefixMatch?.[1]) return prefixMatch[1]
-
-  const parsed = new Date(dateValue)
-  if (Number.isNaN(parsed.getTime())) return null
-  return parsed.toISOString().slice(0, 10)
+function toActivityTimestamp(activityAt: string | undefined): number | null {
+  if (!activityAt) return null
+  const parsedTimestamp = Date.parse(activityAt)
+  if (Number.isNaN(parsedTimestamp)) return null
+  return parsedTimestamp
 }
 
 export function buildLiveResumeFeedItems(
@@ -222,28 +227,29 @@ export function buildLiveResumeFeedItems(
   return documents
     .map((doc) => ({
       doc,
-      normalizedDate: normalizeDateToIso(doc.eventDate ?? doc.updatedAt),
+      activityTimestamp: toActivityTimestamp(doc.activityAt),
     }))
     .filter(
       (
         item
       ): item is {
         doc: ObsidianDocument
-        normalizedDate: string
+        activityTimestamp: number
       } =>
         Boolean(
-          item.normalizedDate &&
+          item.activityTimestamp !== null &&
+            item.doc.activityAt &&
             item.doc.summary &&
             typeof item.doc.summary === "string" &&
             item.doc.summary.trim().length > 0
         )
     )
-    .sort((a, b) => b.normalizedDate.localeCompare(a.normalizedDate))
+    .sort((a, b) => b.activityTimestamp - a.activityTimestamp)
     .slice(0, safeLimit)
-    .map(({ doc, normalizedDate }) => ({
+    .map(({ doc }) => ({
       id: doc.id,
       title: doc.title,
-      date: normalizedDate,
+      activityAt: doc.activityAt as string,
       summary: doc.summary,
       tags: doc.tags,
       promptText: `최근 업데이트 "${doc.title}"에 대해 문제, 해결, 성과를 자세히 설명해줘.`,

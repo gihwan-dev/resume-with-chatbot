@@ -2,27 +2,38 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { trackEvent } from "@/lib/analytics"
 import { dispatchChatPromptRequest } from "@/lib/chat-prompt"
-import { cn } from "@/lib/utils"
 import type { LiveResumeFeedItem } from "@/lib/work-agent/types"
 
 interface LiveResumeFeedProps {
   items: LiveResumeFeedItem[]
 }
 
-function formatFeedDate(dateText: string): string {
-  if (!dateText) return "-"
-  return dateText.slice(0, 10)
+const ROTATE_INTERVAL_MS = 5000
+const TRANSITION_DURATION_MS = 360
+const ROW_HEIGHT_PX = 32
+
+function formatActivityDate(activityAt: string): string {
+  if (!activityAt) return "-"
+
+  const prefixMatch = activityAt.match(/^(\d{4}-\d{2}-\d{2})/)
+  if (prefixMatch?.[1]) return prefixMatch[1]
+
+  const parsedDate = new Date(activityAt)
+  if (Number.isNaN(parsedDate.getTime())) return "-"
+  return parsedDate.toISOString().slice(0, 10)
 }
 
 export function LiveResumeFeed({ items }: LiveResumeFeedProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [previousIndex, setPreviousIndex] = useState<number | null>(null)
+  const [nextIndex, setNextIndex] = useState<number | null>(null)
+  const [isAnimating, setIsAnimating] = useState(false)
   const [isPaused, setIsPaused] = useState(false)
   const [isReducedMotion, setIsReducedMotion] = useState(false)
-  const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const currentItem = items[currentIndex]
-  const previousItem = previousIndex === null ? null : items[previousIndex]
+  const nextItem = nextIndex === null ? null : items[nextIndex]
+  const actionableItem = nextItem ?? currentItem
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)")
@@ -44,55 +55,72 @@ export function LiveResumeFeed({ items }: LiveResumeFeedProps) {
   }, [items.length])
 
   useEffect(() => {
-    if (items.length <= 1 || isPaused || isReducedMotion) return
-
-    const intervalId = setInterval(() => {
-      setCurrentIndex((prevIndex) => {
-        const nextIndex = (prevIndex + 1) % items.length
-        setPreviousIndex(prevIndex)
-        trackEvent("live_feed_rotate", {
-          from_index: prevIndex,
-          to_index: nextIndex,
-        })
-        return nextIndex
-      })
-    }, 5000)
-
-    return () => {
-      clearInterval(intervalId)
-    }
-  }, [isPaused, isReducedMotion, items.length])
+    if (items.length === 0) return
+    setCurrentIndex((prevIndex) => (prevIndex >= items.length ? 0 : prevIndex))
+    setNextIndex(null)
+    setIsAnimating(false)
+  }, [items.length])
 
   useEffect(() => {
-    if (previousIndex === null || isReducedMotion) return
+    if (items.length <= 1 || isPaused || isReducedMotion || isAnimating) return
 
-    animationTimerRef.current = setTimeout(() => {
-      setPreviousIndex(null)
-      animationTimerRef.current = null
-    }, 120)
+    const rotateTimer = setTimeout(() => {
+      const toIndex = (currentIndex + 1) % items.length
+      setNextIndex(toIndex)
+      setIsAnimating(true)
+      trackEvent("live_feed_rotate", {
+        from_index: currentIndex,
+        to_index: toIndex,
+      })
+    }, ROTATE_INTERVAL_MS)
 
     return () => {
-      if (animationTimerRef.current) {
-        clearTimeout(animationTimerRef.current)
-        animationTimerRef.current = null
+      clearTimeout(rotateTimer)
+    }
+  }, [currentIndex, isAnimating, isPaused, isReducedMotion, items.length])
+
+  useEffect(() => {
+    if (!isAnimating || nextIndex === null || isReducedMotion) return
+
+    transitionTimerRef.current = setTimeout(() => {
+      setCurrentIndex(nextIndex)
+      setNextIndex(null)
+      setIsAnimating(false)
+      transitionTimerRef.current = null
+    }, TRANSITION_DURATION_MS)
+
+    return () => {
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current)
+        transitionTimerRef.current = null
       }
     }
-  }, [previousIndex, isReducedMotion])
+  }, [isAnimating, isReducedMotion, nextIndex])
 
-  const askCurrentItem = useMemo(
-    () => () => {
-      if (!currentItem) return
+  const askItem = useMemo(
+    () => (item: LiveResumeFeedItem | null) => {
+      if (!item) return
       dispatchChatPromptRequest({
-        prompt: currentItem.promptText,
+        prompt: item.promptText,
         resetThread: true,
         source: "live_feed",
       })
-      trackEvent("live_feed_ask_ai", { item_id: currentItem.id })
+      trackEvent("live_feed_ask_ai", { item_id: item.id })
     },
-    [currentItem]
+    []
   )
 
   if (!currentItem) return null
+
+  const rows = !isReducedMotion && isAnimating && nextItem ? [currentItem, nextItem] : [currentItem]
+  const trackTransform =
+    !isReducedMotion && isAnimating && nextItem
+      ? `translateY(-${ROW_HEIGHT_PX}px)`
+      : "translateY(0)"
+  const trackTransition =
+    !isReducedMotion && isAnimating && nextItem
+      ? `transform ${TRANSITION_DURATION_MS}ms ease`
+      : "none"
 
   return (
     <section
@@ -115,37 +143,40 @@ export function LiveResumeFeed({ items }: LiveResumeFeedProps) {
 
       <button
         type="button"
-        className="relative flex w-full min-w-0 items-center gap-2 overflow-hidden rounded-md text-left"
+        className="w-full rounded-md text-left"
         onClick={() => {
-          trackEvent("live_feed_item_click", { item_id: currentItem.id })
-          askCurrentItem()
+          if (!actionableItem) return
+          trackEvent("live_feed_item_click", { item_id: actionableItem.id })
+          askItem(actionableItem)
         }}
       >
-        <span className="shrink-0 rounded bg-resume-highlight px-2 py-1 text-[11px] font-medium text-resume-primary">
-          {formatFeedDate(currentItem.date)}
-        </span>
-        <span className="relative flex min-w-0 flex-1 items-center overflow-hidden text-sm">
-          {!isReducedMotion && previousItem ? (
-            <span
-              className="absolute inset-0 flex items-center truncate text-resume-text-main/70"
-              style={{ animation: "ticker-slide-up-out 0.1s ease forwards" }}
-            >
-              {previousItem.title} - {previousItem.summary}
-            </span>
-          ) : null}
+        <span className="block h-8 overflow-hidden">
           <span
-            className={cn(
-              "truncate text-resume-text-main",
-              !isReducedMotion && previousItem && "absolute inset-0"
-            )}
-            style={
-              !isReducedMotion && previousItem
-                ? { animation: "ticker-slide-up-in 0.1s ease forwards" }
-                : undefined
-            }
-            data-testid="live-resume-feed-item"
+            className="block will-change-transform"
+            style={{
+              transform: trackTransform,
+              transition: trackTransition,
+            }}
+            data-testid="live-resume-feed-track"
           >
-            {currentItem.title} - {currentItem.summary}
+            {rows.map((item, index) => (
+              <span key={`${item.id}-${index}`} className="flex h-8 min-w-0 items-center gap-2">
+                <span className="shrink-0 rounded bg-resume-highlight px-2 py-1 text-resume-primary">
+                  <span className="block text-[9px] uppercase leading-none tracking-wide text-resume-primary/75">
+                    Updated
+                  </span>
+                  <span className="mt-0.5 block text-[11px] font-medium leading-none">
+                    {formatActivityDate(item.activityAt)}
+                  </span>
+                </span>
+                <span
+                  className="min-w-0 truncate text-sm text-resume-text-main"
+                  data-testid={index === 0 ? "live-resume-feed-item" : undefined}
+                >
+                  {item.title} - {item.summary}
+                </span>
+              </span>
+            ))}
           </span>
         </span>
       </button>
@@ -158,7 +189,7 @@ export function LiveResumeFeed({ items }: LiveResumeFeedProps) {
           className="h-7 text-xs"
           onClick={(event) => {
             event.stopPropagation()
-            askCurrentItem()
+            askItem(actionableItem ?? null)
           }}
           data-testid="live-resume-feed-ask-ai"
         >

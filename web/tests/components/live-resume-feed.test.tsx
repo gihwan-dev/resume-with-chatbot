@@ -37,7 +37,7 @@ describe("LiveResumeFeed", () => {
     {
       id: "item-1",
       title: "업데이트 1",
-      date: "2026-03-08",
+      activityAt: "2026-03-08T09:00:00+09:00",
       summary: "첫 번째 요약",
       tags: ["tag1"],
       promptText: '최근 업데이트 "업데이트 1"을 설명해줘.',
@@ -45,7 +45,7 @@ describe("LiveResumeFeed", () => {
     {
       id: "item-2",
       title: "업데이트 2",
-      date: "2026-03-07",
+      activityAt: "2026-03-07T09:00:00+09:00",
       summary: "두 번째 요약",
       tags: ["tag2"],
       promptText: '최근 업데이트 "업데이트 2"를 설명해줘.',
@@ -76,6 +76,13 @@ describe("LiveResumeFeed", () => {
       vi.advanceTimersByTime(5000)
     })
 
+    const track = screen.getByTestId("live-resume-feed-track")
+    expect(track.getAttribute("style")).toContain("translateY(-32px)")
+
+    act(() => {
+      vi.advanceTimersByTime(400)
+    })
+
     expect(screen.getByTestId("live-resume-feed-item").textContent).toContain("업데이트 2")
     expect(trackEventSpy).toHaveBeenCalledWith("live_feed_rotate", {
       from_index: 0,
@@ -100,7 +107,7 @@ describe("LiveResumeFeed", () => {
 
     fireEvent.mouseLeave(container)
     act(() => {
-      vi.advanceTimersByTime(5000)
+      vi.advanceTimersByTime(5400)
     })
 
     const rotateCallsAfterResume = trackEventSpy.mock.calls.filter(

@@ -8,6 +8,10 @@ import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 import MiniSearch from "minisearch"
+import {
+  BULK_IMPORT_COMMIT_HASH,
+  buildPathActivityMapFromGitLog,
+} from "./live-feed-activity-utils.mjs"
 import { extractVaultDateMeta } from "./vault-date-utils.mjs"
 
 const VAULT_PATH = path.join(process.cwd(), "vault")
@@ -48,27 +52,36 @@ function extractSummary(content) {
   return ""
 }
 
-function getGitLastCommitDate(repoRelativePath) {
+function getVaultGitLogOutput() {
   try {
-    return execFileSync("git", ["log", "-1", "--format=%cs", "--", repoRelativePath], {
-      cwd: process.cwd(),
-      encoding: "utf-8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim()
+    return execFileSync(
+      "git",
+      ["log", "--format=__COMMIT__%n%H%x09%cI", "--name-only", "--", "vault"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }
+    )
   } catch {
-    return undefined
+    return ""
   }
 }
 
-function shouldFailOnMissingFeedData() {
-  return (
-    process.env.CI === "true" ||
-    process.env.NODE_ENV === "production" ||
-    process.env.VERCEL === "1"
-  )
+function getPathActivityMap() {
+  const rawGitLog = getVaultGitLogOutput()
+  if (!rawGitLog) return new Map()
+
+  return buildPathActivityMapFromGitLog(rawGitLog, {
+    ignoredCommitHashes: [BULK_IMPORT_COMMIT_HASH],
+  })
 }
 
-function scanVault(dir) {
+function normalizeRelativePath(relativePath) {
+  return relativePath.split(path.sep).join("/")
+}
+
+function scanVault(dir, pathActivityMap) {
   const documents = []
 
   let entries
@@ -88,12 +101,13 @@ function scanVault(dir) {
 
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name)) continue
-      documents.push(...scanVault(fullPath))
+      documents.push(...scanVault(fullPath, pathActivityMap))
     } else if (entry.name.endsWith(".md")) {
       if (EXCLUDED_FILES.has(entry.name)) continue
 
       const relativePath = path.relative(VAULT_PATH, fullPath)
-      const parts = relativePath.split(path.sep)
+      const normalizedRelativePath = normalizeRelativePath(relativePath)
+      const parts = normalizedRelativePath.split("/")
       const filename = parts[parts.length - 1].replace(/\.md$/, "")
       const category = parts.length > 1 ? parts[0] : "Root"
       const tags = parts.slice(0, -1).filter(Boolean)
@@ -109,25 +123,20 @@ function scanVault(dir) {
         // 읽기 실패 시 빈 값
       }
 
-      let { eventDate, updatedAt } = extractVaultDateMeta(rawContent, relativePath)
-
-      if (!eventDate && !updatedAt) {
-        const gitLastCommitDate = getGitLastCommitDate(path.join("vault", relativePath))
-        ;({ eventDate, updatedAt } = extractVaultDateMeta(rawContent, relativePath, {
-          gitLastCommitDate,
-        }))
-      }
+      const { eventDate, updatedAt } = extractVaultDateMeta(rawContent, normalizedRelativePath)
+      const activityAt = pathActivityMap.get(normalizedRelativePath)
 
       documents.push({
-        id: createDocumentId(relativePath),
+        id: createDocumentId(normalizedRelativePath),
         title: filename,
         category,
-        path: relativePath,
+        path: normalizedRelativePath,
         summary,
         tags,
         content,
         eventDate,
         updatedAt,
+        activityAt,
       })
     }
   }
@@ -142,8 +151,9 @@ if (!fs.existsSync(VAULT_PATH)) {
   process.exit(1)
 }
 
-const documents = scanVault(VAULT_PATH)
-const feedCandidates = documents.filter((document) => document.summary && document.eventDate)
+const pathActivityMap = getPathActivityMap()
+const documents = scanVault(VAULT_PATH, pathActivityMap)
+const feedCandidates = documents.filter((document) => document.summary && document.activityAt)
 
 if (documents.length === 0) {
   console.error("[build-vault] No markdown documents were discovered in web/vault.")
@@ -151,15 +161,9 @@ if (documents.length === 0) {
 }
 
 if (feedCandidates.length === 0) {
-  const message =
-    "[build-vault] No dated documents were produced for Live Resume Feed. Check vault metadata or git history."
-
-  if (shouldFailOnMissingFeedData()) {
-    console.error(message)
-    process.exit(1)
-  }
-
-  console.warn(message)
+  console.warn(
+    "[build-vault] No activity documents were produced for Live Resume Feed. Check vault git history."
+  )
 }
 
 // 출력 디렉토리 생성
@@ -175,7 +179,16 @@ console.log(`[build-vault] Live Resume Feed candidates: ${feedCandidates.length}
 // MiniSearch 인덱스 빌드
 const miniSearch = new MiniSearch({
   fields: ["title", "category", "tagsText", "summary", "content"],
-  storeFields: ["title", "category", "path", "summary", "tags", "eventDate", "updatedAt"],
+  storeFields: [
+    "title",
+    "category",
+    "path",
+    "summary",
+    "tags",
+    "eventDate",
+    "updatedAt",
+    "activityAt",
+  ],
   searchOptions: {
     boost: { title: 3, category: 2, tagsText: 2, summary: 1.5, content: 1 },
     prefix: true,
