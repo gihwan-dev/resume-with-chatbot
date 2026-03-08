@@ -7,7 +7,7 @@
  */
 
 import MiniSearch from "minisearch"
-import type { ObsidianDocument } from "./types"
+import type { LiveResumeFeedItem, ObsidianDocument } from "./types"
 
 interface VaultDocument {
   id: string
@@ -17,6 +17,8 @@ interface VaultDocument {
   summary: string
   tags: string[]
   content: string
+  eventDate?: string
+  updatedAt?: string
 }
 
 interface VaultData {
@@ -66,8 +68,10 @@ let _searchIndex: MiniSearch | null = null
 
 const MINISEARCH_OPTIONS = {
   fields: ["title", "category", "tagsText", "summary", "content"],
-  storeFields: ["title", "category", "path", "summary", "tags"],
+  storeFields: ["title", "category", "path", "summary", "tags", "eventDate", "updatedAt"],
 }
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
+const ISO_DATE_PREFIX_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:[T\s].*)?$/
 
 function getVaultData(): VaultData {
   if (_vaultData) {
@@ -166,14 +170,23 @@ export function searchDocuments(query: string, limit = 20): ObsidianDocument[] {
     combineWith: "OR",
   })
 
-  return results.slice(0, safeLimit).map((result) => ({
-    id: result.id as string,
-    title: result.title as string,
-    category: result.category as string,
-    path: result.path as string,
-    summary: (result.summary as string) ?? "",
-    tags: (result.tags as string[]) ?? [],
-  }))
+  return results.slice(0, safeLimit).map((result) => {
+    const mappedResult: ObsidianDocument = {
+      id: result.id as string,
+      title: result.title as string,
+      category: result.category as string,
+      path: result.path as string,
+      summary: (result.summary as string) ?? "",
+      tags: (result.tags as string[]) ?? [],
+    }
+
+    const eventDate = result.eventDate as string | undefined
+    const updatedAt = result.updatedAt as string | undefined
+    if (eventDate) mappedResult.eventDate = eventDate
+    if (updatedAt) mappedResult.updatedAt = updatedAt
+
+    return mappedResult
+  })
 }
 
 /**
@@ -186,6 +199,59 @@ export function readDocumentContent(
   const doc = _contentMap?.get(docId)
   if (!doc) return null
   return { ...doc }
+}
+
+function normalizeDateToIso(dateValue: string | undefined): string | null {
+  if (!dateValue) return null
+  if (ISO_DATE_PATTERN.test(dateValue)) return dateValue
+
+  const prefixMatch = dateValue.match(ISO_DATE_PREFIX_PATTERN)
+  if (prefixMatch?.[1]) return prefixMatch[1]
+
+  const parsed = new Date(dateValue)
+  if (Number.isNaN(parsed.getTime())) return null
+  return parsed.toISOString().slice(0, 10)
+}
+
+export function buildLiveResumeFeedItems(
+  documents: readonly ObsidianDocument[],
+  limit = 5
+): LiveResumeFeedItem[] {
+  const safeLimit = Math.max(0, limit)
+
+  return documents
+    .map((doc) => ({
+      doc,
+      normalizedDate: normalizeDateToIso(doc.eventDate ?? doc.updatedAt),
+    }))
+    .filter(
+      (
+        item
+      ): item is {
+        doc: ObsidianDocument
+        normalizedDate: string
+      } =>
+        Boolean(
+          item.normalizedDate &&
+            item.doc.summary &&
+            typeof item.doc.summary === "string" &&
+            item.doc.summary.trim().length > 0
+        )
+    )
+    .sort((a, b) => b.normalizedDate.localeCompare(a.normalizedDate))
+    .slice(0, safeLimit)
+    .map(({ doc, normalizedDate }) => ({
+      id: doc.id,
+      title: doc.title,
+      date: normalizedDate,
+      summary: doc.summary,
+      tags: doc.tags,
+      promptText: `최근 업데이트 "${doc.title}"에 대해 문제, 해결, 성과를 자세히 설명해줘.`,
+    }))
+}
+
+export function getLiveResumeFeedItems(limit = 5): LiveResumeFeedItem[] {
+  return buildLiveResumeFeedItems(getDocumentCatalog(), limit)
 }
 
 /**

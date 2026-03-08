@@ -2,7 +2,7 @@
 
 import { AssistantModalPrimitive } from "@assistant-ui/react"
 import { BotIcon, ChevronDownIcon } from "lucide-react"
-import { type FC, forwardRef, useEffect, useRef, useState } from "react"
+import { type FC, forwardRef, useCallback, useEffect, useRef, useState } from "react"
 import { Thread, type UserMessageSubmitMethod } from "@/components/assistant-ui/thread"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
 import { Button } from "@/components/ui/button"
@@ -20,7 +20,11 @@ import {
   readChatOnboardingState,
   shouldShowOnboarding,
 } from "@/lib/chat-onboarding"
-import { CHAT_MODAL_OPENED_EVENT, MOBILE_NAV_OPENED_EVENT } from "@/lib/layer-events"
+import {
+  CHAT_MODAL_OPENED_EVENT,
+  CHAT_PROMPT_REQUEST_EVENT,
+  MOBILE_NAV_OPENED_EVENT,
+} from "@/lib/layer-events"
 import { cn } from "@/lib/utils"
 
 const CHAT_MODAL_CONTENT_ID = "assistant-chat-modal"
@@ -43,20 +47,22 @@ export const AssistantModal: FC = () => {
   const onboardingStateRef = useRef<ChatOnboardingState | null>(null)
   const onboardingShownTrackedRef = useRef(false)
 
-  const focusComposer = () => {
+  const focusComposer = useCallback(() => {
     requestAnimationFrame(() => {
       const input = document.querySelector<HTMLTextAreaElement>(".aui-composer-input")
       input?.focus()
     })
-  }
+  }, [])
 
-  const openModalAndFocusComposer = () => {
-    if (!open) {
-      setOpen(true)
-      window.dispatchEvent(new Event(CHAT_MODAL_OPENED_EVENT))
-    }
+  const openModalAndFocusComposer = useCallback(() => {
+    setOpen((previousOpen) => {
+      if (!previousOpen) {
+        window.dispatchEvent(new Event(CHAT_MODAL_OPENED_EVENT))
+      }
+      return true
+    })
     focusComposer()
-  }
+  }, [focusComposer])
 
   const closeModal = () => {
     setOpen(false)
@@ -157,6 +163,17 @@ export const AssistantModal: FC = () => {
       window.removeEventListener(MOBILE_NAV_OPENED_EVENT, closeChatWhenMobileNavOpens)
     }
   }, [])
+
+  useEffect(() => {
+    const handlePromptRequest = () => {
+      openModalAndFocusComposer()
+    }
+
+    window.addEventListener(CHAT_PROMPT_REQUEST_EVENT, handlePromptRequest)
+    return () => {
+      window.removeEventListener(CHAT_PROMPT_REQUEST_EVENT, handlePromptRequest)
+    }
+  }, [openModalAndFocusComposer])
 
   const handleOpenChange = (open: boolean) => {
     if (open) {

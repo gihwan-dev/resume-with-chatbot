@@ -113,6 +113,8 @@ function toSourceCarouselItems(answerSources: AnswerSource[]): Source[] {
     title: source.title,
     content: SOURCE_TYPE_LABELS[source.type] ?? source.type,
     category: SOURCE_TYPE_LABELS[source.type] ?? source.type,
+    sourceType: source.type,
+    previewAvailable: source.type === "obsidian" && Boolean(source.id),
   }))
 }
 

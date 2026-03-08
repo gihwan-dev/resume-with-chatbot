@@ -7,6 +7,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import MiniSearch from "minisearch"
+import { extractVaultDateMeta } from "./vault-date-utils.mjs"
 
 const VAULT_PATH = path.join(process.cwd(), "vault")
 const OUTPUT_PATH = path.join(process.cwd(), "src", "generated", "vault-data.json")
@@ -17,6 +18,13 @@ const EXCLUDED_FILES = new Set(["콜아웃 리스트.md", "프롬프트.md"])
 
 function createDocumentId(relativePath) {
   return relativePath.replace(/\.md$/, "").replace(/[/\\]/g, "--").replace(/\s+/g, "-")
+}
+
+function stripFrontmatter(content) {
+  if (!content.startsWith("---")) return content
+  const endIndex = content.indexOf("\n---", 3)
+  if (endIndex === -1) return content
+  return content.slice(endIndex + 4).trimStart()
 }
 
 function extractSummary(content) {
@@ -69,14 +77,18 @@ function scanVault(dir) {
       const category = parts.length > 1 ? parts[0] : "Root"
       const tags = parts.slice(0, -1).filter(Boolean)
 
+      let rawContent = ""
       let content = ""
       let summary = ""
       try {
-        content = fs.readFileSync(fullPath, "utf-8")
+        rawContent = fs.readFileSync(fullPath, "utf-8")
+        content = stripFrontmatter(rawContent)
         summary = extractSummary(content)
       } catch {
         // 읽기 실패 시 빈 값
       }
+
+      const { eventDate, updatedAt } = extractVaultDateMeta(rawContent, relativePath)
 
       documents.push({
         id: createDocumentId(relativePath),
@@ -86,6 +98,8 @@ function scanVault(dir) {
         summary,
         tags,
         content,
+        eventDate,
+        updatedAt,
       })
     }
   }
@@ -114,7 +128,7 @@ console.log(`[build-vault] Built vault data: ${documents.length} documents (${si
 // MiniSearch 인덱스 빌드
 const miniSearch = new MiniSearch({
   fields: ["title", "category", "tagsText", "summary", "content"],
-  storeFields: ["title", "category", "path", "summary", "tags"],
+  storeFields: ["title", "category", "path", "summary", "tags", "eventDate", "updatedAt"],
   searchOptions: {
     boost: { title: 3, category: 2, tagsText: 2, summary: 1.5, content: 1 },
     prefix: true,
