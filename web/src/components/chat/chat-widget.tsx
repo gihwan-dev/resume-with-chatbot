@@ -2,7 +2,6 @@ import { useEffect } from "react"
 import { AssistantModal } from "@/components/assistant-ui/assistant-modal"
 import { CHAT_WIDGET_READY_EVENT } from "@/lib/layer-events"
 import { parseResumeVariant, type ResumeVariantId } from "@/lib/resume/variant"
-import { AnswerToolUI } from "./answer-tool-ui"
 import { ChatRuntimeProvider } from "./chat-runtime-provider"
 
 interface ChatWidgetProps {
@@ -29,7 +28,6 @@ export function ChatWidget({ resumeVariant = "frontend" }: ChatWidgetProps) {
 
   return (
     <ChatRuntimeProvider resumeVariant={normalizedResumeVariant}>
-      <AnswerToolUI />
       <AssistantModal />
     </ChatRuntimeProvider>
   )

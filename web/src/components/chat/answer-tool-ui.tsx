@@ -1,18 +1,13 @@
-import { makeAssistantToolUI } from "@assistant-ui/react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { sortSourcesBySection } from "@/lib/evidence-sort"
 import { SourceCarousel } from "./source-carousel"
 import type { Source } from "./types"
 
-interface AnswerToolArgs {
-  answer: string
-  sources: {
-    type: "obsidian" | "resume"
-    title: string
-    id?: string
-  }[]
-  confidence: "high" | "medium" | "low"
+export interface AnswerToolSource {
+  type: "obsidian" | "resume"
+  title: string
+  id?: string
 }
 
 const SOURCE_TYPE_LABELS: Record<string, string> = {
@@ -47,7 +42,7 @@ const answerMarkdownComponents = {
 
 interface AnswerToolContentProps {
   answer?: string
-  sources?: AnswerToolArgs["sources"]
+  sources?: AnswerToolSource[]
 }
 
 export function AnswerToolContent({ answer, sources = [] }: AnswerToolContentProps) {
@@ -79,10 +74,3 @@ export function AnswerToolContent({ answer, sources = [] }: AnswerToolContentPro
     </div>
   )
 }
-
-export const AnswerToolUI = makeAssistantToolUI<AnswerToolArgs, unknown>({
-  toolName: "answer",
-  render: ({ args }) => {
-    return <AnswerToolContent answer={args?.answer} sources={args?.sources} />
-  },
-})

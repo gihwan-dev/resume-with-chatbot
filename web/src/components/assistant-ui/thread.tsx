@@ -22,6 +22,7 @@ import { MarkdownText } from "@/components/assistant-ui/markdown-text"
 import { Reasoning, ReasoningGroupWrapper } from "@/components/assistant-ui/reasoning"
 import { ThinkingProcessProvider } from "@/components/assistant-ui/thinking-process"
 import { ToolCallStatus, ToolGroupWrapper } from "@/components/assistant-ui/tool-call-status"
+import { AnswerToolContent, type AnswerToolSource } from "@/components/chat/answer-tool-ui"
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button"
 import { Button } from "@/components/ui/button"
 import { useFollowUp } from "@/hooks/use-follow-up"
@@ -42,6 +43,50 @@ interface ThreadWelcomeProps {
   onUserMessageSubmitted?: (method: UserMessageSubmitMethod) => void
   onboardingVariant?: "A" | "B"
   onboardingExamplesVisible?: boolean
+}
+
+type AssistantContentPart = {
+  type: string
+  text?: string
+  toolName?: string
+  args?: unknown
+}
+
+const isAnswerToolSource = (value: unknown): value is AnswerToolSource => {
+  if (!value || typeof value !== "object") return false
+  const source = value as { type?: unknown; title?: unknown }
+  return (
+    (source.type === "obsidian" || source.type === "resume") && typeof source.title === "string"
+  )
+}
+
+export function extractFinalAnswerPayload(content: ReadonlyArray<AssistantContentPart>): {
+  answer?: string
+  sources?: AnswerToolSource[]
+} {
+  const answerPart = content.find((part) => part.type === "tool-call" && part.toolName === "answer")
+  if (!answerPart || !answerPart.args || typeof answerPart.args !== "object") {
+    return {}
+  }
+
+  const args = answerPart.args as { answer?: unknown; sources?: unknown }
+  const answer = typeof args.answer === "string" ? args.answer : undefined
+  const sources = Array.isArray(args.sources) ? args.sources.filter(isAnswerToolSource) : []
+  const hasTextPart = content.some(
+    (part) => part.type === "text" && typeof part.text === "string" && part.text.trim().length > 0
+  )
+
+  return {
+    answer: hasTextPart ? undefined : answer,
+    sources: sources.length > 0 ? sources : undefined,
+  }
+}
+
+export const FinalAnswerFromToolCall: FC<{ content: ReadonlyArray<AssistantContentPart> }> = ({
+  content,
+}) => {
+  const { answer, sources } = extractFinalAnswerPayload(content)
+  return <AnswerToolContent answer={answer} sources={sources} />
 }
 
 const ThreadHeader: FC = () => {
@@ -295,6 +340,8 @@ const MessageError: FC = () => {
 const AssistantMessage: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
   onUserMessageSubmitted,
 }) => {
+  const message = useAuiState(({ message }) => message)
+
   return (
     <MessagePrimitive.Root
       className="aui-assistant-message-root fade-in slide-in-from-bottom-1 relative mx-auto w-full max-w-(--thread-max-width) animate-in py-3 duration-150"
@@ -312,10 +359,12 @@ const AssistantMessage: FC<Pick<ThreadProps, "onUserMessageSubmitted">> = ({
                 by_name: {
                   searchDocuments: ToolCallStatus,
                   readDocument: ToolCallStatus,
+                  answer: () => null,
                 },
               },
             }}
           />
+          <FinalAnswerFromToolCall content={message.content} />
         </ThinkingProcessProvider>
         <MessageError />
       </div>
