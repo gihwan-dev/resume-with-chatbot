@@ -214,7 +214,7 @@ describe("ResumeDocument", () => {
     expect((text.match(/•/g) ?? []).length).toBe(0)
   })
 
-  it("Experience 렌더에서 wrap=false를 사용하지 않아 페이지 분할을 허용한다", () => {
+  it("Experience bullet row는 wrap=false로 유지해 dangling bullet을 방지한다", () => {
     const data = createMockResumeData()
     data.blogPosts = []
     data.certificates = []
@@ -223,6 +223,6 @@ describe("ResumeDocument", () => {
 
     render(<ResumeDocument data={data} />)
 
-    expect(viewWrapValues).not.toContain(false)
+    expect(viewWrapValues).toContain(false)
   })
 })

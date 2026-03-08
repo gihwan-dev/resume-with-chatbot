@@ -177,26 +177,26 @@ export const styles = StyleSheet.create({
     lineHeight: 1.48,
   },
   experienceCaseList: {
-    marginTop: 6,
+    marginTop: 7,
   },
   experienceCaseCard: {
     paddingLeft: 0,
     paddingRight: 0,
     paddingTop: 3,
     paddingBottom: 3,
-    marginBottom: 7,
+    marginBottom: 8,
     backgroundColor: colors.background,
   },
   experienceCaseTitle: {
     fontSize: 10.2,
     fontWeight: 600,
-    marginBottom: 4,
+    marginBottom: 5,
     color: colors.text,
   },
   experienceCaseSummary: {
     fontSize: 9.2,
     lineHeight: 1.5,
-    marginBottom: 4,
+    marginBottom: 5,
     color: colors.mutedStrong,
   },
   experienceCaseBulletRow: {

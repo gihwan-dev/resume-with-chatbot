@@ -193,7 +193,8 @@ function ExperienceSection({ work }: { work: SerializedResumeData["work"] }) {
                         <View
                           key={accomplishment}
                           style={styles.experienceCaseBulletRow}
-                          minPresenceAhead={30}
+                          wrap={false}
+                          minPresenceAhead={42}
                         >
                           <View style={styles.experienceCaseBulletDot} />
                           {markdownInlineToPdf(accomplishment, {
