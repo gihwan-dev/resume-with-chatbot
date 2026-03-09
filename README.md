@@ -12,6 +12,13 @@
 - 과거 상세 케이스 스터디 라우트(`/portfolio`, `/portfolio/*`)는 홈으로 리다이렉트됩니다.
 - AI 채팅, PDF 다운로드, 섹션 뷰 analytics는 유지됩니다.
 
+## AI 모델/도구 정책
+
+- 메인 채팅(`/api/chat`): Vertex AI `global` endpoint + `gemini-3.1-pro-preview`
+- 후속 질문(`/api/followup`): `gemini-2.0-flash` 유지
+- 도구 호출 정책: Step 0에서 검색 도구를 `required`로 강제하고, Step 1+는 `auto`로 모델이 `search/read/answer`를 자율 선택
+- 반복 도구 호출은 도구를 강제로 차단하지 않고 시스템 프롬프트에 soft guidance를 추가
+
 ## 아키텍처 개요
 
 ```mermaid
