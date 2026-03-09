@@ -7,7 +7,7 @@
  */
 
 import MiniSearch from "minisearch"
-import type { ObsidianDocument } from "./types"
+import type { LiveResumeFeedItem, ObsidianDocument } from "./types"
 
 interface VaultDocument {
   id: string
@@ -17,6 +17,9 @@ interface VaultDocument {
   summary: string
   tags: string[]
   content: string
+  eventDate?: string
+  updatedAt?: string
+  activityAt?: string
 }
 
 interface VaultData {
@@ -66,7 +69,16 @@ let _searchIndex: MiniSearch | null = null
 
 const MINISEARCH_OPTIONS = {
   fields: ["title", "category", "tagsText", "summary", "content"],
-  storeFields: ["title", "category", "path", "summary", "tags"],
+  storeFields: [
+    "title",
+    "category",
+    "path",
+    "summary",
+    "tags",
+    "eventDate",
+    "updatedAt",
+    "activityAt",
+  ],
 }
 
 function getVaultData(): VaultData {
@@ -166,14 +178,25 @@ export function searchDocuments(query: string, limit = 20): ObsidianDocument[] {
     combineWith: "OR",
   })
 
-  return results.slice(0, safeLimit).map((result) => ({
-    id: result.id as string,
-    title: result.title as string,
-    category: result.category as string,
-    path: result.path as string,
-    summary: (result.summary as string) ?? "",
-    tags: (result.tags as string[]) ?? [],
-  }))
+  return results.slice(0, safeLimit).map((result) => {
+    const mappedResult: ObsidianDocument = {
+      id: result.id as string,
+      title: result.title as string,
+      category: result.category as string,
+      path: result.path as string,
+      summary: (result.summary as string) ?? "",
+      tags: (result.tags as string[]) ?? [],
+    }
+
+    const eventDate = result.eventDate as string | undefined
+    const updatedAt = result.updatedAt as string | undefined
+    const activityAt = result.activityAt as string | undefined
+    if (eventDate) mappedResult.eventDate = eventDate
+    if (updatedAt) mappedResult.updatedAt = updatedAt
+    if (activityAt) mappedResult.activityAt = activityAt
+
+    return mappedResult
+  })
 }
 
 /**
@@ -186,6 +209,55 @@ export function readDocumentContent(
   const doc = _contentMap?.get(docId)
   if (!doc) return null
   return { ...doc }
+}
+
+function toActivityTimestamp(activityAt: string | undefined): number | null {
+  if (!activityAt) return null
+  const parsedTimestamp = Date.parse(activityAt)
+  if (Number.isNaN(parsedTimestamp)) return null
+  return parsedTimestamp
+}
+
+export function buildLiveResumeFeedItems(
+  documents: readonly ObsidianDocument[],
+  limit = 5
+): LiveResumeFeedItem[] {
+  const safeLimit = Math.max(0, limit)
+
+  return documents
+    .map((doc) => ({
+      doc,
+      activityTimestamp: toActivityTimestamp(doc.activityAt),
+    }))
+    .filter(
+      (
+        item
+      ): item is {
+        doc: ObsidianDocument
+        activityTimestamp: number
+      } =>
+        Boolean(
+          item.activityTimestamp !== null &&
+            item.doc.activityAt &&
+            item.doc.summary &&
+            typeof item.doc.summary === "string" &&
+            item.doc.summary.trim().length > 0
+        )
+    )
+    .sort((a, b) => b.activityTimestamp - a.activityTimestamp)
+    .slice(0, safeLimit)
+    .map(({ doc }) => ({
+      id: doc.id,
+      title: doc.title,
+      activityAt: doc.activityAt as string,
+      summary: doc.summary,
+      tags: doc.tags,
+      promptText: `최근 업데이트 "${doc.title}"에 대해 문제, 해결, 성과를 자세히 설명해줘.`,
+    }))
+}
+
+export function getLiveResumeFeedItems(limit = 5): LiveResumeFeedItem[] {
+  return buildLiveResumeFeedItems(getDocumentCatalog(), limit)
 }
 
 /**

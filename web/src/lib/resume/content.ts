@@ -6,6 +6,8 @@ import {
   type CompanyProjectItem,
   type CompanyProjectSource,
 } from "@/lib/experience/company-projects"
+import { getLiveResumeFeedItems } from "@/lib/work-agent/obsidian.server"
+import type { LiveResumeFeedItem } from "@/lib/work-agent/types"
 import { DEFAULT_RESUME_VARIANT, parseResumeVariant, type ResumeVariantId } from "./variant"
 
 interface VariantScopedEntry {
@@ -39,6 +41,7 @@ export interface ResolvedResumeContent {
   variant: ResumeVariantId
   profile: CollectionEntry<"basics">["data"]
   skillsData?: CollectionEntry<"skills">["data"]
+  liveResumeFeedItems: LiveResumeFeedItem[]
   experienceEntries: ResumeExperienceEntry[]
   blogPosts: Awaited<ReturnType<typeof getObsidianBlogPosts>>
   education: CollectionEntry<"education">[]
@@ -119,11 +122,13 @@ export async function resolveResumeContent(
     projects: companyProjectsByCompanyId.get(companyId) ?? [],
   }))
   const sortedAwards = [...awards].sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  const liveResumeFeedItems = getLiveResumeFeedItems(5)
 
   return {
     variant,
     profile,
     skillsData,
+    liveResumeFeedItems,
     experienceEntries,
     blogPosts,
     education,

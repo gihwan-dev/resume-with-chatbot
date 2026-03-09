@@ -1,5 +1,6 @@
 ---
 import { render } from "astro:content"
+import { LiveResumeFeed } from "@/components/resume/live-resume-feed"
 import { Separator } from "@/components/ui/separator"
 import Layout from "@/layouts/Layout.astro"
 import { resolveResumeContent } from "@/lib/resume/content"
@@ -21,6 +22,7 @@ const resumeContent = await resolveResumeContent(variant)
 
 const profile = resumeContent.profile
 const skillsData = resumeContent.skillsData
+const liveResumeFeedItems = resumeContent.liveResumeFeedItems
 const experienceEntries = resumeContent.experienceEntries
 const blogPosts = resumeContent.blogPosts
 const education = resumeContent.education
@@ -56,6 +58,10 @@ const variantLinks = RESUME_VARIANT_IDS.map((id) => ({
     class="container max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 min-h-screen"
   >
     <HeroSection profile={profile} variantLinks={variantLinks} />
+
+    {liveResumeFeedItems.length > 0 && (
+      <LiveResumeFeed client:load items={liveResumeFeedItems} />
+    )}
 
     <div class="mt-4">
       <a

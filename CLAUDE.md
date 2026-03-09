@@ -22,11 +22,16 @@ pnpm test:run         # Vitest single run
 pnpm test:run -- tests/lib/work-agent/tools.test.ts  # Run single test file
 ```
 
+## Push Checklist (Vault)
+
+- `web/vault/` is a tracked directory. Before push, verify there is no missed vault change with `git status -- web/vault` and include intended vault diffs in the same push.
+- If a task touches vault content or anything that depends on vault data (for example Live Resume Feed), run `pnpm build:vault` from `web/` (or `pnpm -C web run build:vault`) before push.
+
 ## Architecture
 
 ### Repo Layout
 
-Monorepo root with `web/` containing the Astro app. `web/vault/` is a git submodule pointing to an Obsidian vault. `web/scripts/build-vault.mjs` pre-builds the vault into `src/generated/vault-data.json` (Vercel serverless can't scan filesystem at runtime).
+Monorepo root with `web/` containing the Astro app. `web/vault/` is a tracked Obsidian vault directory. `web/scripts/build-vault.mjs` pre-builds the vault into `src/generated/vault-data.json` (Vercel serverless can't scan filesystem at runtime).
 
 ### Tech Stack
 

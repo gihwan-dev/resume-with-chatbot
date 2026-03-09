@@ -3,6 +3,8 @@ export interface Source {
   title: string
   content: string
   category: string
+  sourceType: "obsidian" | "resume"
+  previewAvailable: boolean
   relevanceScore?: number
 }
 

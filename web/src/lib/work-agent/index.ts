@@ -7,6 +7,7 @@
 export {
   buildCatalogSummary,
   getDocumentCatalog,
+  getLiveResumeFeedItems,
   readDocumentContent,
   searchDocuments,
 } from "./obsidian.server"
@@ -45,6 +46,7 @@ export {
 // Types
 export {
   type AnswerSource,
+  type LiveResumeFeedItem,
   type ObsidianDocument,
   type ObsidianDocumentContent,
   type SearchContext,

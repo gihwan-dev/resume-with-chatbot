@@ -31,11 +31,23 @@ export interface ObsidianDocument {
   path: string
   summary: string
   tags: string[]
+  eventDate?: string
+  updatedAt?: string
+  activityAt?: string
 }
 
 export interface ObsidianDocumentContent {
   document: ObsidianDocument
   content: string
+}
+
+export interface LiveResumeFeedItem {
+  id: string
+  title: string
+  activityAt: string
+  summary: string
+  tags: string[]
+  promptText: string
 }
 
 // 검색 결과 추적 컨텍스트

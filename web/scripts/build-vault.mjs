@@ -4,9 +4,15 @@
  * Vercel 서버리스 함수에서 런타임 파일시스템 스캔 없이 동작하도록 함
  */
 
+import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
 import MiniSearch from "minisearch"
+import {
+  BULK_IMPORT_COMMIT_HASH,
+  buildPathActivityMapFromGitLog,
+} from "./live-feed-activity-utils.mjs"
+import { extractVaultDateMeta } from "./vault-date-utils.mjs"
 
 const VAULT_PATH = path.join(process.cwd(), "vault")
 const OUTPUT_PATH = path.join(process.cwd(), "src", "generated", "vault-data.json")
@@ -17,6 +23,13 @@ const EXCLUDED_FILES = new Set(["콜아웃 리스트.md", "프롬프트.md"])
 
 function createDocumentId(relativePath) {
   return relativePath.replace(/\.md$/, "").replace(/[/\\]/g, "--").replace(/\s+/g, "-")
+}
+
+function stripFrontmatter(content) {
+  if (!content.startsWith("---")) return content
+  const endIndex = content.indexOf("\n---", 3)
+  if (endIndex === -1) return content
+  return content.slice(endIndex + 4).trimStart()
 }
 
 function extractSummary(content) {
@@ -39,7 +52,36 @@ function extractSummary(content) {
   return ""
 }
 
-function scanVault(dir) {
+function getVaultGitLogOutput() {
+  try {
+    return execFileSync(
+      "git",
+      ["log", "--format=__COMMIT__%n%H%x09%cI", "--name-only", "--", "vault"],
+      {
+        cwd: process.cwd(),
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "ignore"],
+      }
+    )
+  } catch {
+    return ""
+  }
+}
+
+function getPathActivityMap() {
+  const rawGitLog = getVaultGitLogOutput()
+  if (!rawGitLog) return new Map()
+
+  return buildPathActivityMapFromGitLog(rawGitLog, {
+    ignoredCommitHashes: [BULK_IMPORT_COMMIT_HASH],
+  })
+}
+
+function normalizeRelativePath(relativePath) {
+  return relativePath.split(path.sep).join("/")
+}
+
+function scanVault(dir, pathActivityMap) {
   const documents = []
 
   let entries
@@ -59,33 +101,42 @@ function scanVault(dir) {
 
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name)) continue
-      documents.push(...scanVault(fullPath))
+      documents.push(...scanVault(fullPath, pathActivityMap))
     } else if (entry.name.endsWith(".md")) {
       if (EXCLUDED_FILES.has(entry.name)) continue
 
       const relativePath = path.relative(VAULT_PATH, fullPath)
-      const parts = relativePath.split(path.sep)
+      const normalizedRelativePath = normalizeRelativePath(relativePath)
+      const parts = normalizedRelativePath.split("/")
       const filename = parts[parts.length - 1].replace(/\.md$/, "")
       const category = parts.length > 1 ? parts[0] : "Root"
       const tags = parts.slice(0, -1).filter(Boolean)
 
+      let rawContent = ""
       let content = ""
       let summary = ""
       try {
-        content = fs.readFileSync(fullPath, "utf-8")
+        rawContent = fs.readFileSync(fullPath, "utf-8")
+        content = stripFrontmatter(rawContent)
         summary = extractSummary(content)
       } catch {
         // 읽기 실패 시 빈 값
       }
 
+      const { eventDate, updatedAt } = extractVaultDateMeta(rawContent, normalizedRelativePath)
+      const activityAt = pathActivityMap.get(normalizedRelativePath)
+
       documents.push({
-        id: createDocumentId(relativePath),
+        id: createDocumentId(normalizedRelativePath),
         title: filename,
         category,
-        path: relativePath,
+        path: normalizedRelativePath,
         summary,
         tags,
         content,
+        eventDate,
+        updatedAt,
+        activityAt,
       })
     }
   }
@@ -96,11 +147,24 @@ function scanVault(dir) {
 // 볼트 존재 확인
 if (!fs.existsSync(VAULT_PATH)) {
   console.error(`[build-vault] Vault not found at: ${VAULT_PATH}`)
-  console.error("[build-vault] Run: git submodule update --init --recursive")
+  console.error("[build-vault] Ensure web/vault directory exists in repository.")
   process.exit(1)
 }
 
-const documents = scanVault(VAULT_PATH)
+const pathActivityMap = getPathActivityMap()
+const documents = scanVault(VAULT_PATH, pathActivityMap)
+const feedCandidates = documents.filter((document) => document.summary && document.activityAt)
+
+if (documents.length === 0) {
+  console.error("[build-vault] No markdown documents were discovered in web/vault.")
+  process.exit(1)
+}
+
+if (feedCandidates.length === 0) {
+  console.warn(
+    "[build-vault] No activity documents were produced for Live Resume Feed. Check vault git history."
+  )
+}
 
 // 출력 디렉토리 생성
 fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true })
@@ -110,11 +174,21 @@ fs.writeFileSync(OUTPUT_PATH, JSON.stringify({ documents }, null, 0))
 
 const sizeKB = (fs.statSync(OUTPUT_PATH).size / 1024).toFixed(1)
 console.log(`[build-vault] Built vault data: ${documents.length} documents (${sizeKB} KB)`)
+console.log(`[build-vault] Live Resume Feed candidates: ${feedCandidates.length}`)
 
 // MiniSearch 인덱스 빌드
 const miniSearch = new MiniSearch({
   fields: ["title", "category", "tagsText", "summary", "content"],
-  storeFields: ["title", "category", "path", "summary", "tags"],
+  storeFields: [
+    "title",
+    "category",
+    "path",
+    "summary",
+    "tags",
+    "eventDate",
+    "updatedAt",
+    "activityAt",
+  ],
   searchOptions: {
     boost: { title: 3, category: 2, tagsText: 2, summary: 1.5, content: 1 },
     prefix: true,
