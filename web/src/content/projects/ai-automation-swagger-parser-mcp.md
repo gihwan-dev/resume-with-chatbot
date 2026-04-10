@@ -10,4 +10,5 @@ accomplishments:
   - "MCP 도구 호출에서 OpenAPI 문서를 직접 읽고 구조화된 스키마 정보를 반환하도록 서버를 구현했습니다."
   - "패키지를 npm에 배포해 재사용 가능한 형태로 운영했습니다: https://www.npmjs.com/package/swagger-parser-mcp-server"
   - "내부 GitLab 기반 워크플로우와 연결해 API 문서 의존 분석 자동화에 활용했습니다."
+  - "전체 스펙을 매번 다시 조회하는 방식에서 스냅샷 기반 diff 비교로 전환하고, 포맷 차이를 정규화해 실질적인 API 변경(breaking/non-breaking)만 자동 분류하도록 개선했습니다."
 ---

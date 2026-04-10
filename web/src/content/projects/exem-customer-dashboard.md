@@ -11,4 +11,5 @@ accomplishments:
   - "API 전면 교체 시점에 Vue 연장 대신 React와 사내 디자인 시스템 기반으로 재구축해 구조 부채 누적을 줄였습니다."
   - "카드형 2-depth 구조를 고밀도 그리드 1-depth 허브로 바꿔 한 화면 비교와 즉시 RTM/PA 이동 흐름을 확보했습니다."
   - "`useFrozenData` 기반 데이터 스냅샷 유지, `useDeferredValue` 저우선 렌더, memo 최적화로 렌더 총량을 96.7% 줄이고 INP를 안정화했습니다."
+  - "Feature Flag 기반으로 대시보드 변경을 고객사별로 격리해 배포 영향 범위를 제어했습니다."
 ---
