@@ -7,11 +7,11 @@
     },
     {
       "name": "AI Agent & Automation",
-      "items": ["MCP (Model Context Protocol)", "Claude API", "RAG", "n8n", "OpenAPI/Swagger", "GitLab API"]
+      "items": ["MCP (Model Context Protocol)", "LangGraph.js", "Deep Agents SDK", "Langfuse", "OpenTelemetry", "GitLab API"]
     },
     {
       "name": "Frameworks & Runtime",
-      "items": ["React", "Astro", "FastAPI", "Elasticsearch", "TanStack Table", "TanStack Virtual"]
+      "items": ["React", "Fastify", "FastAPI", "Elasticsearch", "TanStack Table", "TanStack Virtual"]
     },
     {
       "name": "Testing & Validation",
@@ -19,7 +19,7 @@
     },
     {
       "name": "Tools",
-      "items": ["Vite", "Git", "Docker"]
+      "items": ["Vite", "Git", "Docker", "Kubernetes", "Helm", "Sentry"]
     }
   ]
 }

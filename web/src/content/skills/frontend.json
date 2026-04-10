@@ -7,15 +7,15 @@
     },
     {
       "name": "Frameworks & Libraries",
-      "items": ["React", "Astro", "Zustand", "TanStack Table", "TanStack Query", "TanStack Virtual"]
+      "items": ["React", "Astro", "Zustand", "TanStack Table", "TanStack Query", "TanStack Virtual", "ECharts", "TanStack Router"]
     },
     {
       "name": "Testing",
-      "items": ["Vitest", "Playwright"]
+      "items": ["Vitest", "Playwright", "MSW", "Storybook"]
     },
     {
       "name": "Tools",
-      "items": ["Vite", "Git"]
+      "items": ["Vite", "Git", "Biome", "Turborepo", "Docker", "GitLab CI"]
     }
   ]
 }

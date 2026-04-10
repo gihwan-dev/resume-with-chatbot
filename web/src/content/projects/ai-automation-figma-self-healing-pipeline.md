@@ -10,4 +10,5 @@ accomplishments:
   - "component-screenshot, figma-to-code, design-check, figma-design-pipeline의 4단계 워크플로우를 하나의 실행 경로로 통합했습니다."
   - "Playwright 기반 Storybook 스크린샷과 pixelmatch 지표를 함께 사용해 정량/정성 검증 리포트를 생성했습니다."
   - "Critical/Major 이슈가 남을 경우 최대 3회까지 자동 개선 루프를 재실행하도록 구성했습니다."
+  - "/design-check 단일 명령으로 Figma↔구현 비교부터 리포트 생성까지 통합하고, MCP의 이미지 저장 제한을 REST API로 우회해 안정적인 스크린샷 캡처 경로를 확보했습니다."
 ---
