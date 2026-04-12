@@ -1,14 +1,13 @@
 ---
 companyId: "ai-automation"
-title: "Swagger Parser MCP 서버 개발 및 npm 배포"
-techStack: ["Node.js", "MCP", "Swagger 2.0", "OpenAPI 3.0.x", "npm"]
+title: "API 스펙 파싱 및 변경 감지 자동화"
+techStack: ["Node.js", "Swagger 2.0", "OpenAPI 3.0.x"]
 dateStart: 2024-11-01
-priority: 4
+priority: 2
 variants: ["ai-agent"]
-summary: "Swagger 2.0 / OpenAPI 3.0.x 스펙을 파싱하는 MCP 서버를 개발하고 배포해, AI 에이전트가 내부 API 명세를 자동으로 해석하는 실행 경로를 마련했습니다."
+summary: "Swagger 2.0 / OpenAPI 3.0.x 스펙을 파싱해 AI 에이전트가 API 명세를 자동 해석하는 도구를 개발했습니다. MCP 서버로 시작해 npm에 배포한 뒤, 프로젝트 내장 스킬로 전환하며 외부 의존성을 제거하고 스냅샷 기반 변경 감지를 추가했습니다."
 accomplishments:
-  - "MCP 도구 호출에서 OpenAPI 문서를 직접 읽고 구조화된 스키마 정보를 반환하도록 서버를 구현했습니다."
-  - "패키지를 npm에 배포해 재사용 가능한 형태로 운영했습니다: https://www.npmjs.com/package/swagger-parser-mcp-server"
-  - "내부 GitLab 기반 워크플로우와 연결해 API 문서 의존 분석 자동화에 활용했습니다."
-  - "전체 스펙을 매번 다시 조회하는 방식에서 스냅샷 기반 diff 비교로 전환하고, 포맷 차이를 정규화해 실질적인 API 변경(breaking/non-breaking)만 자동 분류하도록 개선했습니다."
+  - "OpenAPI 문서를 파싱해 구조화된 스키마 정보를 반환하는 도구를 구현하고, 초기에는 MCP 서버로 npm에 배포해 운영했습니다."
+  - "이후 프로젝트 내장 스킬(.agents/skills/)로 전환해 불필요한 외부 의존성을 제거하고 개발 환경에 직접 통합했습니다."
+  - "전체 스펙을 매번 조회하는 방식에서 스냅샷 기반 diff 비교로 전환하고, 포맷 차이를 정규화해 실질적인 API 변경(breaking/non-breaking)만 자동 분류하도록 개선했습니다."
 ---

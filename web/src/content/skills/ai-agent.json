@@ -11,11 +11,11 @@
     },
     {
       "name": "Frameworks & Runtime",
-      "items": ["React", "Fastify", "FastAPI", "Elasticsearch", "TanStack Table", "TanStack Virtual"]
+      "items": ["React", "Fastify", "TanStack Table", "TanStack Virtual"]
     },
     {
       "name": "Testing & Validation",
-      "items": ["Playwright", "Vitest", "pixelmatch", "Figma MCP"]
+      "items": ["Playwright", "Vitest"]
     },
     {
       "name": "Tools",

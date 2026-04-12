@@ -24,10 +24,10 @@ export const RESUME_VARIANT_META: Record<ResumeVariantId, ResumeVariantMeta> = {
   "ai-agent": {
     id: "ai-agent",
     path: "/ai-agent",
-    label: "AI Agent",
-    pageTitle: "AI Agent Resume",
+    label: "AI Native",
+    pageTitle: "AI Native Resume",
     pageDescription:
-      "최기환의 AI Agent 개발 이력서입니다. MCP 서버 개발, AI 자동화 파이프라인, RAG 챗봇 구축 경험을 담았습니다.",
+      "최기환의 AI Native 개발 이력서입니다. LangGraph.js 기반 AI 자동화 플랫폼, API 스펙 분석 도구, MCP 생태계 통합 경험을 담았습니다.",
   },
 }
 
