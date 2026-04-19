@@ -78,9 +78,12 @@ export const readDocumentSchema = z.object({
 export const findRelatedSchema = z.object({
   documentId: z.string().describe("기준 문서 ID"),
   depth: z
-    .union([z.literal(1), z.literal(2)])
+    .number()
+    .int()
+    .min(1)
+    .max(2)
     .optional()
-    .describe("탐색 깊이 (기본 1). 2는 이웃의 이웃까지 포함."),
+    .describe("탐색 깊이 (1 또는 2, 기본 1). 2는 이웃의 이웃까지 포함."),
 })
 
 export const answerSchema = z.object({
@@ -199,7 +202,7 @@ export const findRelated = tool({
   inputSchema: findRelatedSchema,
   execute: async (params: FindRelatedInput) => {
     try {
-      const depth = params.depth ?? 1
+      const depth = params.depth === 2 ? 2 : 1
       const related: RelatedObsidianDocument[] = findRelatedDocs(params.documentId, depth)
 
       return {
