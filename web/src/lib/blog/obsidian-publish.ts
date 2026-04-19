@@ -1,11 +1,10 @@
-const OBSIDIAN_PUBLISH_SLUG = "gihwan-dev"
-const OBSIDIAN_PUBLISH_ORIGIN = "https://publish.obsidian.md"
+const OBSIDIAN_PUBLISH_ORIGIN = "https://obsidian.gihwan-dev.com"
 const BLOG_PATH_PREFIX = "50-Blog/"
 const BLOG_README_PATH = `${BLOG_PATH_PREFIX}README.md`
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 const DEFAULT_LIMIT = 5
 
-export const OBSIDIAN_BLOG_SECTION_URL = `${OBSIDIAN_PUBLISH_ORIGIN}/${OBSIDIAN_PUBLISH_SLUG}/50-Blog`
+export const OBSIDIAN_BLOG_SECTION_URL = `${OBSIDIAN_PUBLISH_ORIGIN}/50-Blog`
 
 export interface ObsidianBlogPost {
   title: string
@@ -77,7 +76,7 @@ function buildPostUrl(path: string): string {
     .map((segment) => encodeURIComponent(segment))
     .join("/")
 
-  return `${OBSIDIAN_PUBLISH_ORIGIN}/${OBSIDIAN_PUBLISH_SLUG}/${encodedPath}`
+  return `${OBSIDIAN_PUBLISH_ORIGIN}/${encodedPath}`
 }
 
 function parseSiteInfo(pageHtml: string): PublishSiteInfo | null {
