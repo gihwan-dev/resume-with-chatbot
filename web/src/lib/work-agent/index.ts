@@ -33,12 +33,14 @@ export {
   createSearchContext,
   extractDocumentId,
   extractDocumentIds,
+  extractRelatedDocumentIds,
   validateSources,
 } from "./source-tracker"
 // AI Tools
 export {
   answer,
   createAnswerTool,
+  findRelated,
   readDocument,
   searchDocuments as searchDocumentsTool,
   workAgentTools,
@@ -49,6 +51,8 @@ export {
   type LiveResumeFeedItem,
   type ObsidianDocument,
   type ObsidianDocumentContent,
+  type ObsidianLinkRef,
+  type RelatedObsidianDocument,
   type SearchContext,
   type SourceValidationResult,
   WorkAgentError,

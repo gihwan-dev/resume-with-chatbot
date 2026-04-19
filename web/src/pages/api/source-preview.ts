@@ -82,6 +82,7 @@ export function buildExcerpt(content: string, summary: string): string {
 export const GET = async ({ request }: { request: Request }) => {
   const url = new URL(request.url)
   const id = url.searchParams.get("id")?.trim()
+  const wantFullContent = url.searchParams.get("full") === "true"
   parseResumeVariant(url.searchParams.get("variant"))
 
   if (!id) {
@@ -102,20 +103,24 @@ export const GET = async ({ request }: { request: Request }) => {
   const summary = document.summary?.trim() || "요약 정보가 없습니다."
   const excerpt = buildExcerpt(document.content, summary)
 
-  return new Response(
-    JSON.stringify({
-      id: document.id,
-      sourceType: "obsidian",
-      title: document.title,
-      category: document.category,
-      path: document.path,
-      summary,
-      excerpt,
-      tags: document.tags,
-    }),
-    {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }
-  )
+  const payload: Record<string, unknown> = {
+    id: document.id,
+    sourceType: "obsidian",
+    title: document.title,
+    category: document.category,
+    path: document.path,
+    summary,
+    excerpt,
+    tags: document.tags,
+  }
+
+  if (wantFullContent) {
+    payload.fullContent = stripFrontmatter(document.content).trimStart()
+    payload.outLinks = document.outLinks
+  }
+
+  return new Response(JSON.stringify(payload), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  })
 }

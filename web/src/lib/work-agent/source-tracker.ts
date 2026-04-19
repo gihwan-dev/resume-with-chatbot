@@ -32,6 +32,14 @@ interface ReadDocumentResult {
   }
 }
 
+// findRelated 결과 타입
+interface FindRelatedResult {
+  success: true
+  data: {
+    documents: Array<{ id: string }>
+  }
+}
+
 /**
  * 빈 SearchContext 생성
  */
@@ -63,6 +71,18 @@ export function extractDocumentId(result: unknown): string | null {
 }
 
 /**
+ * findRelated 결과에서 ID 목록 추출
+ */
+export function extractRelatedDocumentIds(result: unknown): string[] {
+  if (!result || typeof result !== "object") return []
+  const typedResult = result as { success?: boolean; data?: FindRelatedResult["data"] }
+  if (!typedResult.success || !typedResult.data?.documents) return []
+  return typedResult.data.documents
+    .map((doc) => doc?.id)
+    .filter((id): id is string => typeof id === "string" && id.length > 0)
+}
+
+/**
  * 전체 steps에서 SearchContext 구축
  */
 export function buildSearchContextFromSteps(steps: StepLike[]): SearchContext {
@@ -81,6 +101,11 @@ export function buildSearchContextFromSteps(steps: StepLike[]): SearchContext {
         case "readDocument": {
           const id = extractDocumentId(toolResult.result)
           if (id) context.obsidianDocIds.add(id)
+          break
+        }
+        case "findRelated": {
+          const ids = extractRelatedDocumentIds(toolResult.result)
+          for (const id of ids) context.obsidianDocIds.add(id)
           break
         }
       }

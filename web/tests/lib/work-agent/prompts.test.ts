@@ -198,6 +198,8 @@ describe("prompts", () => {
         lastToolName: "searchDocuments",
         lastQueries: ["query1", "query2", "query3"],
         totalSearchCount: 3,
+        findRelatedCount: 0,
+        hasCalledFindRelated: false,
       }
       const result = buildDynamicSystemPrompt({
         intent: "career_inquiry",
@@ -218,6 +220,8 @@ describe("prompts", () => {
         lastToolName: "searchDocuments",
         lastQueries: ["query1", "query2"],
         totalSearchCount: 2,
+        findRelatedCount: 0,
+        hasCalledFindRelated: false,
       }
       const result = buildDynamicSystemPrompt({
         intent: "career_inquiry",
@@ -233,6 +237,8 @@ describe("prompts", () => {
         lastToolName: "searchDocuments",
         lastQueries: ["q1", "q2", "q3", "q4", "q5"],
         totalSearchCount: 5,
+        findRelatedCount: 0,
+        hasCalledFindRelated: false,
       }
       const result = buildDynamicSystemPrompt({
         intent: "career_inquiry",
@@ -240,6 +246,40 @@ describe("prompts", () => {
         includeReflexion: false,
       })
       expect(result).not.toContain("전략 전환 힌트")
+    })
+
+    it("technical_inquiry에서 검색 2회 이상 + findRelated 미사용 시 연쇄 탐색 힌트 추가", () => {
+      const analysis = {
+        consecutiveSameToolCount: 1,
+        lastToolName: "searchDocuments",
+        lastQueries: ["x"],
+        totalSearchCount: 2,
+        findRelatedCount: 0,
+        hasCalledFindRelated: false,
+      }
+      const result = buildDynamicSystemPrompt({
+        intent: "technical_inquiry",
+        analysis,
+        includeReflexion: true,
+      })
+      expect(result).toContain("연쇄 탐색 힌트")
+    })
+
+    it("findRelated를 이미 호출했다면 연쇄 탐색 힌트 미포함", () => {
+      const analysis = {
+        consecutiveSameToolCount: 1,
+        lastToolName: "findRelated",
+        lastQueries: [],
+        totalSearchCount: 3,
+        findRelatedCount: 1,
+        hasCalledFindRelated: true,
+      }
+      const result = buildDynamicSystemPrompt({
+        intent: "technical_inquiry",
+        analysis,
+        includeReflexion: true,
+      })
+      expect(result).not.toContain("연쇄 탐색 힌트")
     })
   })
 

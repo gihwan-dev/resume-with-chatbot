@@ -10,6 +10,7 @@ import {
   createSearchContext,
   extractDocumentId,
   extractDocumentIds,
+  extractRelatedDocumentIds,
   validateSources,
 } from "../../../src/lib/work-agent/source-tracker"
 import type { AnswerSource, SearchContext } from "../../../src/lib/work-agent/types"
@@ -101,6 +102,52 @@ describe("source-tracker", () => {
     it("null/undefined 입력에서 null 반환", () => {
       expect(extractDocumentId(null)).toBeNull()
       expect(extractDocumentId(undefined)).toBeNull()
+    })
+  })
+
+  // ============================================
+  // extractRelatedDocumentIds Tests
+  // ============================================
+  describe("extractRelatedDocumentIds", () => {
+    it("findRelated 결과에서 ID 목록 추출", () => {
+      const result = {
+        success: true,
+        data: {
+          documents: [
+            {
+              id: "rel-1",
+              title: "R1",
+              category: "X",
+              path: "X/r1.md",
+              relation: "outLink",
+              distance: 1,
+            },
+            {
+              id: "rel-2",
+              title: "R2",
+              category: "X",
+              path: "X/r2.md",
+              relation: "inLink",
+              distance: 1,
+            },
+          ],
+        },
+      }
+
+      expect(extractRelatedDocumentIds(result)).toEqual(["rel-1", "rel-2"])
+    })
+
+    it("실패 결과에서 빈 배열", () => {
+      expect(extractRelatedDocumentIds({ success: false })).toEqual([])
+      expect(extractRelatedDocumentIds(null)).toEqual([])
+    })
+
+    it("id 누락된 항목 필터링", () => {
+      const result = {
+        success: true,
+        data: { documents: [{ id: "rel-1" }, { title: "no-id" }, { id: "" }] },
+      }
+      expect(extractRelatedDocumentIds(result)).toEqual(["rel-1"])
     })
   })
 
@@ -238,6 +285,45 @@ describe("source-tracker", () => {
       const context = buildSearchContextFromSteps(steps)
       expect(context.obsidianDocIds.size).toBe(1)
       expect(context.obsidianDocIds.has("doc-1")).toBe(true)
+    })
+
+    it("findRelated 결과 ID도 context에 누적", () => {
+      const steps = [
+        {
+          toolResults: [
+            {
+              toolName: "findRelated",
+              result: {
+                success: true,
+                data: {
+                  documents: [
+                    {
+                      id: "rel-1",
+                      title: "관련 문서 1",
+                      category: "X",
+                      path: "X/r1.md",
+                      relation: "outLink",
+                      distance: 1,
+                    },
+                    {
+                      id: "rel-2",
+                      title: "관련 문서 2",
+                      category: "X",
+                      path: "X/r2.md",
+                      relation: "inLink",
+                      distance: 2,
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      ]
+
+      const context = buildSearchContextFromSteps(steps)
+      expect(context.obsidianDocIds.has("rel-1")).toBe(true)
+      expect(context.obsidianDocIds.has("rel-2")).toBe(true)
     })
 
     it("알 수 없는 도구 이름은 무시", () => {

@@ -10,8 +10,8 @@ import {
   stepCountIs,
   streamText,
 } from "ai"
-import { buildResumePrompt } from "@/lib/resume-prompt"
 import { parseResumeVariant, type ResumeVariantId } from "@/lib/resume/variant"
+import { buildResumePrompt } from "@/lib/resume-prompt"
 import { createToolInputDeltaFilter } from "@/lib/stream/filter-tool-input-delta"
 import {
   analyzeToolCallPattern,
@@ -28,8 +28,12 @@ import { buildCatalogSummary } from "@/lib/work-agent/obsidian.server"
 import { WorkAgentError } from "@/lib/work-agent/types"
 
 type ToolName = keyof typeof workAgentTools
-const SEARCH_TOOLS: ToolName[] = ["searchDocuments", "readDocument"]
+const SEARCH_TOOLS: ToolName[] = ["searchDocuments", "readDocument", "findRelated"]
 const ALL_TOOLS: ToolName[] = [...SEARCH_TOOLS, "answer"]
+
+function resolveEarlyForceStep(intent: ReturnType<typeof classifyIntent>["intent"]): number {
+  return intent === "technical_inquiry" || intent === "career_inquiry" ? 6 : 3
+}
 
 const SYSTEM_PROMPT_HEADER = `당신은 최기환의 이력서 웹사이트에서 방문자의 질문에 답변하는 AI 어시스턴트입니다.
 
@@ -163,8 +167,11 @@ export const POST = async ({ request }: { request: Request }) => {
     const tools = {
       searchDocuments: workAgentTools.searchDocuments,
       readDocument: workAgentTools.readDocument,
+      findRelated: workAgentTools.findRelated,
       answer: dynamicAnswerTool,
     }
+
+    const earlyForceStep = resolveEarlyForceStep(intentClassification.intent)
 
     const result = streamText({
       model: vertex("gemini-3.1-pro-preview"),
@@ -220,7 +227,18 @@ export const POST = async ({ request }: { request: Request }) => {
         }
 
         const answered = hasAnswerToolCall(steps)
-        if (!answered && stepNumber >= 2) {
+
+        // 동일 도구 5회 이상 연속 호출 → 무한 루프 방어: answer 강제
+        if (!answered && analysis.consecutiveSameToolCount >= 5) {
+          return {
+            system: stepSystemPrompt,
+            activeTools: ["answer"],
+            toolChoice: "required" as const,
+          }
+        }
+
+        // 의도별 강제 answer step (연쇄 탐색 허용)
+        if (!answered && stepNumber >= earlyForceStep) {
           return {
             system: stepSystemPrompt,
             activeTools: ["answer"],
@@ -236,7 +254,7 @@ export const POST = async ({ request }: { request: Request }) => {
         }
       },
 
-      stopWhen: [stepCountIs(15), hasToolCall("answer")],
+      stopWhen: [stepCountIs(20), hasToolCall("answer")],
 
       onStepFinish: ({ toolCalls, toolResults, finishReason, usage }) => {
         if (toolCalls.length > 0) {

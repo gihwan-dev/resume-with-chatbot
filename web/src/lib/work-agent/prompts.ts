@@ -27,6 +27,8 @@ export interface StepAnalysis {
   lastToolName: string | null
   lastQueries: string[]
   totalSearchCount: number
+  findRelatedCount: number
+  hasCalledFindRelated: boolean
 }
 
 export interface DynamicPromptOptions {
@@ -177,12 +179,14 @@ export const INTENT_KEYWORDS: Record<UserIntent, string[]> = {
  */
 export const PERSONA_PROMPTS: Record<UserIntent, string> = {
   career_inquiry: `## 모드: 커리어 답변
-- 먼저 searchDocuments로 근거를 찾고, 필요한 문서는 readDocument로 확인하세요.
+- 구체적 프로젝트/회사 질문: searchDocuments → readDocument로 근거 확보.
+- 포괄적 질문(전체 경험, 역량, 강점 등): readDocument로 확인한 프로젝트 문서의 outLinks를 살피고 findRelated(depth=1)로 연관 기술 노트까지 탐색한 뒤 답변하세요.
 - 답변은 문제/해결/성과 순서로 간결하게 작성하세요.
 - 확인되지 않은 수치나 사실은 추측하지 마세요.`,
 
   technical_inquiry: `## 모드: 기술 답변
-- 기술 질문은 반드시 검색 근거를 확보한 뒤 답변하세요.
+- 구체적 기술 질문(특정 API, 구현 방법 등): searchDocuments → readDocument 순서로 근거 확보.
+- 추상적 주제(설계 철학, 아키텍처 원칙, 접근 방식, 코드 스타일 등): searchDocuments로 시드 문서 1~2개를 찾은 뒤 readDocument로 outLinks를 확인하고, findRelated(depth=1 또는 2)로 연관 문서를 연쇄 탐색하세요. 단편 정보만으로 철학/원칙을 단정하지 마세요.
 - 문서 제목만으로 단정하지 말고, 구현 세부는 readDocument로 검증하세요.
 - 설명은 기술 선택 이유와 구현 포인트 중심으로 작성하세요.`,
 
@@ -196,6 +200,14 @@ export const PERSONA_PROMPTS: Record<UserIntent, string> = {
 - 잡담은 간결하고 자연스럽게 응답하세요.
 - 근거가 없으면 추측하지 마세요.`,
 }
+
+/**
+ * 연쇄 탐색(findRelated 미사용) 힌트
+ */
+export const CHAIN_EXPLORATION_HINT = `## 연쇄 탐색 힌트
+- 이미 몇 차례 검색했지만 findRelated를 아직 호출하지 않았습니다.
+- readDocument 응답의 outLinks를 살펴보고, 관련 문서를 findRelated(depth=1)로 확장하세요.
+- 추상적 주제라면 2~3개 노트만으로 단정하지 말고 연결된 맥락을 먼저 파악하세요.`
 
 /**
  * 반복 호출 시 전략 전환 힌트(soft guidance)
@@ -304,6 +316,8 @@ export function analyzeToolCallPattern(
       lastToolName: null,
       lastQueries: [],
       totalSearchCount: 0,
+      findRelatedCount: 0,
+      hasCalledFindRelated: false,
     }
   }
 
@@ -329,14 +343,17 @@ export function analyzeToolCallPattern(
   }
 
   // 검색 도구 총 호출 횟수
-  const searchTools = ["searchDocuments", "readDocument"]
+  const searchTools = ["searchDocuments", "readDocument", "findRelated"]
   const totalSearchCount = history.filter((h) => searchTools.includes(h.toolName)).length
+  const findRelatedCount = history.filter((h) => h.toolName === "findRelated").length
 
   return {
     consecutiveSameToolCount: consecutiveCount,
     lastToolName,
     lastQueries,
     totalSearchCount,
+    findRelatedCount,
+    hasCalledFindRelated: findRelatedCount > 0,
   }
 }
 
@@ -374,6 +391,17 @@ ${options.analysis.lastQueries.map((q, i) => `${i + 1}. "${q}"`).join("\n")}
 
 위 쿼리와 다른 접근을 시도하세요.`)
       }
+    }
+
+    // 연쇄 탐색 힌트: 추상적 주제에서 searchDocuments만 반복하고 findRelated를 안 쓴 경우
+    const intentSupportsChaining =
+      options.intent === "technical_inquiry" || options.intent === "career_inquiry"
+    if (
+      intentSupportsChaining &&
+      options.analysis.totalSearchCount >= 2 &&
+      !options.analysis.hasCalledFindRelated
+    ) {
+      parts.push(CHAIN_EXPLORATION_HINT)
     }
   }
 

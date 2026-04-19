@@ -57,6 +57,7 @@ vi.mock("@/lib/work-agent", () => ({
   workAgentTools: {
     searchDocuments: { description: "search" },
     readDocument: { description: "read" },
+    findRelated: { description: "find-related" },
   },
 }))
 
@@ -114,13 +115,17 @@ describe("/api/chat", () => {
       lastToolName: null,
       lastQueries: [],
       totalSearchCount: 0,
+      findRelatedCount: 0,
+      hasCalledFindRelated: false,
     })
-    mockBuildDynamicSystemPrompt.mockImplementation((options?: { analysis?: { lastQueries?: string[] } }) => {
-      const queries = options?.analysis?.lastQueries ?? []
-      return queries.length > 0
-        ? `soft guidance\n이전 검색 쿼리\n${queries.map((q) => `"${q}"`).join("\n")}`
-        : "dynamic prompt"
-    })
+    mockBuildDynamicSystemPrompt.mockImplementation(
+      (options?: { analysis?: { lastQueries?: string[] } }) => {
+        const queries = options?.analysis?.lastQueries ?? []
+        return queries.length > 0
+          ? `soft guidance\n이전 검색 쿼리\n${queries.map((q) => `"${q}"`).join("\n")}`
+          : "dynamic prompt"
+      }
+    )
     mockCreateSearchContext.mockReturnValue({})
     mockCreateAnswerTool.mockReturnValue({ description: "answer" })
     mockResolveThinkingLevel.mockReturnValue("high")
@@ -208,7 +213,10 @@ describe("/api/chat", () => {
     })
 
     const streamTextArg = mockStreamText.mock.calls[0][0] as {
-      prepareStep: (args: { stepNumber: number; steps: Array<{ toolCalls?: Array<{ toolName: string }> }> }) => {
+      prepareStep: (args: {
+        stepNumber: number
+        steps: Array<{ toolCalls?: Array<{ toolName: string }> }>
+      }) => {
         system: string
         activeTools: string[]
         toolChoice: "required" | "auto"
@@ -218,42 +226,128 @@ describe("/api/chat", () => {
     const step1 = streamTextArg.prepareStep({ stepNumber: 1, steps: [] })
 
     expect(step0.toolChoice).toBe("required")
-    expect(step0.activeTools).toEqual(["searchDocuments", "readDocument"])
+    expect(step0.activeTools).toEqual(["searchDocuments", "readDocument", "findRelated"])
     expect(step1.toolChoice).toBe("auto")
-    expect(step1.activeTools).toEqual(["searchDocuments", "readDocument", "answer"])
+    expect(step1.activeTools).toEqual(["searchDocuments", "readDocument", "findRelated", "answer"])
   })
 
-  it("answer 미호출 상태에서 step2+는 answer required 가드가 동작한다", async () => {
+  it("contact_inquiry: answer 미호출 상태에서 step3+ answer 강제 가드가 동작한다", async () => {
+    mockClassifyIntent.mockReturnValueOnce({
+      intent: "contact_inquiry",
+      confidence: 0.9,
+      keywords: ["연락처"],
+    })
+
     await POST({
       request: new Request("http://localhost/api/chat?variant=frontend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{ role: "user", parts: [{ type: "text", text: "경력 알려줘" }] }],
+          messages: [{ role: "user", parts: [{ type: "text", text: "연락처 알려줘" }] }],
         }),
       }),
     })
 
     const streamTextArg = mockStreamText.mock.calls[0][0] as {
-      prepareStep: (args: { stepNumber: number; steps: Array<{ toolCalls?: Array<{ toolName: string }> }> }) => {
+      prepareStep: (args: {
+        stepNumber: number
+        steps: Array<{ toolCalls?: Array<{ toolName: string }> }>
+      }) => {
         activeTools: string[]
         toolChoice: "required" | "auto"
       }
     }
 
-    const step2WithoutAnswer = streamTextArg.prepareStep({
-      stepNumber: 2,
+    const step3WithoutAnswer = streamTextArg.prepareStep({
+      stepNumber: 3,
       steps: [{ toolCalls: [{ toolName: "searchDocuments" }] }],
     })
-    expect(step2WithoutAnswer.toolChoice).toBe("required")
-    expect(step2WithoutAnswer.activeTools).toEqual(["answer"])
+    expect(step3WithoutAnswer.toolChoice).toBe("required")
+    expect(step3WithoutAnswer.activeTools).toEqual(["answer"])
 
-    const step2WithAnswer = streamTextArg.prepareStep({
-      stepNumber: 2,
+    const step3WithAnswer = streamTextArg.prepareStep({
+      stepNumber: 3,
       steps: [{ toolCalls: [{ toolName: "answer" }] }],
     })
-    expect(step2WithAnswer.toolChoice).toBe("auto")
-    expect(step2WithAnswer.activeTools).toEqual(["searchDocuments", "readDocument", "answer"])
+    expect(step3WithAnswer.toolChoice).toBe("auto")
+    expect(step3WithAnswer.activeTools).toEqual([
+      "searchDocuments",
+      "readDocument",
+      "findRelated",
+      "answer",
+    ])
+  })
+
+  it("technical_inquiry: step 5까지는 연쇄 탐색 허용, step 6부터 answer 강제", async () => {
+    await POST({
+      request: new Request("http://localhost/api/chat?variant=frontend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", parts: [{ type: "text", text: "설계 철학 알려줘" }] }],
+        }),
+      }),
+    })
+
+    const streamTextArg = mockStreamText.mock.calls[0][0] as {
+      prepareStep: (args: {
+        stepNumber: number
+        steps: Array<{ toolCalls?: Array<{ toolName: string }> }>
+      }) => {
+        activeTools: string[]
+        toolChoice: "required" | "auto"
+      }
+    }
+
+    const step5 = streamTextArg.prepareStep({
+      stepNumber: 5,
+      steps: [{ toolCalls: [{ toolName: "searchDocuments" }] }],
+    })
+    expect(step5.toolChoice).toBe("auto")
+
+    const step6 = streamTextArg.prepareStep({
+      stepNumber: 6,
+      steps: [{ toolCalls: [{ toolName: "searchDocuments" }] }],
+    })
+    expect(step6.toolChoice).toBe("required")
+    expect(step6.activeTools).toEqual(["answer"])
+  })
+
+  it("동일 도구 5회 이상 연속이면 즉시 answer 강제", async () => {
+    mockAnalyzeToolCallPattern.mockReturnValueOnce({
+      consecutiveSameToolCount: 5,
+      lastToolName: "searchDocuments",
+      lastQueries: ["q1", "q2", "q3", "q4", "q5"],
+      totalSearchCount: 5,
+      findRelatedCount: 0,
+      hasCalledFindRelated: false,
+    })
+
+    await POST({
+      request: new Request("http://localhost/api/chat?variant=frontend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", parts: [{ type: "text", text: "뭐 했어?" }] }],
+        }),
+      }),
+    })
+
+    const streamTextArg = mockStreamText.mock.calls[0][0] as {
+      prepareStep: (args: {
+        stepNumber: number
+        steps: Array<{ toolCalls?: Array<{ toolName: string }> }>
+      }) => {
+        activeTools: string[]
+        toolChoice: "required" | "auto"
+      }
+    }
+    const step1 = streamTextArg.prepareStep({
+      stepNumber: 1,
+      steps: [{ toolCalls: [{ toolName: "searchDocuments" }] }],
+    })
+    expect(step1.toolChoice).toBe("required")
+    expect(step1.activeTools).toEqual(["answer"])
   })
 
   it("반복 호출 3회 이상이면 prepareStep.system에 soft guidance와 이전 쿼리가 포함된다", async () => {
@@ -275,7 +369,10 @@ describe("/api/chat", () => {
     })
 
     const streamTextArg = mockStreamText.mock.calls[0][0] as {
-      prepareStep: (args: { stepNumber: number; steps: Array<{ toolCalls?: Array<{ toolName: string }> }> }) => {
+      prepareStep: (args: {
+        stepNumber: number
+        steps: Array<{ toolCalls?: Array<{ toolName: string }> }>
+      }) => {
         system: string
       }
     }
@@ -286,9 +383,9 @@ describe("/api/chat", () => {
 
     expect(step1.system).toContain("soft guidance")
     expect(step1.system).toContain("이전 검색 쿼리")
-    expect(step1.system).toContain("\"query1\"")
-    expect(step1.system).toContain("\"query2\"")
-    expect(step1.system).toContain("\"query3\"")
+    expect(step1.system).toContain('"query1"')
+    expect(step1.system).toContain('"query2"')
+    expect(step1.system).toContain('"query3"')
   })
 
   it("contact_inquiry 에서는 thinkingLevel low를 사용한다", async () => {

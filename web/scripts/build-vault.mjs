@@ -4,19 +4,36 @@
  * Vercel 서버리스 함수에서 런타임 파일시스템 스캔 없이 동작하도록 함
  */
 
+import "dotenv/config"
 import { execFileSync } from "node:child_process"
 import fs from "node:fs"
 import path from "node:path"
+import { createVertex } from "@ai-sdk/google-vertex"
+import { embedMany } from "ai"
 import MiniSearch from "minisearch"
 import {
   buildPathActivityMapFromGitLog,
   detectInitialVaultCommitHash,
 } from "./live-feed-activity-utils.mjs"
 import { extractVaultDateMeta } from "./vault-date-utils.mjs"
+import {
+  generateEmbeddings,
+  loadEmbeddingCache,
+  saveEmbeddingCache,
+} from "./vault-embedding-utils.mjs"
+import { buildDocIndex, parseWikiLinks, resolveWikiTarget } from "./vault-wiki-link-utils.mjs"
 
 const VAULT_PATH = path.join(process.cwd(), "vault")
 const OUTPUT_PATH = path.join(process.cwd(), "src", "generated", "vault-data.json")
 const SEARCH_INDEX_PATH = path.join(process.cwd(), "src", "generated", "search-index.json")
+const EMBEDDINGS_PATH = path.join(process.cwd(), "src", "generated", "vault-embeddings.json")
+const EMBEDDING_CACHE_PATH = path.join(
+  process.cwd(),
+  "scripts",
+  "cache",
+  "vault-embedding-cache.json"
+)
+const EMBEDDING_MODEL_ID = "text-embedding-005"
 
 function resolveGitRoot() {
   try {
@@ -146,6 +163,7 @@ function scanVault(dir, pathActivityMap) {
 
       const { eventDate, updatedAt } = extractVaultDateMeta(rawContent, normalizedRelativePath)
       const activityAt = pathActivityMap.get(normalizedRelativePath)
+      const { outLinks: outLinksRaw, imageLinks: imageLinksRaw } = parseWikiLinks(content)
 
       documents.push({
         id: createDocumentId(normalizedRelativePath),
@@ -158,6 +176,8 @@ function scanVault(dir, pathActivityMap) {
         eventDate,
         updatedAt,
         activityAt,
+        outLinksRaw,
+        imageLinks: imageLinksRaw.map((link) => link.target),
       })
     }
   }
@@ -187,15 +207,84 @@ if (feedCandidates.length === 0) {
   )
 }
 
+// Wiki 링크 해석 + 역링크 인덱스
+const catalogForIndex = new Map(
+  documents.map((doc) => [doc.id, { id: doc.id, category: doc.category, title: doc.title }])
+)
+const docIndex = buildDocIndex(documents)
+
+const ambiguousLinkTargets = new Set()
+for (const doc of documents) {
+  const resolvedOutLinks = []
+  const seen = new Set()
+  for (const link of doc.outLinksRaw ?? []) {
+    const resolvedId = resolveWikiTarget(link.target, docIndex, {
+      sourceCategory: doc.category,
+      catalog: catalogForIndex,
+      onAmbiguous: (target) => ambiguousLinkTargets.add(target),
+    })
+    if (!resolvedId || resolvedId === doc.id || seen.has(resolvedId)) continue
+    seen.add(resolvedId)
+    resolvedOutLinks.push(resolvedId)
+  }
+  doc.outLinks = resolvedOutLinks
+  delete doc.outLinksRaw
+}
+
+const inLinksMap = new Map()
+for (const doc of documents) {
+  for (const targetId of doc.outLinks) {
+    const existing = inLinksMap.get(targetId)
+    if (existing) {
+      existing.add(doc.id)
+    } else {
+      inLinksMap.set(targetId, new Set([doc.id]))
+    }
+  }
+}
+for (const doc of documents) {
+  doc.inLinks = Array.from(inLinksMap.get(doc.id) ?? [])
+}
+
+if (ambiguousLinkTargets.size > 0) {
+  console.warn(
+    `[build-vault] Ambiguous wiki targets resolved by first match: ${Array.from(
+      ambiguousLinkTargets
+    )
+      .slice(0, 10)
+      .join(
+        ", "
+      )}${ambiguousLinkTargets.size > 10 ? ` (+${ambiguousLinkTargets.size - 10} more)` : ""}`
+  )
+}
+
+const totalOutLinks = documents.reduce((sum, doc) => sum + doc.outLinks.length, 0)
+console.log(
+  `[build-vault] Wiki graph: ${totalOutLinks} out-links across ${documents.length} documents`
+)
+
+// 임베딩 생성
+const embeddingCache = loadEmbeddingCache(EMBEDDING_CACHE_PATH)
+const embeddingsMap = await buildEmbeddingMap(documents, embeddingCache)
+
 // 출력 디렉토리 생성
 fs.mkdirSync(path.dirname(OUTPUT_PATH), { recursive: true })
 
-// JSON 파일 생성
+// vault-data.json (메타 + 본문 + 링크 그래프, 임베딩은 별도 파일)
 fs.writeFileSync(OUTPUT_PATH, JSON.stringify({ documents }, null, 0))
 
 const sizeKB = (fs.statSync(OUTPUT_PATH).size / 1024).toFixed(1)
 console.log(`[build-vault] Built vault data: ${documents.length} documents (${sizeKB} KB)`)
 console.log(`[build-vault] Live Resume Feed candidates: ${feedCandidates.length}`)
+
+// 임베딩 JSON (없으면 빈 객체 — 런타임에서 BM25로 fallback)
+const embeddingsObject = {}
+for (const [docId, vector] of embeddingsMap) embeddingsObject[docId] = vector
+fs.writeFileSync(EMBEDDINGS_PATH, JSON.stringify(embeddingsObject))
+const embeddingsSizeKB = (fs.statSync(EMBEDDINGS_PATH).size / 1024).toFixed(1)
+console.log(
+  `[build-vault] Built embeddings: ${Object.keys(embeddingsObject).length} vectors (${embeddingsSizeKB} KB)`
+)
 
 // MiniSearch 인덱스 빌드
 const miniSearch = new MiniSearch({
@@ -229,3 +318,46 @@ fs.writeFileSync(SEARCH_INDEX_PATH, JSON.stringify(miniSearch))
 
 const indexSizeKB = (fs.statSync(SEARCH_INDEX_PATH).size / 1024).toFixed(1)
 console.log(`[build-vault] Built search index: ${documents.length} documents (${indexSizeKB} KB)`)
+
+async function buildEmbeddingMap(docs, cache) {
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
+  const projectId = process.env.PUBLIC_FIREBASE_PROJECT_ID
+
+  if (!privateKey || !clientEmail || !projectId) {
+    console.warn(
+      "[embedding] Missing FIREBASE_* env vars. Skipping embeddings — BM25 fallback will be used at runtime."
+    )
+    return new Map()
+  }
+
+  const vertex = createVertex({
+    project: projectId,
+    location: "global",
+    googleAuthOptions: {
+      credentials: {
+        client_email: clientEmail,
+        private_key: privateKey.replace(/\\n/g, "\n"),
+      },
+    },
+  })
+  const model = vertex.textEmbeddingModel(EMBEDDING_MODEL_ID)
+
+  const {
+    embeddings,
+    cache: updatedCache,
+    regenerated,
+    failed,
+  } = await generateEmbeddings({
+    documents: docs,
+    cache,
+    embedMany,
+    model,
+  })
+
+  saveEmbeddingCache(EMBEDDING_CACHE_PATH, updatedCache)
+  console.log(
+    `[embedding] ${embeddings.size} vectors ready (regenerated ${regenerated}, failed ${failed})`
+  )
+  return embeddings
+}

@@ -7,7 +7,14 @@
  */
 
 import MiniSearch from "minisearch"
-import type { LiveResumeFeedItem, ObsidianDocument } from "./types"
+import { bfsRelatedNodes, type LinkGraphNode } from "./link-graph"
+import { reciprocalRankFusion } from "./rrf"
+import type {
+  LiveResumeFeedItem,
+  ObsidianDocument,
+  ObsidianLinkRef,
+  RelatedObsidianDocument,
+} from "./types"
 
 interface VaultDocument {
   id: string
@@ -20,14 +27,20 @@ interface VaultDocument {
   eventDate?: string
   updatedAt?: string
   activityAt?: string
+  outLinks?: string[]
+  inLinks?: string[]
+  imageLinks?: string[]
 }
 
 interface VaultData {
   documents: VaultDocument[]
 }
 
+type EmbeddingsData = Record<string, number[]>
+
 const GENERATED_VAULT_DATA_KEY = "../../generated/vault-data.json"
 const GENERATED_SEARCH_INDEX_KEY = "../../generated/search-index.json"
+const GENERATED_EMBEDDINGS_KEY = "../../generated/vault-embeddings.json"
 const GENERATED_JSON_MODULES = import.meta.glob("../../generated/*.json", {
   eager: true,
   import: "default",
@@ -66,6 +79,12 @@ let _vaultData: VaultData | null = null
 
 // MiniSearch 인덱스 (레이지 초기화)
 let _searchIndex: MiniSearch | null = null
+
+// 임베딩 맵 (ID → unit-normalized vector)
+let _embeddingsMap: Map<string, number[]> | null = null
+
+// 문서 카탈로그 인덱스 (ID로 빠른 조회)
+let _catalogMap: Map<string, ObsidianDocument> | null = null
 
 const MINISEARCH_OPTIONS = {
   fields: ["title", "category", "tagsText", "summary", "content"],
@@ -128,13 +147,45 @@ function getSearchIndex(): MiniSearch {
 }
 
 function ensureLoaded(): void {
-  if (_catalog && _contentMap) return
+  if (_catalog && _contentMap && _catalogMap) return
 
   const data = getVaultData()
-  _catalog = data.documents.map(({ content: _, ...meta }) => meta)
+  _catalog = data.documents.map(({ content: _content, ...meta }) => ({
+    id: meta.id,
+    title: meta.title,
+    category: meta.category,
+    path: meta.path,
+    summary: meta.summary,
+    tags: meta.tags,
+    ...(meta.eventDate ? { eventDate: meta.eventDate } : {}),
+    ...(meta.updatedAt ? { updatedAt: meta.updatedAt } : {}),
+    ...(meta.activityAt ? { activityAt: meta.activityAt } : {}),
+  }))
   _contentMap = new Map(data.documents.map((doc) => [doc.id, doc]))
+  _catalogMap = new Map(_catalog.map((doc) => [doc.id, doc]))
 
   console.log(`[obsidian] Catalog loaded: ${_catalog.length} documents`)
+}
+
+function getEmbeddingsMap(): Map<string, number[]> {
+  if (_embeddingsMap) return _embeddingsMap
+
+  const loadedEmbeddings = readGeneratedModule<unknown>(GENERATED_EMBEDDINGS_KEY, "embeddings")
+  const map = new Map<string, number[]>()
+
+  if (!loadedEmbeddings || typeof loadedEmbeddings !== "object") {
+    _embeddingsMap = map
+    return map
+  }
+
+  for (const [id, vector] of Object.entries(loadedEmbeddings as EmbeddingsData)) {
+    if (Array.isArray(vector) && vector.length > 0) {
+      map.set(id, vector)
+    }
+  }
+
+  _embeddingsMap = map
+  return map
 }
 
 /**
@@ -152,6 +203,7 @@ export function resetCatalogCache(): void {
   _catalog = null
   _contentMap = null
   _vaultData = null
+  _catalogMap = null
 }
 
 /**
@@ -159,6 +211,13 @@ export function resetCatalogCache(): void {
  */
 export function resetSearchIndex(): void {
   _searchIndex = null
+}
+
+/**
+ * 임베딩 캐시 초기화 (테스트용)
+ */
+export function resetEmbeddingsCache(): void {
+  _embeddingsMap = null
 }
 
 /**
@@ -202,13 +261,155 @@ export function searchDocuments(query: string, limit = 20): ObsidianDocument[] {
 /**
  * 문서 ID로 전체 내용 읽기
  */
-export function readDocumentContent(
-  docId: string
-): (ObsidianDocument & { content: string }) | null {
+export function readDocumentContent(docId: string):
+  | (ObsidianDocument & {
+      content: string
+      outLinks: ObsidianLinkRef[]
+      inLinks: ObsidianLinkRef[]
+    })
+  | null {
   ensureLoaded()
   const doc = _contentMap?.get(docId)
   if (!doc) return null
-  return { ...doc }
+  return {
+    id: doc.id,
+    title: doc.title,
+    category: doc.category,
+    path: doc.path,
+    summary: doc.summary,
+    tags: doc.tags,
+    ...(doc.eventDate ? { eventDate: doc.eventDate } : {}),
+    ...(doc.updatedAt ? { updatedAt: doc.updatedAt } : {}),
+    ...(doc.activityAt ? { activityAt: doc.activityAt } : {}),
+    content: doc.content,
+    outLinks: toLinkRefs(doc.outLinks ?? []),
+    inLinks: toLinkRefs(doc.inLinks ?? []),
+  }
+}
+
+function toLinkRefs(ids: readonly string[]): ObsidianLinkRef[] {
+  ensureLoaded()
+  const map = _catalogMap
+  if (!map) return []
+  const refs: ObsidianLinkRef[] = []
+  for (const id of ids) {
+    const doc = map.get(id)
+    if (doc) refs.push({ id: doc.id, title: doc.title })
+  }
+  return refs
+}
+
+/**
+ * 벡터 유사도 기반 의미 검색
+ * 빌드 타임에 unit-normalize된 벡터 가정 → dot product만 수행
+ */
+export function semanticSearch(queryEmbedding: readonly number[], limit = 20): ObsidianDocument[] {
+  const safeLimit = Math.max(0, limit)
+  if (safeLimit === 0 || queryEmbedding.length === 0) return []
+
+  ensureLoaded()
+  const catalog = _catalog
+  const catalogMap = _catalogMap
+  if (!catalog || !catalogMap) return []
+
+  const embeddings = getEmbeddingsMap()
+  if (embeddings.size === 0) return []
+
+  const normalizedQuery = normalizeVector(queryEmbedding)
+
+  const scored: Array<{ doc: ObsidianDocument; score: number }> = []
+  for (const [docId, vector] of embeddings) {
+    if (vector.length !== normalizedQuery.length) continue
+    const doc = catalogMap.get(docId)
+    if (!doc) continue
+    let score = 0
+    for (let i = 0; i < vector.length; i++) score += vector[i] * normalizedQuery[i]
+    scored.push({ doc, score })
+  }
+
+  scored.sort((a, b) => b.score - a.score)
+  return scored.slice(0, safeLimit).map(({ doc }) => doc)
+}
+
+/**
+ * BM25 + 벡터 하이브리드 검색 (Reciprocal Rank Fusion)
+ */
+export function hybridSearch(
+  query: string,
+  queryEmbedding: readonly number[] | null,
+  limit = 20,
+  rrfK = 60
+): ObsidianDocument[] {
+  const bm25Results = searchDocuments(query, Math.max(limit, 30))
+
+  if (!queryEmbedding || queryEmbedding.length === 0) return bm25Results.slice(0, limit)
+
+  const vectorResults = semanticSearch(queryEmbedding, Math.max(limit, 30))
+  if (vectorResults.length === 0) return bm25Results.slice(0, limit)
+
+  return reciprocalRankFusion([bm25Results, vectorResults], rrfK, limit)
+}
+
+function normalizeVector(vector: readonly number[]): number[] {
+  let norm = 0
+  for (const value of vector) norm += value * value
+  norm = Math.sqrt(norm)
+  if (norm === 0) return vector.slice()
+  const normalized = new Array<number>(vector.length)
+  for (let i = 0; i < vector.length; i++) normalized[i] = vector[i] / norm
+  return normalized
+}
+
+/**
+ * 문서 ID와 연결된 outLinks / inLinks 조회
+ */
+export function getOutLinks(docId: string): ObsidianLinkRef[] {
+  ensureLoaded()
+  const doc = _contentMap?.get(docId)
+  return doc ? toLinkRefs(doc.outLinks ?? []) : []
+}
+
+export function getInLinks(docId: string): ObsidianLinkRef[] {
+  ensureLoaded()
+  const doc = _contentMap?.get(docId)
+  return doc ? toLinkRefs(doc.inLinks ?? []) : []
+}
+
+/**
+ * BFS로 링크 연결된 관련 문서 탐색
+ * depth=1: 직접 연결된 outLinks ∪ inLinks
+ * depth=2: 1단계 이웃에서 한 번 더 확장 (원본 제외, 중복은 짧은 distance 유지)
+ */
+export function findRelatedDocs(docId: string, depth: 1 | 2 = 1): RelatedObsidianDocument[] {
+  ensureLoaded()
+  const contentMap = _contentMap
+  const catalogMap = _catalogMap
+  if (!contentMap || !catalogMap || !contentMap.has(docId)) return []
+
+  const graph = new Map<string, LinkGraphNode>()
+  for (const [id, doc] of contentMap) {
+    graph.set(id, {
+      outLinks: doc.outLinks ?? [],
+      inLinks: doc.inLinks ?? [],
+    })
+  }
+
+  const bfsResults = bfsRelatedNodes(docId, graph, depth)
+  const results: RelatedObsidianDocument[] = []
+  for (const { id, relation, distance } of bfsResults) {
+    const doc = catalogMap.get(id)
+    if (!doc) continue
+    results.push({
+      id: doc.id,
+      title: doc.title,
+      category: doc.category,
+      path: doc.path,
+      relation,
+      distance,
+    })
+  }
+
+  return results
 }
 
 function toActivityTimestamp(activityAt: string | undefined): number | null {

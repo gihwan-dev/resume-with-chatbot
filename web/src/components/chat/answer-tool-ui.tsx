@@ -1,6 +1,6 @@
+import type { ComponentProps } from "react"
 import Markdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import type { ComponentProps } from "react"
 import { sortSourcesBySection } from "@/lib/evidence-sort"
 import { cn } from "@/lib/utils"
 import { SourceCarousel } from "./source-carousel"
@@ -143,11 +143,7 @@ const answerMarkdownComponents = {
   ),
 }
 
-export function AnswerMessageContent({
-  answer,
-  sources,
-  className,
-}: AnswerMessageContentProps) {
+export function AnswerMessageContent({ answer, sources, className }: AnswerMessageContentProps) {
   const hasAnswer = answer.trim().length > 0
   if (!hasAnswer) return null
 

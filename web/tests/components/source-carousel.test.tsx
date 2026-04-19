@@ -138,7 +138,7 @@ describe("SourceCarousel", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByTestId("source-preview-content").textContent).toContain("두 번째 문서")
+      expect(screen.getByRole("dialog").textContent).toContain("두 번째 문서")
     })
 
     firstResponse.resolve(
@@ -158,9 +158,9 @@ describe("SourceCarousel", () => {
     )
 
     await waitFor(() => {
-      const previewText = screen.getByTestId("source-preview-content").textContent ?? ""
-      expect(previewText).toContain("두 번째 문서")
-      expect(previewText).not.toContain("첫 번째 문서")
+      const dialogText = screen.getByRole("dialog").textContent ?? ""
+      expect(dialogText).toContain("두 번째 문서")
+      expect(dialogText).not.toContain("첫 번째 문서")
     })
   })
 })
