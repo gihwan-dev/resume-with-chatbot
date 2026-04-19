@@ -142,7 +142,7 @@ describe("buildResumePrompt", () => {
     mockGetObsidianBlogPosts.mockResolvedValue([
       {
         title: "리액트로 바라보는 정책과 메커니즘의 분리",
-        url: "https://publish.obsidian.md/gihwan-dev/50-Blog/sample-post",
+        url: "https://obsidian.gihwan-dev.com/50-Blog/sample-post",
         publishedAt: "2026-01-11T08:17:53.000Z",
       },
     ])

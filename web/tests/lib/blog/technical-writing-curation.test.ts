@@ -12,7 +12,7 @@ function createPost(params: {
     title: params.title,
     summary: params.summary,
     publishedAt: `${params.date}T00:00:00.000Z`,
-    url: `https://publish.obsidian.md/gihwan-dev/50-Blog/${params.slug}`,
+    url: `https://obsidian.gihwan-dev.com/50-Blog/${params.slug}`,
   }
 }
 

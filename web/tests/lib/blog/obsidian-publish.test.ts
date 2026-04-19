@@ -95,7 +95,7 @@ describe("obsidian publish blog", () => {
     expect(posts).toHaveLength(2)
     expect(posts[0]).toMatchObject({
       title: "첫 글",
-      url: "https://publish.obsidian.md/gihwan-dev/50-Blog/%EC%B2%AB%20%EA%B8%80",
+      url: "https://obsidian.gihwan-dev.com/50-Blog/%EC%B2%AB%20%EA%B8%80",
       publishedAt: "2026-01-11T08:17:53.000Z",
       summary: "첫 번째 글 요약",
     })
@@ -131,7 +131,7 @@ describe("obsidian publish blog", () => {
 
     expect(posts).toHaveLength(1)
     expect(posts[0].url).toBe(
-      `https://publish.obsidian.md/gihwan-dev/50-Blog/${encodeURIComponent(fileName)}`
+      `https://obsidian.gihwan-dev.com/50-Blog/${encodeURIComponent(fileName)}`
     )
   })
 
