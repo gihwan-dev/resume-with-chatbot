@@ -37,7 +37,7 @@ Monorepo root with `web/` containing the Astro app. `web/vault/` is a tracked Ob
 
 - **Astro 5 + React 19** with `client:load` hydration
 - **Vercel AI SDK** (`ai` package) — `streamText`, `convertToModelMessages`, tool calling
-- **Google Vertex AI** — Gemini 3.1 Pro Preview on `global` endpoint (chat), Gemini 2.0 Flash (followup, `us-central1`)
+- **Google Vertex AI** — Gemini 3.1 Pro Preview on `global` endpoint (chat), Gemini 3 Flash Preview on `global` endpoint (followup)
 - **@assistant-ui/react** — Chat modal/thread primitives (wraps Radix Popover)
 - **TailwindCSS 4**, **Zustand**, **Zod**
 - **Biome** for linting/formatting (not ESLint), **Vitest** for tests

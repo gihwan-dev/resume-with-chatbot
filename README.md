@@ -15,7 +15,7 @@
 ## AI 모델/도구 정책
 
 - 메인 채팅(`/api/chat`): Vertex AI `global` endpoint + `gemini-3.1-pro-preview`
-- 후속 질문(`/api/followup`): `gemini-2.0-flash` 유지
+- 후속 질문(`/api/followup`): Vertex AI `global` endpoint + `gemini-3-flash-preview`
 - 도구 호출 정책: Step 0에서 검색 도구를 `required`로 강제하고, Step 1+는 `auto`로 모델이 `search/read/answer`를 자율 선택
 - 반복 도구 호출은 도구를 강제로 차단하지 않고 시스템 프롬프트에 soft guidance를 추가
 

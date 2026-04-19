@@ -20,7 +20,7 @@ const getVertex = () => {
 
   return createVertex({
     project: projectId,
-    location: "us-central1",
+    location: "global",
     googleAuthOptions: {
       credentials: {
         client_email: clientEmail,
@@ -71,7 +71,7 @@ export const POST = async ({ request }: { request: Request }) => {
 
     // Use a fast model for quick response
     const result = streamText({
-      model: vertex("gemini-2.0-flash"),
+      model: vertex("gemini-3-flash-preview"),
       system: SYSTEM_PROMPT,
       prompt: `이전 답변:\n${prompt}\n\n위 답변을 바탕으로 후속 질문 3개를 생성해주세요.`,
     })
