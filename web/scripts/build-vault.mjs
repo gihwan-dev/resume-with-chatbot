@@ -9,14 +9,32 @@ import fs from "node:fs"
 import path from "node:path"
 import MiniSearch from "minisearch"
 import {
-  BULK_IMPORT_COMMIT_HASH,
   buildPathActivityMapFromGitLog,
+  detectInitialVaultCommitHash,
 } from "./live-feed-activity-utils.mjs"
 import { extractVaultDateMeta } from "./vault-date-utils.mjs"
 
 const VAULT_PATH = path.join(process.cwd(), "vault")
 const OUTPUT_PATH = path.join(process.cwd(), "src", "generated", "vault-data.json")
 const SEARCH_INDEX_PATH = path.join(process.cwd(), "src", "generated", "search-index.json")
+
+function resolveGitRoot() {
+  try {
+    return execFileSync("git", ["rev-parse", "--show-toplevel"], {
+      cwd: process.cwd(),
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim()
+  } catch {
+    return ""
+  }
+}
+
+function resolveVaultPathSpec(gitRoot) {
+  if (!gitRoot) return "vault"
+  const relative = path.relative(gitRoot, VAULT_PATH).split(path.sep).join("/")
+  return relative || "vault"
+}
 
 const EXCLUDED_DIRS = new Set([".obsidian", ".vscode", "Excalidraw", "이미지저장소", ".git"])
 const EXCLUDED_FILES = new Set(["콜아웃 리스트.md", "프롬프트.md"])
@@ -52,13 +70,13 @@ function extractSummary(content) {
   return ""
 }
 
-function getVaultGitLogOutput() {
+function getVaultGitLogOutput(gitRoot, vaultPathSpec) {
   try {
     return execFileSync(
       "git",
-      ["log", "--format=__COMMIT__%n%H%x09%cI", "--name-only", "--", "vault"],
+      ["log", "--format=__COMMIT__%n%H%x09%cI", "--name-only", "--", vaultPathSpec],
       {
-        cwd: process.cwd(),
+        cwd: gitRoot || process.cwd(),
         encoding: "utf-8",
         stdio: ["ignore", "pipe", "ignore"],
       }
@@ -69,12 +87,15 @@ function getVaultGitLogOutput() {
 }
 
 function getPathActivityMap() {
-  const rawGitLog = getVaultGitLogOutput()
+  const gitRoot = resolveGitRoot()
+  const vaultPathSpec = resolveVaultPathSpec(gitRoot)
+  const rawGitLog = getVaultGitLogOutput(gitRoot, vaultPathSpec)
   if (!rawGitLog) return new Map()
 
-  return buildPathActivityMapFromGitLog(rawGitLog, {
-    ignoredCommitHashes: [BULK_IMPORT_COMMIT_HASH],
-  })
+  const initialCommitHash = detectInitialVaultCommitHash(rawGitLog)
+  const ignoredCommitHashes = initialCommitHash ? [initialCommitHash] : []
+
+  return buildPathActivityMapFromGitLog(rawGitLog, { ignoredCommitHashes })
 }
 
 function normalizeRelativePath(relativePath) {

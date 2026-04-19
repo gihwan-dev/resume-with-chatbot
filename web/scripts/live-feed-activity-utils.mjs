@@ -1,7 +1,5 @@
 const COMMIT_MARKER = "__COMMIT__"
-const VAULT_PREFIX = "vault/"
-
-export const BULK_IMPORT_COMMIT_HASH = "ee2e5b1f"
+const VAULT_PREFIX = "web/vault/"
 
 function normalizePath(pathText) {
   return String(pathText ?? "")
@@ -20,7 +18,7 @@ function normalizeVaultRelativePath(gitPath) {
   if (normalizedPath.startsWith(VAULT_PREFIX)) {
     return normalizedPath.slice(VAULT_PREFIX.length)
   }
-  return normalizedPath
+  return ""
 }
 
 function isExcludedByDirectory(relativePath) {
@@ -41,6 +39,31 @@ export function shouldIncludeFeedActivityPath(relativePath) {
   if (fileName === "README.md" || fileName === "TODO.md") return false
 
   return true
+}
+
+export function detectInitialVaultCommitHash(rawGitLog) {
+  const lines = String(rawGitLog ?? "").split(/\r?\n/)
+  let lastCommitHash = ""
+  let expectMeta = false
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim()
+    if (!line) continue
+
+    if (line === COMMIT_MARKER) {
+      expectMeta = true
+      continue
+    }
+
+    if (expectMeta) {
+      const [hash] = line.split("\t")
+      const normalized = normalizeCommitHash(hash)
+      if (normalized) lastCommitHash = normalized
+      expectMeta = false
+    }
+  }
+
+  return lastCommitHash
 }
 
 export function buildPathActivityMapFromGitLog(
