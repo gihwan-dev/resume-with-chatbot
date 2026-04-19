@@ -9,25 +9,39 @@ import { WorkAgentError } from "../../../src/lib/work-agent/types"
 // Obsidian 서버 모킹
 vi.mock("../../../src/lib/work-agent/obsidian.server", () => ({
   searchDocuments: vi.fn(),
+  hybridSearch: vi.fn(),
   readDocumentContent: vi.fn(),
+  findRelatedDocs: vi.fn(),
+}))
+
+// 쿼리 임베딩 모킹 (기본: throw → BM25 fallback 경로)
+vi.mock("../../../src/lib/work-agent/query-embedding", () => ({
+  embedQuery: vi.fn(),
 }))
 
 import {
+  findRelatedDocs,
+  hybridSearch,
   readDocumentContent,
   searchDocuments as searchDocumentsLocal,
 } from "../../../src/lib/work-agent/obsidian.server"
+import { embedQuery } from "../../../src/lib/work-agent/query-embedding"
 
 import {
   answer,
   answerSchema,
   createAnswerTool,
+  findRelated,
   readDocument,
   searchDocuments,
 } from "../../../src/lib/work-agent/tools"
 import type { SearchContext } from "../../../src/lib/work-agent/types"
 
 const mockSearchDocuments = searchDocumentsLocal as ReturnType<typeof vi.fn>
+const mockHybridSearch = hybridSearch as ReturnType<typeof vi.fn>
 const mockReadDocumentContent = readDocumentContent as ReturnType<typeof vi.fn>
+const mockFindRelatedDocs = findRelatedDocs as ReturnType<typeof vi.fn>
+const mockEmbedQuery = embedQuery as ReturnType<typeof vi.fn>
 
 const testContext = {
   toolCallId: "test-call",
@@ -38,6 +52,8 @@ const testContext = {
 describe("Work Agent Tools", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // 기본적으로 embedQuery는 실패 → BM25 fallback 경로로 동작
+    mockEmbedQuery.mockRejectedValue(new Error("embed disabled in tests"))
   })
 
   // ============================================
@@ -114,6 +130,55 @@ describe("Work Agent Tools", () => {
       expect(mockSearchDocuments).toHaveBeenCalledWith("test", 5)
     })
 
+    it("임베딩 성공 시 하이브리드 경로 사용", async () => {
+      mockEmbedQuery.mockResolvedValueOnce([0.1, 0.2, 0.3])
+      mockHybridSearch.mockReturnValue([
+        {
+          id: "doc-1",
+          title: "아키텍처",
+          category: "Design",
+          path: "Design/아키텍처.md",
+          summary: "요약",
+          tags: [],
+        },
+      ])
+
+      const result = (await searchDocuments.execute?.({ query: "설계 철학" }, testContext)) as {
+        success: true
+        data: { documents: Array<{ id: string }> }
+      }
+
+      expect(mockEmbedQuery).toHaveBeenCalledWith("설계 철학")
+      expect(mockHybridSearch).toHaveBeenCalledWith("설계 철학", [0.1, 0.2, 0.3], 20)
+      expect(mockSearchDocuments).not.toHaveBeenCalled()
+      expect(result.success).toBe(true)
+      expect(result.data.documents).toHaveLength(1)
+    })
+
+    it("임베딩 실패 시 BM25로 자동 fallback", async () => {
+      // 기본 mockEmbedQuery가 이미 reject 상태
+      mockSearchDocuments.mockReturnValue([
+        {
+          id: "doc-1",
+          title: "BM25 결과",
+          category: "Misc",
+          path: "Misc/x.md",
+          summary: "요약",
+          tags: [],
+        },
+      ])
+
+      const result = (await searchDocuments.execute?.({ query: "fallback" }, testContext)) as {
+        success: true
+        data: { documents: Array<{ id: string }> }
+      }
+
+      expect(mockSearchDocuments).toHaveBeenCalledWith("fallback", 20)
+      expect(mockHybridSearch).not.toHaveBeenCalled()
+      expect(result.success).toBe(true)
+      expect(result.data.documents).toHaveLength(1)
+    })
+
     it("에러: 볼트 읽기 실패", async () => {
       mockSearchDocuments.mockImplementation(() => {
         throw new WorkAgentError("Vault read error", "VAULT_ERROR")
@@ -170,7 +235,7 @@ describe("Work Agent Tools", () => {
   // readDocument Tests
   // ============================================
   describe("readDocument", () => {
-    it("성공: 문서 내용 반환", async () => {
+    it("성공: 문서 내용 + outLinks 반환", async () => {
       mockReadDocumentContent.mockReturnValue({
         id: "React.js--useRef",
         title: "useRef",
@@ -179,6 +244,8 @@ describe("Work Agent Tools", () => {
         summary: "useRef 훅에 대한 설명",
         tags: ["React.js"],
         content: "# useRef\n\nuseRef는 React 훅입니다.",
+        outLinks: [{ id: "React.js--useState", title: "useState" }],
+        inLinks: [],
       })
 
       const result = await readDocument.execute?.({ documentId: "React.js--useRef" }, testContext)
@@ -193,6 +260,7 @@ describe("Work Agent Tools", () => {
             path: "React.js/useRef.md",
           },
           content: "# useRef\n\nuseRef는 React 훅입니다.",
+          outLinks: [{ id: "React.js--useState", title: "useState" }],
         },
       })
     })
@@ -218,6 +286,60 @@ describe("Work Agent Tools", () => {
       })
 
       const result = await readDocument.execute?.({ documentId: "broken-doc" }, testContext)
+
+      expect(result).toEqual({
+        success: false,
+        error: {
+          code: "VAULT_ERROR",
+          message: "Obsidian 볼트 읽기 중 오류가 발생했습니다.",
+          retryable: false,
+        },
+      })
+    })
+  })
+
+  // ============================================
+  // findRelated Tool Tests
+  // ============================================
+  describe("findRelated", () => {
+    it("성공: 관련 문서 반환 (depth 기본값 1)", async () => {
+      mockFindRelatedDocs.mockReturnValue([
+        {
+          id: "doc-2",
+          title: "관련 문서",
+          category: "Design",
+          path: "Design/관련.md",
+          relation: "outLink",
+          distance: 1,
+        },
+      ])
+
+      const result = (await findRelated.execute?.({ documentId: "doc-1" }, testContext)) as {
+        success: true
+        data: { documents: Array<{ id: string; relation: string }>; totalFound: number }
+      }
+
+      expect(mockFindRelatedDocs).toHaveBeenCalledWith("doc-1", 1)
+      expect(result.success).toBe(true)
+      expect(result.data.documents).toHaveLength(1)
+      expect(result.data.documents[0].relation).toBe("outLink")
+      expect(result.data.totalFound).toBe(1)
+    })
+
+    it("성공: depth=2 전달", async () => {
+      mockFindRelatedDocs.mockReturnValue([])
+
+      await findRelated.execute?.({ documentId: "doc-1", depth: 2 }, testContext)
+
+      expect(mockFindRelatedDocs).toHaveBeenCalledWith("doc-1", 2)
+    })
+
+    it("에러: 볼트 읽기 실패", async () => {
+      mockFindRelatedDocs.mockImplementation(() => {
+        throw new WorkAgentError("graph error", "VAULT_ERROR")
+      })
+
+      const result = await findRelated.execute?.({ documentId: "doc-1" }, testContext)
 
       expect(result).toEqual({
         success: false,

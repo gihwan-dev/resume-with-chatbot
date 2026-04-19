@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { isResumeRoutePath, parseResumeVariant, parseResumeVariantFromPath } from "@/lib/resume/variant"
+import {
+  isResumeRoutePath,
+  parseResumeVariant,
+  parseResumeVariantFromPath,
+} from "@/lib/resume/variant"
 
 describe("resume variant route smoke", () => {
   it("/와 /ai-agent를 resume route로 인식한다", () => {

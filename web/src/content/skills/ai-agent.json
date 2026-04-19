@@ -7,7 +7,14 @@
     },
     {
       "name": "AI Agent & Automation",
-      "items": ["MCP (Model Context Protocol)", "LangGraph.js", "Deep Agents SDK", "Langfuse", "OpenTelemetry", "GitLab API"]
+      "items": [
+        "MCP (Model Context Protocol)",
+        "LangGraph.js",
+        "Deep Agents SDK",
+        "Langfuse",
+        "OpenTelemetry",
+        "GitLab API"
+      ]
     },
     {
       "name": "Frameworks & Runtime",

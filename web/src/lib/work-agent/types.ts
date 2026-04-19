@@ -39,6 +39,19 @@ export interface ObsidianDocument {
 export interface ObsidianDocumentContent {
   document: ObsidianDocument
   content: string
+  outLinks: ObsidianLinkRef[]
+}
+
+export interface ObsidianLinkRef {
+  id: string
+  title: string
+}
+
+export interface RelatedObsidianDocument extends ObsidianLinkRef {
+  category: string
+  path: string
+  relation: "outLink" | "inLink"
+  distance: 1 | 2
 }
 
 export interface LiveResumeFeedItem {

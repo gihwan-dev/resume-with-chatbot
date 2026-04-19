@@ -1,7 +1,9 @@
 import { resolveResumeContent } from "@/lib/resume/content"
 import type { SerializedResumeData } from "./types"
 
-export async function serializeResumeData(variantInput?: string | null): Promise<SerializedResumeData> {
+export async function serializeResumeData(
+  variantInput?: string | null
+): Promise<SerializedResumeData> {
   const resumeContent = await resolveResumeContent(variantInput)
   const { profile, experienceEntries, blogPosts, education, certificates, awards, skillsData } =
     resumeContent

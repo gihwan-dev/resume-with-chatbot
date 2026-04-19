@@ -10,6 +10,9 @@ lighthouse/
 .vercel/
 next-env.d.ts
 
+# Local caches
+scripts/cache/
+
 # Environment Variables
 .env
 .env.*
