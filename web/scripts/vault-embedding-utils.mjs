@@ -4,6 +4,7 @@ import path from "node:path"
 
 const EMBED_INPUT_CHAR_LIMIT = 8000
 const DEFAULT_BATCH_SIZE = 100
+const DEFAULT_BATCH_INPUT_CHAR_LIMIT = 12000
 const RETRY_DELAYS_MS = [1000, 2000, 4000]
 
 export function computeContentHash(doc) {
@@ -69,12 +70,45 @@ async function embedBatchWithRetry(values, embedMany, model) {
   throw new Error("embedBatchWithRetry exhausted")
 }
 
+export function createEmbeddingBatches(
+  pending,
+  { batchSize = DEFAULT_BATCH_SIZE, maxBatchInputChars = DEFAULT_BATCH_INPUT_CHAR_LIMIT } = {}
+) {
+  const batches = []
+  let currentBatch = []
+  let currentChars = 0
+
+  for (const item of pending) {
+    const value = buildEmbeddingInput(item.doc)
+    const valueLength = value.length
+    const exceedsBatchSize = currentBatch.length >= batchSize
+    const exceedsCharBudget =
+      currentBatch.length > 0 && currentChars + valueLength > maxBatchInputChars
+
+    if (exceedsBatchSize || exceedsCharBudget) {
+      batches.push(currentBatch)
+      currentBatch = []
+      currentChars = 0
+    }
+
+    currentBatch.push({ ...item, value })
+    currentChars += valueLength
+  }
+
+  if (currentBatch.length > 0) {
+    batches.push(currentBatch)
+  }
+
+  return batches
+}
+
 export async function generateEmbeddings({
   documents,
   cache,
   embedMany,
   model,
   batchSize = DEFAULT_BATCH_SIZE,
+  maxBatchInputChars = DEFAULT_BATCH_INPUT_CHAR_LIMIT,
 }) {
   const results = new Map()
   const freshCache = { ...cache }
@@ -101,10 +135,10 @@ export async function generateEmbeddings({
 
   let regenerated = 0
   let failed = 0
+  const batches = createEmbeddingBatches(pending, { batchSize, maxBatchInputChars })
 
-  for (let i = 0; i < pending.length; i += batchSize) {
-    const batch = pending.slice(i, i + batchSize)
-    const values = batch.map(({ doc }) => buildEmbeddingInput(doc))
+  for (const [batchIndex, batch] of batches.entries()) {
+    const values = batch.map(({ value }) => value)
     try {
       const vectors = await embedBatchWithRetry(values, embedMany, model)
       batch.forEach(({ doc, hash }, index) => {
@@ -121,7 +155,7 @@ export async function generateEmbeddings({
     } catch (error) {
       failed += batch.length
       console.error(
-        `[embedding] Batch ${i / batchSize + 1} failed permanently: ${
+        `[embedding] Batch ${batchIndex + 1} failed permanently: ${
           error?.message ?? error
         }. Affected documents will fall back to BM25-only.`
       )
