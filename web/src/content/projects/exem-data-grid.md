@@ -12,5 +12,5 @@ accomplishments:
   - "셀·행마다 개별 핸들러를 붙이는 대신 테이블 레벨 이벤트 위임을 적용해 핸들러 수와 상호작용 처리 비용을 낮췄습니다."
   - "UI와 로직을 헤드리스 구조로 분리하고, 기능별 descriptor 하나만 등록하면 테이블에 새 기능이 붙는 파이프라인을 설계했습니다. Core - State - UI 계층 분리와 기능 호환표 기준으로 Storybook 시나리오, 브라우저 통합 테스트, 회귀 타깃 문서를 함께 운영해 기능 조합 회귀를 관리했습니다."
   - "PR마다 복잡도·코드 중복·함수 길이 등 7개 품질 지표를 CI에서 자동 검사해 리뷰 전 품질 기준선을 보장하는 게이트를 구축했습니다."
-  - "TailwindCSS v4, Vite 8, Storybook 10.3, DnD 라이브러리(Atlaskit Pragmatic DnD) 전환을 무중단으로 완료하고, npm 스코프 마이그레이션을 병행했습니다."
+  - "TailwindCSS v4, Vite 8, Storybook 10.3 전환과 npm 스코프 마이그레이션을 병행했습니다. 이후 Atlaskit DnD 의존성을 제거하고 자체 Pointer Events 기반 DnD 엔진으로 열·행 재정렬 흐름을 통합했습니다."
 ---
