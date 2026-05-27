@@ -162,7 +162,7 @@ export function LiveResumeFeed({ items }: LiveResumeFeedProps) {
             {rows.map((item, index) => (
               <span key={`${item.id}-${index}`} className="flex h-8 min-w-0 items-center gap-2">
                 <span className="shrink-0 rounded bg-resume-highlight px-2 py-1 text-resume-primary">
-                  <span className="block text-[9px] uppercase leading-none tracking-wide text-resume-primary/75">
+                  <span className="block text-[9px] uppercase leading-none tracking-wide text-resume-text-main">
                     Updated
                   </span>
                   <span className="mt-0.5 block text-[11px] font-medium leading-none">
