@@ -4,10 +4,10 @@ title: "프론트엔드 개발 생산성 및 진단 구조 개선"
 techStack: ["ExtJS", "Sencha", "React", "TypeScript", "Vite", "Oracle", "Docker", "WebSocket", "Node.js", "Playwright"]
 dateStart: 2025-02-01
 priority: 4
-summary: "레거시 ExtJS 코드베이스와 차세대 제품 개발 흐름에서 수동 추적·환경 준비·페이지 제작 검증을 정리하고, 진단 도구와 하네스를 공용화해 초기 환경 셋업 3시간을 1분 이내로 단축했습니다."
+summary: "레거시 ExtJS 코드베이스와 차세대 제품 개발 흐름에서 수동 추적·환경 준비·페이지 제작 검증을 정리하고, 로컬 풀스택 실행 흐름과 페이지 검증 하네스를 공용화해 반복 확인 지점을 코드와 테스트로 고정했습니다."
 accomplishments:
-  - "`mfo_v5_starter`에 레포·서브모듈·환경 감지·`config.json` 생성·실행 절차를 중앙화하고, PJS/RTS/Colima/Jetty 호환성 이슈를 코드로 고정해 초기 셋업 3시간이 걸리던 레거시 개발 환경을 1분 이내 진입 가능한 흐름으로 줄였습니다."
-  - "팀 공용 브라우저 진단 도구를 구축해 `console.log` 없이 SQL 응답을 실시간으로 확인하고 컴포넌트를 IDE로 바로 추적할 수 있게 해, 레거시 ExtJS 이슈의 원인 추적 비용을 낮췄습니다."
+  - "`mfo_v5_starter`에 레포·서브모듈·환경 감지·`config.json` 생성·실행 절차를 중앙화하고, PJS/RTS/Colima/Jetty 호환성 이슈를 코드로 고정해 레거시 개발 환경을 `pnpm run dev` 중심의 재현 가능한 로컬 풀스택 흐름으로 정리했습니다."
+  - "Chrome DevTools 기반 Sencha/ExtJS 진단 확장의 MV3 스캐폴드와 frame/runtime probe, panel shell까지 구현하고, 실제 SQL monitor·IDE 연계는 후속 범위로 분리했습니다."
   - "레거시 SQL 참조·실행 payload를 Oracle/PostgreSQL 기준으로 점검하는 `sql:report`와 `sql:lint-runtime` 흐름을 만들고, 오류·경고·DB 분기·소스 경로별로 필터링 가능한 브라우저 리포트 UI까지 연결했습니다."
   - "Mock DB 기반 E2E를 기능 영역별 스위트와 MR 전용 scenario/resolver 레이어로 재구성하고, 250개 MR 후보를 브라우저 경로·REST/WS ledger clean gate·리포트 아티팩트로 추적하는 회귀 하네스를 정비했습니다."
   - "`@exem/design-studio` 코어 패키지와 Design Studio 템플릿에 멀티 프로젝트 워크스페이스, page/i18n/screen-spec/policy 문서 스캐폴딩·검증, pageOnlyCommit 가드, iframe 미리보기·SNB 라우팅을 묶어 실제 프로젝트에서 dependency로 재사용 가능한 페이지 단위 검증 하네스로 공용화했습니다."
