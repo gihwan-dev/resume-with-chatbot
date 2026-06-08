@@ -12,6 +12,7 @@ accomplishments:
   - "Mock DB 기반 E2E를 기능 영역별 스위트와 MR 전용 scenario/resolver 레이어로 재구성하고, 250개 MR 후보를 브라우저 경로·REST/WS ledger clean gate·리포트 아티팩트로 추적하는 회귀 하네스를 정비했습니다."
   - "`@exem/design-studio` 코어 패키지와 Design Studio 템플릿에 멀티 프로젝트 워크스페이스, page/i18n/screen-spec/policy 문서와 페이지별 MSW operations/handler 레지스트리 스캐폴딩·검증, pageOnlyCommit 가드, MockReady 런타임, iframe 미리보기·SNB 라우팅을 묶어 실제 프로젝트에서 dependency로 재사용 가능한 페이지 단위 검증 하네스로 공용화했습니다."
   - "Playwright로 실제 렌더된 테이블 헤더를 읽어 screen-spec drift를 검출·동기화하는 스크립트를 만들고, SQL 분석 13개 화면의 `screen-spec.yaml`과 `table-columns.csv`를 실제 화면 기준으로 정합시켰습니다."
+  - "Design Studio workspace에 lock-service 기반 page lock과 Claude terminal bridge의 `agent_runs` 스냅샷·heartbeat·stale busy-run 만료를 연결하고, IA tree의 페이지별 구현 에이전트 상태 표시를 Fastify·브라우저 테스트로 고정했습니다."
   - "Vitest Browser와 Playwright 기반 통합 테스트로 preview shell bridge, same-origin iframe navigation, page 파라미터 정규화, 디자인 인스펙터 속성 탐색·드래그/리사이즈 핸들, 디자이너 노트 handoff와 JSX source-line 매핑을 고정해 Design Studio 미리보기·핸드오프 회귀를 코드 레벨에서 추적했습니다."
   - "WebSocket 공통 모듈에 JSDoc과 사용 예시를 추가해 호출 규칙과 응답 해석 기준을 문서화하고, 화면별 추측에 의존하던 통신 로직 분석 부담을 줄였습니다."
   - "브라우저 기반 검증 중 발견된 RTM 프레임 초기화 순서, SQL Elapsed Time 필터 값 shape, 설정 화면의 빈 선택 상태 예외를 추적해 초기화 순서 보정과 입력 정규화로 레거시 ExtJS 런타임 오류를 줄였습니다."
