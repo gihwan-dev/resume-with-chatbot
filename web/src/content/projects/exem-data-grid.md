@@ -14,6 +14,7 @@ accomplishments:
   - "내장 TableFilter를 TanStack Table feature로 추가해 문자열·숫자 컬럼 조건, AND/OR 조합, 내부·외부 facet 값 추천, 필터 태그 UI를 지원하고, 상태 모델 단위 테스트와 Storybook 브라우저 테스트로 필터 추가·조합·추천값 회귀를 고정했습니다."
   - "medium/small Table Size 옵션을 SSoT 토큰으로 분리해 행·헤더·푸터 높이와 built-in 셀 포맷 밀도를 함께 동기화하고, Size 브라우저 테스트와 검색 필터 memo 경계 테스트로 디자인 밀도·검색 조합 회귀를 고정했습니다."
   - "CodeText 셀 포맷을 `copyText`·`href`·`onCopy`·`onNavigate` 액션 모델로 확장해 SQL·명령어 셀의 텍스트 복사와 상세 이동을 분리하고, CellFormats·RowClick 브라우저 테스트로 행 클릭과 셀 액션 충돌을 고정했습니다."
+  - "셀 툴팁을 브라우저 `title` 속성에서 `@exem-ui/react` Tooltip 합성으로 전환해 hover 지연·최대 폭·긴 문자열 줄바꿈을 일관화하고, TooltipMaxLength 브라우저 테스트로 잘림/무제한 노출과 폭 제한 회귀를 고정했습니다."
   - "UI와 로직을 헤드리스 구조로 분리하고, 기능별 descriptor와 columnContract 컴파일 단계로 데이터·그룹·유틸리티 컬럼의 검색·필터·정렬·DnD 대상 여부를 표준화했습니다. Storybook 시나리오, 단위 테스트, 브라우저 통합 테스트로 컬럼 가시성·복사·Excel export·DnD 조합 회귀를 관리했습니다."
   - "PR마다 복잡도·코드 중복·함수 길이 등 7개 품질 지표를 CI에서 자동 검사해 리뷰 전 품질 기준선을 보장하는 게이트를 구축했습니다."
   - "TailwindCSS v4, Vite 8, Storybook 10.3 전환과 npm 스코프 마이그레이션을 병행했습니다. 이후 Atlaskit DnD 의존성을 제거하고 자체 Pointer Events 기반 DnD 엔진으로 열·행 재정렬 흐름을 통합했습니다."
