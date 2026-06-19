@@ -11,6 +11,7 @@ accomplishments:
   - "행 가상화로 실제 DOM 마운트를 뷰포트 범위로 제한하고, React.memo에 값 기반 비교 함수를 적용해 스크롤 중 불필요한 리렌더를 억제했습니다."
   - "셀·행마다 개별 핸들러를 붙이는 대신 테이블 레벨 이벤트 위임을 적용해 핸들러 수와 상호작용 처리 비용을 낮췄습니다."
   - "검색·정렬·페이지네이션 옵션을 query 상태 모델로 정규화하는 기반을 만들고, 컬럼 가시성 변경·고정 컬럼 재마운트·행 DnD 모드 조합에서 상태가 어긋나지 않도록 단위 테스트와 브라우저 테스트로 회귀 조건을 고정했습니다."
+  - "컬럼 편집 모달을 표시/숨김 transfer-list로 재구성하고, 검색·순서 이동·pin 고정·미저장 변경 확인 흐름을 분리했습니다. column edit 상태·적용·reorder 단위 테스트와 ColumnEditing Storybook 브라우저·VRT 테스트로 컬럼 편집 회귀를 고정했습니다."
   - "내장 TableFilter를 TanStack Table feature로 추가해 문자열·숫자 컬럼 조건, AND/OR 조합, 내부·외부 facet 값 추천, 필터 태그 UI를 지원하고, 상태 모델 단위 테스트와 Storybook 브라우저 테스트로 필터 추가·조합·추천값 회귀를 고정했습니다."
   - "medium/small Table Size 옵션을 SSoT 토큰으로 분리해 행·헤더·푸터 높이와 built-in 셀 포맷 밀도를 함께 동기화하고, Size 브라우저 테스트와 검색 필터 memo 경계 테스트로 디자인 밀도·검색 조합 회귀를 고정했습니다."
   - "CodeText 셀 포맷을 `copyText`·`href`·`onCopy`·`onNavigate` 액션 모델로 확장해 SQL·명령어 셀의 텍스트 복사와 상세 이동을 분리하고, CellFormats·RowClick 브라우저 테스트로 행 클릭과 셀 액션 충돌을 고정했습니다."
